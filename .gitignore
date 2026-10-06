@@ -1,0 +1,45 @@
+# Credentials and private local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+
+# Dependencies, builds, and caches
+node_modules/
+dist/
+build/
+coverage/
+.cache/
+.venv/
+__pycache__/
+*.pyc
+*.log
+
+# Runtime/private assets and coordinator packets
+/data/
+/storage/
+/uploads/
+/outputs/
+/private/
+/work-packets/
+/reports/private/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+
+# Local model weights
+*.safetensors
+*.ckpt
+*.gguf
+*.pt
+*.pth
+
+# Workstation files
+.DS_Store
+Thumbs.db
