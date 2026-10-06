@@ -3,8 +3,9 @@
 A website-first visual design workspace connecting brand intent, visual references, editable page
 composition, image iteration, and design decisions.
 
-This repository currently contains the development bootstrap and handoff templates. A runnable
-application has not been implemented. Features below describe the intended product, not shipping behavior.
+This repository contains an executable offline contract/storage spike, synthetic fixtures, and
+handoff templates. A browser application and live providers have not been implemented. The intended
+experience below describes the product direction, not shipping UI behavior.
 
 The application is standalone and is developed/tested with synthetic website briefs, sample assets,
 and mock providers. No existing website or client pilot is required to start development. Real
@@ -49,9 +50,21 @@ public-safe technical changes and verification evidence.
 
 ## Setup and validation
 
-There is no application build or test command yet. The first implementation packet establishes the
-stack, executable setup, and meaningful verification commands. Do not report the bootstrap as tested
-software or infer passing tests from the absence of source code.
+With Node 24.19.0 (tested on Linux x64):
+
+```sh
+npm ci --ignore-scripts
+npm run typecheck
+npm test
+npm run smoke
+```
+
+These commands run an offline SQLite/filesystem spike in temporary folders. No server, browser,
+provider call, private input, or production deployment is started. There is no browser build yet.
+
+- [Standalone interfaces and persistence](docs/standalone-contracts.md)
+- [Provider capabilities and evidence boundaries](docs/provider-boundaries.md)
+- [Technical checks and designer review rubric](docs/verification.md)
 
 For documentation changes, check local links, read the changed files, and run `git diff --check`.
 Runtime data, credentials, model weights, and generated/client assets are excluded by `.gitignore`.
