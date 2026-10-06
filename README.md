@@ -6,6 +6,10 @@ composition, image iteration, and design decisions.
 This repository currently contains the development bootstrap and handoff templates. A runnable
 application has not been implemented. Features below describe the intended product, not shipping behavior.
 
+The application is standalone and is developed/tested with synthetic website briefs, sample assets,
+and mock providers. No existing website or client pilot is required to start development. Real
+provider checks validate integrations; a later website/designer pilot evaluates usefulness and quality.
+
 ## Intended experience
 
 Develop a brief, compare visual directions, compose editable website sections, generate or import
