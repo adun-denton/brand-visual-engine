@@ -1,11 +1,12 @@
 # Brand Visual Engine
 
-A website-first visual design workspace connecting brand intent, visual references, editable page
-composition, image iteration, and design decisions.
+Website is the first implemented module of an experimental shared AI Design OS foundation. Its
+contracts connect brand intent, visual references, Website design exploration, image iteration and
+local design decisions.
 
-This repository contains an executable offline contract/storage spike, synthetic fixtures, and
-handoff templates. A browser application and live providers have not been implemented. The intended
-experience below describes the product direction, not shipping UI behavior.
+This repository contains an executable offline shared kernel, Website contracts, legacy storage
+adapters, synthetic fixtures and handoff templates. A browser application and live providers have
+not been implemented. The intended experience below describes product direction, not shipping UI behavior.
 
 The application is standalone and is developed/tested with synthetic website briefs, sample assets,
 and mock providers. No existing website or client pilot is required to start development. Real
@@ -57,12 +58,14 @@ npm ci --ignore-scripts
 npm run typecheck
 npm test
 npm run smoke
+npm run smoke:design-os
 ```
 
 These commands run an offline SQLite/filesystem spike in temporary folders. No server, browser,
 provider call, private input, or production deployment is started. There is no browser build yet.
 
-- [Standalone interfaces and persistence](docs/standalone-contracts.md)
+- [Shared foundation, context modes and legacy mapping](docs/design-os-contracts.md)
+- [Legacy standalone interfaces and persistence](docs/standalone-contracts.md)
 - [Provider capabilities and evidence boundaries](docs/provider-boundaries.md)
 - [Technical checks and designer review rubric](docs/verification.md)
 

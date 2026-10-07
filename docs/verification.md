@@ -7,6 +7,7 @@ npm ci --ignore-scripts
 npm run typecheck
 npm test
 npm run smoke
+npm run smoke:design-os
 git diff --check
 ```
 
@@ -37,6 +38,35 @@ The manifest check is a contract feasibility test. It is not a complete handoff 
 preview, downstream reconstruction or deployment. Restart is process exit after committed writes;
 hard power loss, disk exhaustion, large assets, concurrent writers, Windows, online backup, migrations,
 provider timeout/rate limits and real cancellation are untested.
+
+## Shared foundation checks
+
+The expanded suite has 43 top-level tests: all 18 original invariants, one exhaustive pixel property
+check (6,912 channel assertions), and 24 shared-foundation checks. The path-with-spaces regression
+runs the 19 legacy tests again in a copied checkout, including separate-process restart. Node's
+nested test context is removed and TAP explicitly enabled so the parent verifies the child count.
+Both smoke commands run offline and clean up temporary state; the Design OS smoke uses two processes.
+
+| Property | Procedure | Expected observation |
+|---|---|---|
+| Shared modes and origins | Persist Branded/Freeroam through identical Website contracts; local override plus derived/inherited inputs | Honest effective precedence and source refs; no Freeroam mount or invented approval; unresolved remains visible |
+| Context integrity | Forge inherited/effective values with a valid recomputed checksum | Gate rejects mismatch against mounted approved source |
+| Candidate exploration | Nine coherent relative four-family vectors; select and refine three around selected base | Nine distinct vectors, shared locks, narrower amplitude, base/provenance refs, immutable bundle versions |
+| Port contract | Wrong type/schema/required field/permission/lineage, forged checksum, malformed nested state | No persistence or history change |
+| Dependencies and ownership | Missing/current-stale/cross-project refs, unknown module/owner/asset | Rejected; pinned historical dependencies remain usable |
+| Preservation/review | Change preserved scope; edit declared review paths | Rejected preservation; explicit invalidation findings without quality score |
+| Capability/executor boundary | Incompatible type; unavailable cloud/local/Chinvat; human route; semantic stub | Structured unavailable Placeholder/manual route; unknown observed settings null; semantic status not-run |
+| Bundle/acceptance | Wrong membership/count/locks/dimensions; stale accept; injected selected-pointer failure | Rejected; audit and pointer atomically preserved; no VisualOS promotion |
+| Restart/metadata | Separate seed/inspect processes for both modes; reconnect pointers locally and with absent refs | Bundle v2, selected pointer, provenance and unresolved fields survive; no implicit context mount |
+| Legacy mapping | Explicit snapshot all old records/assets; duplicate/corrupt/injected audit failure | Old data and bytes unchanged; historical links retained; new data stays proposal; atomic rollback |
+| Serialized fixtures | Enter checked-in packets through runtime gates; regenerate fixtures | All pass and generated JSON matches checked-in content |
+
+Inspect [design-os.json](../fixtures/design-os.json) as data, not a visual deliverable. Regenerate it
+with `node scripts/serialize-design-fixtures.ts` and confirm `git diff --exit-code -- fixtures/design-os.json`.
+The Linux CI workflow uses Node 24.19.0 and immutable action references. It has no secret or provider
+steps. Record whether a workflow actually ran and its result, rather than assuming a committed
+workflow establishes CI success. Windows/macOS, graphical previews, live providers, designer review,
+full storage unification and production auth remain unverified/out of scope.
 
 ## Designer rubric
 

@@ -1,4 +1,7 @@
-# Standalone contract spike
+# Legacy standalone contract spike
+
+The retained compatibility spike below is supplemented by the shared kernel and Website module
+in [design-os-contracts.md](design-os-contracts.md). It is not the current generic ownership model.
 
 This document describes the experimental v1 interfaces in this checkout. It is implementation
 reference, not project planning or task status. There is no browser application or live provider
@@ -84,7 +87,9 @@ WAL and FULL synchronous mode are enabled. Acceptance and result collection use 
 transactions. The expected current accepted ID is checked inside the acceptance transaction.
 
 Asset bytes are SHA-addressed. A temporary file is written and fsynced, renamed within the same
-filesystem, and the asset directory fsynced before the metadata row is inserted. Existing bytes are
+filesystem, and on Linux the asset directory fsynced before the metadata row is inserted. Temporary files
+are reopened with a writable `r+` handle for fsync. Directory fsync is skipped on Windows; equivalent
+directory durability and Windows behavior have not been verified. Existing bytes are
 checksum-checked before reuse. A transaction failure can leave an orphan file; it creates no asset
 row, accepted pointer or output record. The spike never deletes or adopts such orphans automatically.
 Tests inject a DB failure after file creation and verify that retry safely reuses those bytes.

@@ -5,6 +5,7 @@ import { mkdtempSync, rmSync, readFileSync, writeFileSync, unlinkSync, existsSyn
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { Store } from '../src/store.ts';
 import { candidateRaster, completeFixture, providerFixture, regionFixture, sourceRaster, website } from '../src/fixtures.ts';
@@ -189,9 +190,9 @@ test('a fresh process recovers accepted state and marks in-flight work unknown w
   const root = mkdtempSync(join(tmpdir(), 'bve-restart-'));
   try {
     const script = new URL('../scripts/restart-fixture.ts', import.meta.url);
-    const seed = spawnSync(process.execPath, [script.pathname, 'seed', root], { encoding: 'utf8' });
+    const seed = spawnSync(process.execPath, [fileURLToPath(script), 'seed', root], { encoding: 'utf8' });
     assert.equal(seed.status, 0, seed.stderr);
-    const inspect = spawnSync(process.execPath, [script.pathname, 'inspect', root], { encoding: 'utf8' });
+    const inspect = spawnSync(process.execPath, [fileURLToPath(script), 'inspect', root], { encoding: 'utf8' });
     assert.equal(inspect.status, 0, inspect.stderr);
     assert.deepEqual(JSON.parse(inspect.stdout), { accepted: true, state: 'outcome_unknown', outputs: [], decisionCount: 1 });
   } finally { rmSync(root, { recursive: true, force: true }); }
@@ -239,4 +240,16 @@ test('section-local acceptance preserves every other section and global style', 
   assert.deepEqual(after.sections.slice(1), before.sections.slice(1));
   assert.deepEqual(after.style, before.style);
   assert.equal(store.asset(candidate).parentId, source.id);
+});
+
+test('all 48 single-pixel masks preserve every outside channel: 6912 independent channel assertions', () => {
+  const source = sourceRaster(), candidate = candidateRaster();
+  for (let selected = 0; selected < 48; selected++) {
+    const mask = Array.from({ length: 48 }, (_, index) => index === selected ? 1 : 0);
+    const result = composite(source, candidate, { id: 'mask-' + selected, sourceVersionId: 'source',
+      width: 8, height: 6, coordinateSystem: 'pixel-top-left', mask });
+    for (let channel = 0; channel < 144; channel++) {
+      assert.equal(result.pixels[channel], Math.floor(channel / 3) === selected ? candidate.pixels[channel] : source.pixels[channel]);
+    }
+  }
 });
