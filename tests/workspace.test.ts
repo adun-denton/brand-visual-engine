@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   mkdtempSync,
+  readdirSync,
   rmSync,
   cpSync,
   readFileSync,
@@ -182,6 +183,20 @@ test('references validate owner/type and revise without losing accepted history;
     p = create(w),
     chosen = accepted(w, p),
     other = create(w);
+  const referenceBefore = selections(w, p.id);
+  await assert.rejects(
+    w.addReference(
+      p.id,
+      reference(p),
+      Buffer.from('invalid reference'),
+      'Invalid',
+      'composition',
+      'hero',
+    ),
+    /PNG/,
+  );
+  assert.deepEqual(selections(w, p.id), referenceBefore);
+  assert.equal(readdirSync(join(w.assets.root, '..', 'quarantine')).length, 1);
   await w.addReference(
     p.id,
     reference(p),

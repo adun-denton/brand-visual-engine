@@ -652,7 +652,13 @@ export class Workspace {
     scope: unknown,
   ) {
     const p = this.project(projectId, expected);
-    const info = await decode(bytes);
+    let info: Awaited<ReturnType<typeof decode>>;
+    try {
+      info = await decode(bytes);
+    } catch (error) {
+      this.assets.quarantine(bytes);
+      throw error;
+    }
     this.project(projectId, expected);
     const state: ImageState = {
       image: info,
