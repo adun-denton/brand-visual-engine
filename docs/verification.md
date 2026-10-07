@@ -41,11 +41,17 @@ provider timeout/rate limits and real cancellation are untested.
 
 ## Shared foundation checks
 
-The expanded suite has 43 top-level tests: all 18 original invariants, one exhaustive pixel property
+The retained foundation suite has 43 top-level tests: all 18 original invariants, one exhaustive pixel property
 check (6,912 channel assertions), and 24 shared-foundation checks. The path-with-spaces regression
 runs the 19 legacy tests again in a copied checkout, including separate-process restart. Node's
 nested test context is removed and TAP explicitly enabled so the parent verifies the child count.
-Both smoke commands run offline and clean up temporary state; the Design OS smoke uses two processes.
+The repair suite adds 11 consumption-boundary regressions, for 54 top-level tests total. It advances
+current dependencies/context after insertion, rejects acceptance with unchanged ledger/selection
+through reopen, permits pinned historical versions, and checks selected bundle inputs. Metadata
+negatives cover foreign project/ledger/bundle, unrelated same-project rounds, wrong referenced types,
+lookup identity and previously stored bad metadata after reopen; correct and partially/wholly missing
+pointers remain controls with explicit mounting. Both smoke commands run offline and clean up temporary
+state; the Design OS smoke uses two processes.
 
 | Property | Procedure | Expected observation |
 |---|---|---|
@@ -59,6 +65,8 @@ Both smoke commands run offline and clean up temporary state; the Design OS smok
 | Bundle/acceptance | Wrong membership/count/locks/dimensions; stale accept; injected selected-pointer failure | Rejected; audit and pointer atomically preserved; no VisualOS promotion |
 | Restart/metadata | Separate seed/inspect processes for both modes; reconnect pointers locally and with absent refs | Bundle v2, selected pointer, provenance and unresolved fields survive; no implicit context mount |
 | Legacy mapping | Explicit snapshot all old records/assets; duplicate/corrupt/injected audit failure | Old data and bytes unchanged; historical links retained; new data stays proposal; atomic rollback |
+| Acceptance consumption | Advance explicitly current artifact/bundle project/context/base inputs after insertion, then reopen | Stale acceptance fails with unchanged audit/pointer; pinned historical artifact v2 and selected bundle v2 still succeed |
+| Metadata consumption | Constructor/import/reconnect with incorrect known owner/types/bundle and historical invalid metadata | Consistent rejection; missing portable pointers remain unresolved; no automatic VisualOS mount |
 | Serialized fixtures | Enter checked-in packets through runtime gates; regenerate fixtures | All pass and generated JSON matches checked-in content |
 
 Inspect [design-os.json](../fixtures/design-os.json) as data, not a visual deliverable. Regenerate it

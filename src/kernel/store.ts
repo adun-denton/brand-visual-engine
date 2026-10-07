@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { IterationBundle, LedgerEvent, NodePacket, PortContract, ProjectLedger, VersionRef } from './contracts.ts';
-import { contractGate, writePort } from './gate.ts';
+import { contractGate, revalidatePacket, writePort } from './gate.ts';
 import type { GateEnvironment } from './gate.ts';
 import { digest, reference, revise } from './packets.ts';
 export type KernelServices = Pick<GateEnvironment, 'assetExists' | 'moduleExists' | 'validateArtifact' | 'grantedPermissions'>;
@@ -101,7 +101,7 @@ export class KernelStore {
       const artifact = this.get(artifactRef);
       if (artifact.type !== 'design-artifact' || artifact.projectId !== projectId) throw new Error('artifact acceptance scope mismatch');
       if (!slot.trim()) throw new Error('acceptance slot required');
-      for (const asset of artifact.assets) if (!this.services.assetExists(asset.id, asset.checksum)) throw new Error('referenced asset unavailable or corrupt');
+      revalidatePacket(artifact, writePort('design-artifact'), this.environment());
       if (artifactRef.freshness === 'current' && this.currentVersion(artifact.id) !== artifact.version) throw new Error('stale acceptance artifact');
       const current = this.selected(projectId, slot);
       if ((current?.id ?? null) !== (expected?.id ?? null) || (current?.version ?? null) !== (expected?.version ?? null)) throw new Error('stale acceptance');
@@ -110,6 +110,7 @@ export class KernelStore {
         if (this.currentVersion(bundle.id) !== bundle.version) throw new Error('stale acceptance bundle');
         if (bundle.type !== 'iteration-bundle' || bundle.projectId !== projectId
           || bundle.payload.selection?.id !== artifactRef.id || bundle.payload.selection.version !== artifactRef.version) throw new Error('bundle selection mismatch');
+        revalidatePacket(bundle, writePort('iteration-bundle'), this.environment());
       }
       const event = this.event(projectId, artifactRef, 'acceptance', actor, reason, bundleRef ? [bundleRef] : []);
       this.db.prepare('INSERT INTO kernel_selections VALUES(?,?,?) ON CONFLICT(project_id,slot) DO UPDATE SET body=excluded.body')

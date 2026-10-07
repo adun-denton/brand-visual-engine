@@ -25,7 +25,7 @@ try {
       const project = store.get<ModuleProject>({ id: 'website-' + mode, version: 1, freshness: 'pinned' });
       const bundle = store.get<IterationBundle>({ id: mode + '-round', version: 2, freshness: 'pinned' });
       const artifact = store.get(bundle.payload.selection!);
-      const metadata = artifactMetadata(artifact, project, project.payload.visualOSRef, reference(bundle));
+      const metadata = artifactMetadata(artifact, project, project.payload.visualOSRef, reference(bundle), ref => store.lookup(ref));
       const links = reconnect(metadata, ref => store.lookup(ref));
       const events = store.ledger(project.id).events;
       return { mode: project.payload.mode, accepted: store.selected(project.id, 'landing-page')?.id === artifact.id,

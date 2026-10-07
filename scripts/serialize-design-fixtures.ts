@@ -7,7 +7,8 @@ const visualOS = syntheticVisualOS();
 const modes = (['branded', 'freeroam'] as const).map(mode => {
   const project = syntheticProject(mode, mode === 'branded' ? visualOS : null);
   const round = exploreWebsite(project, mode + '-round');
-  return { project, ...round, metadata: artifactMetadata(round.candidates[4]!, project, project.payload.visualOSRef, reference(round.bundle)) };
+  return { project, ...round, metadata: artifactMetadata(round.candidates[4]!, project, project.payload.visualOSRef, reference(round.bundle),
+    ref => [project, visualOS, round.bundle, ...round.candidates].find(p => p.id === ref.id && p.version === ref.version) ?? null) };
 });
 writeFileSync(new URL('../fixtures/design-os.json', import.meta.url), JSON.stringify({ fixtureOnly: true, visualOS, modes,
   template: packet({ type: 'bundle-template', id: 'website-exploration-template', payload: explorationTemplate }),

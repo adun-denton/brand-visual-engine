@@ -1,6 +1,7 @@
 import type { LocalField, NodePacket, PacketType, PortContract, VersionRef, VisualOS } from './contracts.ts';
 import { atPath, canonical, digest } from './packets.ts';
 import { resolveContext } from './context.ts';
+import { validateMetadata } from './metadata.ts';
 export interface GateEnvironment {
   lookup(ref: VersionRef): NodePacket<unknown> | null;
   currentVersion(id: string): number | null;
@@ -138,10 +139,7 @@ function payloadSchema(type: PacketType, payload: unknown, env: GateEnvironment)
     }
     case 'artifact-metadata':
       // Portable pointers may be unavailable locally. Reconnection reports them without mounting.
-      if (p['schemaVersion'] !== 1) throw new Error('metadata schema mismatch');
-      versionRef(p['artifact']); versionRef(p['project']);
-      if (p['visualOS'] !== null) versionRef(p['visualOS']); if (p['bundle'] !== null) versionRef(p['bundle']);
-      text(p['ledgerProjectId']); if (!/^[a-f0-9]{64}$/.test(text(p['artifactIntegrity']))) throw new Error('metadata integrity invalid'); break;
+      validateMetadata(p, env.lookup); break;
     case 'execution-record':
       capability(p['request']);
       if (env.lookup(ref(p['bundleRef']))?.type !== 'iteration-bundle') throw new Error('execution bundle mismatch');
@@ -181,6 +179,7 @@ export function contractGate(input: unknown, port: PortContract, env: GateEnviro
   }
   const refs = [...list(p['contextRefs']).map(versionRef), ...list(p['dependencies']).map(versionRef), ...payloadSchema(type, p['payload'], env)];
   const payload = object(p['payload']);
+  if (type === 'artifact-metadata' && p['projectId'] !== null && p['projectId'] !== object(payload['project'])['id']) throw new Error('metadata envelope project mismatch');
   if (type === 'module-project' && p['projectId'] !== p['id']) throw new Error('project identity mismatch');
   if (type === 'design-artifact') {
     const ownerVersion = env.currentVersion(text(p['projectId']));
@@ -203,6 +202,13 @@ export function contractGate(input: unknown, port: PortContract, env: GateEnviro
     if (!/^[a-f0-9]{64}$/.test(hash) || !env.assetExists(text(a['id']), hash)) throw new Error('referenced asset unavailable or corrupt');
   }
   return input as NodePacket<unknown>;
+}
+
+/** Recheck a stored immutable version at consumption, against its own predecessor, not the head. */
+export function revalidatePacket(input: NodePacket<unknown>, port: PortContract, env: GateEnvironment): NodePacket<unknown> {
+  const previous = input.version === 1 ? null : env.lookup({ id: input.id, version: input.version - 1, freshness: 'pinned' });
+  if (input.version > 1 && previous === null) throw new Error('stored revision predecessor unavailable');
+  return contractGate(input, port, env, previous);
 }
 
 /** Invalidation findings require human review; they are not semantic approval or a quality score. */

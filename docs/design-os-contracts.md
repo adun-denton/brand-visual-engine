@@ -81,7 +81,13 @@ versions advance. `reviewChanges` reports changed declared paths for human revie
 invalidation finding, not automated semantic gating. Consumers must use explicit port preservation
 and review policies; arbitrary downstream graph invalidation is not implemented.
 
-All writes enter the gate. Reads verify identity and packet checksum. This is a trusted local-process
+All writes enter the gate. Reads verify identity and packet checksum. Acceptance revalidates the
+stored artifact and any associated bundle inside the acceptance transaction, before event/pointer
+writes. This rechecks their declared dependency/context/base/candidate freshness, schema, ownership,
+assets, constraints and integrity. Revalidation uses the stored version's own predecessor for lineage,
+so deliberately pinned inputs and older immutable artifact revisions remain usable. It neither inserts
+a new packet nor recursively invalidates all historical nodes. Associated bundles must still be the
+latest selected bundle and identify the accepted candidate. This is a trusted local-process
 spike, not a hostile-input service: it has no HTTP parser, limits/auth layer, sandboxed plugin loader,
 transactional external job executor, general graph scheduler or comprehensive JSON Schema ecosystem.
 
@@ -107,7 +113,15 @@ record into a fully generic operation. Full unification is deferred.
 Portable `ArtifactMetadata` includes only schema, artifact/project/VisualOS/bundle refs, ledger-project
 pointer and artifact integrity. Reconnection reports available/missing pointers and suggests the
 prior VisualOS with `requiresExplicitMount: true`; it never changes a project mode or hydrates context.
-Unavailable references are valid portable pointers, not locally executable dependencies.
+Unavailable references are valid portable pointers, not locally executable dependencies. One shared
+metadata validator is used by construction, ContractGate import and reconnect. The builder validates
+its known artifact/project arguments and accepts an optional lookup for known bundle/VisualOS objects;
+local-store callers supply that lookup. Known pointers must match identity/schema/type/checksum,
+artifact owner/module, project identity, ledger-project ID and bundle owner/project/artifact relation.
+A non-null metadata envelope owner must match its project pointer. A bundle can identify the artifact
+as a candidate or base state; selecting a candidate does not approve the metadata itself. Ledger and
+project IDs must agree even when all objects are missing. Partial/absent portable objects remain
+unresolved and are checked again when available. VisualOS remains an explicit mount suggestion.
 
 Close all stores before backup; copy the full root including database/WAL/SHM and assets. Revert the
 unmerged adaptation to `075dc6fec513b8eb61f287d8dac342871742137e` for the legacy implementation. Keep
@@ -124,7 +138,8 @@ has no equivalent directory durability path. That is a stated durability limitat
 Linux errors or proof of Windows support. Child scripts use `fileURLToPath`, and a test copies the
 checkout into a path containing spaces, then runs the complete legacy suite and restart checks.
 
-The exercised platform is Linux x64, Node 24.19.0. Windows is unverified. The earlier Windows failure
+The repair implementation is exercised on Linux x64, Node 24.19.0. These repairs were not run
+on Windows; directory crash durability there remains unverified. The earlier Windows failure
 on Node 24.16.0 cannot establish the declared baseline's outcome. Pure pixel preservation evidence
 is retained and extended with 48 single-pixel masks and 6,912 channel assertions. Technical commands,
 new invariant coverage and independent-review requirements are in [verification.md](verification.md).
