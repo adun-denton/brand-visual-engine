@@ -4,9 +4,9 @@ Website is the first implemented module of an experimental shared AI Design OS f
 contracts connect brand intent, visual references, Website design exploration, image iteration and
 local design decisions.
 
-This repository contains an executable offline shared kernel, Website contracts, legacy storage
-adapters, synthetic fixtures and handoff templates. A browser application and live providers have
-not been implemented. The intended experience below describes product direction, not shipping UI behavior.
+This repository contains a local browser workspace, shared kernel, Website exploration, persistence,
+manual native-image export/import, legacy asset compatibility and synthetic fixtures. Live providers
+and production website composition are not implemented. Broader intended behavior remains below.
 
 The application is standalone and is developed/tested with synthetic website briefs, sample assets,
 and mock providers. No existing website or client pilot is required to start development. Real
@@ -61,8 +61,10 @@ npm run smoke
 npm run smoke:design-os
 ```
 
-These commands run an offline SQLite/filesystem spike in temporary folders. No server, browser,
-provider call, private input, or production deployment is started. There is no browser build yet.
+These retained checks run offline SQLite/filesystem fixtures in temporary folders. To open the local
+workspace, run `npm run dev` and visit `http://127.0.0.1:4173`. Runtime data stays outside source control.
+See [workspace setup, boundaries, native handoff and recovery](docs/workspace.md) for configuration,
+browser checks and limitations. No provider call or production deployment is started.
 
 - [Shared foundation, context modes and legacy mapping](docs/design-os-contracts.md)
 - [Legacy standalone interfaces and persistence](docs/standalone-contracts.md)

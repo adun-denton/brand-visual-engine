@@ -1,7 +1,9 @@
 # Provider boundaries
 
 Documentation review: 2026-10-06. These are adapter requirements and evidence boundaries, not a
-claim that adapters ship in this checkout. Only the deterministic fixture provider executes.
+claim that live provider adapters ship. The [local workspace](workspace.md) adds manual native
+export/import with decoded files and immutable original-job bindings. It does not call a host tool.
+Only deterministic fixtures execute; the table below retains the original S0 evidence boundary.
 
 | Path | Intended operation | S0 evidence | Limits to preserve |
 |---|---|---|---|
@@ -29,6 +31,6 @@ local/remote distinction. Store project history independently of provider choice
 configuration and text/vision assistant configuration are separate. Human review promotes a proposal;
 provider selection cannot silently approve brand rules or reset a brief.
 
-No adapter, credential handling, native file import/export, in-app design assistant, OpenAI integration
-or ComfyUI worker is implemented here. The full image formats, usage accounting, idempotency and retry
+Manual native file export/import is implemented as described in workspace.md. No credential handling,
+in-app design assistant, OpenAI API integration or ComfyUI worker is implemented here. The full image formats, usage accounting, idempotency and retry
 behavior must be checked with real providers in their bounded integration assignments.

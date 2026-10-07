@@ -10,10 +10,18 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/*.test.ts",
     "smoke": "node scripts/smoke.ts",
-    "smoke:design-os": "node scripts/smoke-design-os.ts"
+    "smoke:design-os": "node scripts/smoke-design-os.ts",
+    "build": "node scripts/build.ts",
+    "dev": "npm run build && node scripts/dev.ts",
+    "test:browser": "node scripts/browser-check.ts"
   },
   "devDependencies": {
+    "@playwright/test": "1.58.2",
     "@types/node": "24.10.0",
+    "esbuild": "0.28.2",
     "typescript": "7.0.2"
+  },
+  "dependencies": {
+    "sharp": "0.35.5"
   }
 }

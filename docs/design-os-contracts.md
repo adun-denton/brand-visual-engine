@@ -1,8 +1,9 @@
 # Experimental shared foundation and legacy mapping
 
 This describes executable contracts in this checkout, not a roadmap or canonical task status.
-Website is the only implemented module. Everything runs offline with fictional briefs and authored
-fixtures. There is no browser UI, visual renderer, live provider, semantic AI evaluation or deployment.
+Website is the only implemented module. The [local workspace](workspace.md) now exposes these shared
+contracts through a browser and bounded manual image adapter. The S0 model below remains applicable;
+there is no live provider, semantic AI evaluation or deployment.
 The existing spike is adapted in place rather than discarded.
 
 ## Ownership and boundary
@@ -50,8 +51,8 @@ checked against supplied local grants; no production identity or remote authoriz
 
 `DesignArtifact<WebsiteDesignState>` represents Website design itself: site/page/landing-page/section/
 component/media scope, intent, thesis, section order, parameters, exploratory dimensions and unresolved
-inputs. The synthetic generator exercises landing-page state. It is a data proposal, not rendered
-HTML, a generated image, a complete site editor, or designer-approved visual work.
+inputs. The synthetic generator exercises landing-page state. It is a data proposal, not a generated image, complete site editor or designer-approved visual work.
+The local browser offers a structured synthetic preview, described separately in workspace.md.
 
 The broad fixture has nine distinct coherent parameter combinations across Structural, Spatial,
 Styling and Dynamics. Relative values are exploration controls, not quality/commercial scores.
@@ -87,8 +88,8 @@ writes. This rechecks their declared dependency/context/base/candidate freshness
 assets, constraints and integrity. Revalidation uses the stored version's own predecessor for lineage,
 so deliberately pinned inputs and older immutable artifact revisions remain usable. It neither inserts
 a new packet nor recursively invalidates all historical nodes. Associated bundles must still be the
-latest selected bundle and identify the accepted candidate. This is a trusted local-process
-spike, not a hostile-input service: it has no HTTP parser, limits/auth layer, sandboxed plugin loader,
+latest selected bundle and identify the accepted candidate. These kernel methods remain a trusted local-process boundary. The bounded local service wraps them
+with parsing/limits/origin checks as described in workspace.md; the kernel itself has no HTTP parser, limits/auth layer, sandboxed plugin loader,
 transactional external job executor, general graph scheduler or comprehensive JSON Schema ecosystem.
 
 ## Persistence, import and rollback

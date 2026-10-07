@@ -1,6 +1,7 @@
 import type { BundleTemplate, DesignArtifact, Dimension, IterationBundle, ModuleManifest, ModuleProject, NodePacket, Value } from '../../kernel/contracts.ts';
 import { effectiveValues } from '../../kernel/context.ts';
 import { object, text } from '../../kernel/gate.ts';
+import { validateWorkspaceArtifact } from './workspace-contracts.ts';
 import { canonical, packet, reference } from '../../kernel/packets.ts';
 export interface WebsiteDesignState {
   scope: 'site' | 'page' | 'landing-page' | 'section' | 'component' | 'media';
@@ -16,6 +17,7 @@ export const explorationTemplate: BundleTemplate = { name: 'Landing page broad e
     { family: 'Styling', key: 'edge-expression', relative: 0.5 }, { family: 'Dynamics', key: 'motion-intent', relative: 0.5 }],
   capabilityIds: ['design.explore'], variationStrategy: 'coherent-grid' };
 export function validateWebsiteArtifact(payload: Record<string, unknown>): void {
+  if (validateWorkspaceArtifact(payload)) return;
   if (payload['kind'] === 'legacy-snapshot') { object(payload['state']); return; }
   if (payload['kind'] !== 'website-design') throw new Error('unsupported Website artifact');
   const state = object(payload['state']); text(state['intent']); text(state['thesis']);

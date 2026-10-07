@@ -1,4 +1,4 @@
-name: Offline foundation checks
+name: Offline foundation and workspace checks
 on:
   pull_request:
   push:
@@ -15,6 +15,7 @@ jobs:
         with:
           node-version: '24.19.0'
       - run: npm ci --ignore-scripts
+      - run: npm run build
       - run: npm run typecheck
       - run: npm test
       - run: npm run smoke
@@ -22,3 +23,7 @@ jobs:
       - run: node scripts/serialize-design-fixtures.ts
       - run: git diff --exit-code -- fixtures/design-os.json
       - run: git diff --check
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-browser-evidence

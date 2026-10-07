@@ -103,3 +103,16 @@ a reviewer must re-read the pinned task and latest task meaning, inspect the exa
 repeat relevant commands from a fresh checkout, probe the stated invariants independently, and
 record acceptance or repairs in MSB. Consequential visual choices require designer/operator review.
 The implementing session must not mark its own canonical task complete.
+
+## Local workspace checks
+
+The retained 54 tests remain; 13 new workspace/service groups cover current-input no-write acceptance,
+reference ownership/type and revisions, reviewed proposal uncertainty, real PNG/JPEG/WebP decoding,
+truncation/dimension/animation/byte limits, invalid original bindings, wrong project/scope/stale job,
+duplicate/late/closed returns, corruption, metadata controls, host/origin/token/nested boundaries,
+and copied closed-root restoration with unchanged legacy data. Run `npm run build` and
+`npm run test:browser` after installing Chromium; see [workspace.md](workspace.md) for exact setup.
+The browser check exercises actual forms/downloads/uploads, 1440px/390px overflow, skip-link/focus,
+comparison, reference revision/stale acceptance, native result/section acceptance, proposal import,
+Branded context and fresh process/browser reconstruction. [Synthetic evidence](evidence/) is technical
+implementer evidence only. Native-host generation and independent round trip remain separate checks.
