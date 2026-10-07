@@ -7,6 +7,10 @@ import { join, resolve } from 'node:path';
 import { createServer } from 'node:net';
 import { once } from 'node:events';
 import { createHash } from 'node:crypto';
+import sharp from 'sharp';
+import type { Workspace } from '../src/service/workspace.ts';
+import type { DesignArtifact, NodePacket } from '../src/kernel/contracts.ts';
+import type { NativeJob } from '../src/modules/website/workspace-contracts.ts';
 const runtime = mkdtempSync(join(tmpdir(), 'bve-browser-'));
 const evidence = resolve(process.env['BVE_EVIDENCE_DIR'] ?? 'docs/evidence');
 mkdirSync(evidence, { recursive: true });
@@ -20,7 +24,11 @@ let service: ChildProcess | null = null;
 async function start() {
   service = spawn(process.execPath, ['scripts/dev.ts'], {
     cwd: resolve(import.meta.dirname, '..'),
-    env: { ...process.env, BVE_RUNTIME_ROOT: runtime, BVE_PORT: String(port) },
+    env: {
+      ...process.env,
+      BVE_RUNTIME_ROOT: runtime,
+      BVE_PORT: String(port),
+    },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   await new Promise<void>((resolve, reject) => {
@@ -62,10 +70,11 @@ const context = await browser.newContext({
 let page = await context.newPage();
 const errors: string[] = [];
 page.on('pageerror', (e) => errors.push(e.message));
-const screen = async (name: string, fullPage = false) => {
-  await page.evaluate(
-    () => (document.querySelector('#notice')!.textContent = ''),
-  );
+const screen = async (name: string, fullPage = false, keepNotice = false) => {
+  if (!keepNotice)
+    await page.evaluate(
+      () => (document.querySelector('#notice')!.textContent = ''),
+    );
   await page.screenshot({ path: join(evidence, name + '.png'), fullPage });
 };
 const noOverflow = async () => {
@@ -110,6 +119,55 @@ const image = join(
   resolve(import.meta.dirname, '..'),
   'fixtures/native-return.png',
 );
+const checksum = (bytes: Buffer) =>
+  createHash('sha256').update(bytes).digest('hex');
+const referenceFile = {
+  name: 'composition-reference.jpg',
+  mimeType: 'image/jpeg',
+  buffer: await sharp(readFileSync(image)).jpeg({ quality: 84 }).toBuffer(),
+};
+const returnFile = {
+  name: 'synthetic-return.webp',
+  mimeType: 'image/webp',
+  buffer: await sharp(readFileSync(image)).webp({ quality: 81 }).toBuffer(),
+};
+type WorkspaceState = ReturnType<Workspace['state']>;
+async function workspaceState(project: string): Promise<WorkspaceState> {
+  const response = await page.request.get(
+    origin + '/api/v1/workspace?project=' + encodeURIComponent(project),
+  );
+  expect(response.ok()).toBe(true);
+  return response.json();
+}
+const jobOf = (s: WorkspaceState, id: string) =>
+  s.artifacts!.find((a) => a.id === id) as NodePacket<
+    DesignArtifact<NativeJob>
+  >;
+const pinned = (p: { id: string; version: number }) => ({
+  id: p.id,
+  version: p.version,
+  freshness: 'pinned',
+});
+const acceptance = (s: WorkspaceState) => ({
+  accepted: s.accepted,
+  events: s.ledger!.events.filter((e) => e.kind === 'acceptance'),
+});
+async function downloadOriginal(
+  label: string,
+  bytes: Buffer,
+  extension: string,
+) {
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('link', { name: label, exact: true }).click(),
+  ]);
+  expect(download.suggestedFilename()).toBe(
+    `asset-${checksum(bytes)}.${extension}`,
+  );
+  const path = await download.path();
+  expect(path).not.toBeNull();
+  expect(readFileSync(path!)).toEqual(bytes);
+}
 try {
   await page.goto(origin);
   await expect(
@@ -140,11 +198,18 @@ try {
   await page.getByLabel('Label', { exact: true }).fill('Composition reference');
   await page.getByRole('button', { name: 'Attach reference' }).click();
   await expect(page.locator('#notice')).toContainText('PNG');
-  await page.locator('#add-reference input[type=file]').setInputFiles(image);
+  await page
+    .locator('#add-reference input[type=file]')
+    .setInputFiles(referenceFile);
   await page.getByRole('button', { name: 'Attach reference' }).click();
   await expect(
     page.getByRole('heading', { name: 'Composition reference' }),
   ).toBeVisible();
+  await downloadOriginal(
+    'Download reference image',
+    referenceFile.buffer,
+    'jpg',
+  );
   await page.evaluate(
     () => (document.querySelector('#notice')!.textContent = ''),
   );
@@ -230,8 +295,87 @@ try {
       .update(await raw.body())
       .digest('hex'),
   ).toBe(reference.image.checksum);
-  await page.locator('.native-import input[type=file]').setInputFiles(image);
+  const originalTruth = acceptance(
+    await workspaceState(exported.manifest.project.id),
+  );
+  await page.locator('.native-import input[type=file]').setInputFiles({
+    name: 'invalid.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from('invalid native image'),
+  });
   await page.getByRole('button', { name: 'Import as candidate' }).click();
+  await expect(page.locator('#notice')).toContainText('PNG');
+  await expect(page.locator('.outcomes')).toContainText('invalid');
+  await expect(page.locator('.image-result')).toHaveCount(0);
+  let current = await workspaceState(exported.manifest.project.id);
+  expect(jobOf(current, exported.manifest.jobId).version).toBe(
+    exported.job.version + 1,
+  );
+  expect(acceptance(current)).toEqual(originalTruth);
+  await page.locator('.job').scrollIntoViewIfNeeded();
+  await screen('native-error-desktop', true, true);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await noOverflow();
+  await screen('native-error-mobile', true, true);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  // Correct the file in the owning form, with no navigation/reload or automatic retry.
+  await page
+    .locator('.native-import input[type=file]')
+    .setInputFiles(returnFile);
+  await page.getByRole('button', { name: 'Import as candidate' }).click();
+  await expect(page.locator('.image-result')).toHaveCount(1);
+  current = await workspaceState(exported.manifest.project.id);
+  expect(acceptance(current)).toEqual(originalTruth);
+  const output = jobOf(current, exported.manifest.jobId).payload.state
+    .outputs[0]!;
+  expect(current.artifacts!.find((a) => a.id === output.id)!.approval).toBe(
+    'proposal',
+  );
+  await downloadOriginal('Download original result', returnFile.buffer, 'webp');
+  // Another actor advances this exact job. The old form must reject, reconcile and never retry.
+  const sessionToken = (
+    await (await page.request.get(origin + '/api/v1/session')).json()
+  ).token;
+  const previousJob = jobOf(current, exported.manifest.jobId);
+  const invalidResponse = await page.request.post(origin + '/api/v1/import', {
+    headers: {
+      Origin: origin,
+      'Content-Type': 'application/json',
+      'X-BVE-Token': sessionToken,
+    },
+    data: {
+      projectId: exported.manifest.project.id,
+      input: {
+        job: pinned(previousJob),
+        manifestProject: exported.manifest.project,
+        originalArtifact: exported.manifest.artifact,
+        file: Buffer.from('second invalid attempt').toString('base64'),
+      },
+    },
+  });
+  expect(invalidResponse.status()).toBe(400);
+  const advanced = await workspaceState(exported.manifest.project.id);
+  expect(jobOf(advanced, exported.manifest.jobId).version).toBe(
+    previousJob.version + 1,
+  );
+  await page
+    .locator('.native-import input[type=file]')
+    .setInputFiles(returnFile);
+  await page.getByRole('button', { name: 'Import as candidate' }).click();
+  await expect(page.locator('#notice')).toContainText('Job changed');
+  current = await workspaceState(exported.manifest.project.id);
+  expect(current).toEqual(advanced);
+  expect(
+    JSON.parse(
+      (await page.locator('.native-import').getAttribute('data-job')) ?? '{}',
+    ),
+  ).toEqual(pinned(jobOf(current, exported.manifest.jobId)));
+  expect(acceptance(current)).toEqual(originalTruth);
+  await page
+    .locator('.native-import input[type=file]')
+    .setInputFiles(returnFile);
+  await page.getByRole('button', { name: 'Import as candidate' }).click();
+  await expect(page.locator('.outcomes')).toContainText('duplicate');
   await expect(page.locator('.image-result')).toHaveCount(1);
   await page
     .locator('.accept-image input[name=reason]')
@@ -334,6 +478,38 @@ try {
         a.payload.kind === 'website-direction',
     ).payload.state.unresolved,
   ).toEqual(['Motion']);
+  // A closed original request can record an invalid attempt and a corrected late return,
+  // but reconciliation must retain its closed status and disabled acceptance.
+  await page
+    .locator('#native textarea[name=instructions]')
+    .fill('Closed handoff recovery control');
+  await page.getByRole('button', { name: 'Create native request' }).click();
+  const closedJob = page
+    .locator('.job')
+    .filter({ hasText: 'Closed handoff recovery control' });
+  await closedJob.getByRole('button', { name: 'Abandon handoff' }).click();
+  await expect(closedJob.locator('.job-heading')).toContainText('abandoned');
+  const closedTruth = acceptance(await workspaceState(pid));
+  await closedJob.locator('input[type=file]').setInputFiles({
+    name: 'invalid.webp',
+    mimeType: 'image/webp',
+    buffer: Buffer.from('invalid closed return'),
+  });
+  await closedJob.getByRole('button', { name: 'Import as candidate' }).click();
+  await expect(page.locator('#notice')).toContainText('PNG');
+  await expect(closedJob.locator('.outcomes')).toContainText('invalid');
+  await expect(closedJob.locator('.job-heading')).toContainText('abandoned');
+  await closedJob.locator('input[type=file]').setInputFiles(returnFile);
+  await closedJob.getByRole('button', { name: 'Import as candidate' }).click();
+  await expect(closedJob.locator('.outcomes')).toContainText('late-cancelled');
+  await expect(
+    closedJob.getByRole('button', { name: 'Accept section image' }),
+  ).toBeDisabled();
+  expect(acceptance(await workspaceState(pid))).toEqual(closedTruth);
+  const savedComparison = persisted.artifacts.find(
+    (a: { payload: { kind: string } }) =>
+      a.payload.kind === 'website-comparison',
+  );
   await page
     .getByRole('button', { name: '+ New workspace', exact: true })
     .click();
@@ -356,6 +532,75 @@ try {
     page.locator('.context-field').filter({ hasText: 'palette' }),
   ).toContainText('Local override');
   await screen('context-override-desktop');
+  async function compareActive(title: string) {
+    await page.getByRole('button', { name: '02 Explore & compare' }).click();
+    await page
+      .getByRole('button', { name: 'Explore directions', exact: true })
+      .click();
+    await expect(page.locator('.candidate')).toHaveCount(9);
+    await expect(page.locator('[data-compare]:checked')).toHaveCount(0);
+    await page.locator('[data-compare]').nth(0).check();
+    await expect(page.locator('[data-compare]').nth(0)).toBeChecked();
+    await page.locator('[data-compare]').nth(1).check();
+    await expect(page.locator('[data-compare]:checked')).toHaveCount(2);
+    await expect(page.locator('.comparison-grid article')).toHaveCount(2);
+    await page
+      .locator('#comparison input[name=reason]')
+      .fill(`Compare only ${title} directions`);
+    await page
+      .getByRole('button', { name: 'Save comparison', exact: true })
+      .click();
+    await expect(page.locator('#notice')).toContainText('Comparison saved');
+    const session = await (
+      await page.request.get(origin + '/api/v1/session')
+    ).json();
+    const project = session.projects.find(
+      (p: { payload: { localContext: { title: { override: string } } } }) =>
+        p.payload.localContext.title.override === title,
+    );
+    const current = await workspaceState(project.id);
+    const comparison = current.artifacts!.find(
+      (a) => a.payload.kind === 'website-comparison',
+    )!;
+    expect(current.artifacts!.every((a) => a.projectId === project.id)).toBe(
+      true,
+    );
+    return { projectId: project.id, comparison };
+  }
+  const brandComparison = await compareActive('Branded Fixture');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator('.comparison').scrollIntoViewIfNeeded();
+  await noOverflow();
+  await screen('second-workspace-mobile');
+  await page
+    .getByRole('button', { name: '+ New workspace', exact: true })
+    .click();
+  await page.getByLabel('Workspace name').fill('Freeroam Comparison Fixture');
+  await page.getByRole('radio', { name: 'Freeroam', exact: false }).check();
+  await page.getByRole('button', { name: 'Enter Website' }).click();
+  await expect(
+    page.locator('.context-field').filter({ hasText: 'palette' }),
+  ).toContainText('Placeholder');
+  await compareActive('Freeroam Comparison Fixture');
+  // Every transition restores only the owning saved comparison, including returning to A.
+  for (const [title, id, comparison] of [
+    ['Branded Fixture', brandComparison.projectId, brandComparison.comparison],
+    ['Fictional Home Care', pid, savedComparison],
+  ] as const) {
+    await page
+      .getByRole('button', { name: '+ New workspace', exact: true })
+      .click();
+    await page.getByRole('button', { name: title, exact: true }).click();
+    await page.getByRole('button', { name: '02 Explore & compare' }).click();
+    await expect(page.locator('[data-compare]:checked')).toHaveCount(2);
+    await expect(page.locator('.comparison-grid article')).toHaveCount(2);
+    expect(
+      (await workspaceState(id)).artifacts!.find((a) => a.id === comparison.id),
+    ).toEqual(comparison);
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.locator('.comparison').scrollIntoViewIfNeeded();
+  await screen('comparison-restored-desktop');
   expect(errors).toEqual([]);
   const report = {
     node: process.version,
@@ -368,11 +613,13 @@ try {
     ],
     pageErrors: errors,
     workflow:
-      'keyboard Tab/Enter across all views with visible focus at both widths, entry, sparse Freeroam, invalid/correct reference, compare two, accept design, revise reference, stale acceptance rejection, native export/result/section acceptance, reviewed direction, process/context restart and historical read',
+      'keyboard Tab/Enter and visible focus at both widths, JPEG reference/WebP result original downloads, comparison, stale acceptance, invalid native outcome/corrected upload without reload, stale job rejection/read-back without retry, candidate-only import, closed/late controls, proposal/restart/history, new Branded/Freeroam comparisons and restored owning comparisons',
     nativeEvidence: 'Authored synthetic attachment; no host generation',
     fixtureSHA256: createHash('sha256')
       .update(readFileSync(image))
       .digest('hex'),
+    referenceSHA256: checksum(referenceFile.buffer),
+    returnSHA256: checksum(returnFile.buffer),
     runtimeRoot: 'private temporary synthetic root outside checkout',
   };
   writeFileSync(

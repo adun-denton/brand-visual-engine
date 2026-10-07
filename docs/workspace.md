@@ -50,6 +50,9 @@ removed automatically. Invalid bounded uploads are quarantined under opaque name
 The adapter checks both original byte SHA-256 and decoded descriptors on reads. Display previews are
 normalized PNGs; **Download reference image / original result returns original bytes** with their
 manifest checksum, not normalized previews.
+The preview endpoint `/api/v1/image` returns PNG. `/api/v1/asset` uses the same ownership,
+checksum and full-decoder checks, then downloads the stored bytes with their decoded MIME type
+and a checksum-based `.jpg`, `.webp` or `.png` attachment filename.
 
 Existing `workspace.sqlite` is opened only by a read-only legacy asset validator if present. It checks
 schema, asset identity, fixed derived RGB paths, byte checksums and raster dimensions. It never exposes
@@ -80,6 +83,10 @@ remote provider execution, external job reconciliation, schema migration or auto
    version rejects without altering that other job. Cancel/abandon is local only; late files are
    retained for their closed original request and cannot be accepted. Other late results require
    explicit review. Every acceptance compares the then-current pointer.
+   After a rejected mutation the browser reads back the owning workspace, updates changed state,
+   and retains the original error. Reselect a corrected file in that same request; there is no
+   automatic mutation retry or generation. Stale versions still reject. Workspace creation/opening
+   restores only that project's saved comparison and resets its active exploration round.
 7. Import reviewed direction JSON with `title`, `rationale`, `constraints`, `uncertainty`, `unresolved`,
    project `sourceReferences`, `reviewed: true` and `source`. Its uncertainty persists; it stays a proposal.
 8. Inspect history, stop/restart the service, reopen the project and inspect earlier accepted versions.

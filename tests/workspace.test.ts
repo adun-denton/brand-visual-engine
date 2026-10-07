@@ -11,6 +11,7 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import sharp from 'sharp';
+import { createHash } from 'node:crypto';
 import { request as httpRequest } from 'node:http';
 import { DatabaseSync } from 'node:sqlite';
 import { Workspace } from '../src/service/workspace.ts';
@@ -38,16 +39,38 @@ const image = () =>
   })
     .png()
     .toBuffer();
-function setup(t: test.TestContext) {
+function temporaryRoot(t: test.TestContext) {
   const root = mkdtempSync(join(tmpdir(), 'bve-workspace-'));
-  const w = new Workspace(root);
-  t.after(() => {
-    try {
-      w.close();
-    } catch {}
+  const closers: (() => void | Promise<void>)[] = [];
+  t.after(async () => {
+    const errors: unknown[] = [];
+    for (const close of closers.toReversed()) {
+      try {
+        await close();
+      } catch (error) {
+        errors.push(error);
+      }
+    }
+    if (errors.length)
+      throw new AggregateError(errors, 'Test resource cleanup failed');
     rmSync(root, { recursive: true, force: true });
   });
-  return { root, w };
+  return {
+    root,
+    cleanup: (close: () => void | Promise<void>) => closers.push(close),
+  };
+}
+const closedWorkspaces = new WeakSet<Workspace>();
+function closeWorkspace(w: Workspace) {
+  if (closedWorkspaces.has(w)) return;
+  w.close();
+  closedWorkspaces.add(w);
+}
+function setup(t: test.TestContext) {
+  const { root, cleanup } = temporaryRoot(t);
+  const w = new Workspace(root);
+  cleanup(() => closeWorkspace(w));
+  return { root, w, cleanup };
 }
 function create(w: Workspace, mode = 'freeroam') {
   return w.create({
@@ -428,20 +451,21 @@ test('abandoned/cancelled returns retained against original job but cannot be ac
   }
 });
 test('fresh service and closed-root copied restore reconstruct brief references comparisons proposals native links and acceptance; legacy unchanged', async (t) => {
-  const { root, w } = setup(t);
+  const { root, w, cleanup } = setup(t);
   const legacy = new Store(root);
+  let legacyClosed = false;
+  cleanup(() => {
+    if (!legacyClosed) legacy.close();
+  });
   legacy.createProject(website());
   const asset = legacy.addAsset(website().id, 'hero', sourceRaster());
   legacy.close();
+  legacyClosed = true;
   const oldDb = readFileSync(join(root, 'workspace.sqlite'));
   // Reopen the service only after the legacy store closes: it never runs legacy recovery/mutations.
-  w.close();
+  closeWorkspace(w);
   const ws = new Workspace(root);
-  t.after(() => {
-    try {
-      ws.close();
-    } catch {}
-  });
+  cleanup(() => closeWorkspace(ws));
   assert.equal(ws.legacy.exists(asset.id, asset.checksum), true);
   const p = create(ws, 'branded'),
     a = accepted(ws, p);
@@ -484,12 +508,12 @@ test('fresh service and closed-root copied restore reconstruct brief references 
     },
   });
   const before = canonical(ws.state(p.id));
-  ws.close();
+  closeWorkspace(ws);
   assert.deepEqual(readFileSync(join(root, 'workspace.sqlite')), oldDb);
-  const backup = mkdtempSync(join(tmpdir(), 'bve-copy-'));
-  t.after(() => rmSync(backup, { recursive: true, force: true }));
+  const { root: backup, cleanup: backupCleanup } = temporaryRoot(t);
   cpSync(root, backup, { recursive: true });
   const restored = new Workspace(backup);
+  backupCleanup(() => closeWorkspace(restored));
   assert.equal(canonical(restored.state(p.id)), before);
   assert.equal(restored.legacy.exists(asset.id, asset.checksum), true);
   assert.equal(
@@ -497,7 +521,7 @@ test('fresh service and closed-root copied restore reconstruct brief references 
       .manifest.model,
     null,
   );
-  restored.close();
+  closeWorkspace(restored);
 });
 test('portable metadata known mismatches reject; missing pointers do not mount context', (t) => {
   const { w } = setup(t),
@@ -530,12 +554,11 @@ test('portable metadata known mismatches reject; missing pointers do not mount c
   assert.equal(w.project(p.id).payload.mode, before);
 });
 test('HTTP host/origin/token/method/nested/file boundaries reject; valid browser requests persist and fresh session token changes', async (t) => {
-  const { root } = setup(t),
+  const { root, cleanup } = temporaryRoot(t),
     app = await startApp(root);
-  t.after(async () => {
-    try {
-      await app.close();
-    } catch {}
+  let appClosed = false;
+  cleanup(async () => {
+    if (!appClosed) await app.close();
   });
   let response = await fetch(app.origin + '/api/v1/session');
   const session = (await response.json()) as { token: string };
@@ -616,14 +639,119 @@ test('HTTP host/origin/token/method/nested/file boundaries reject; valid browser
   response = await fetch(app.origin + '/../../etc/passwd');
   assert.equal(response.status, 404);
   await app.close();
+  appClosed = true;
   const restarted = await startApp(root);
-  t.after(() => restarted.close());
+  cleanup(() => restarted.close());
   const fresh = (await (
     await fetch(restarted.origin + '/api/v1/session')
   ).json()) as { token: string; projects: unknown[] };
   assert.notEqual(fresh.token, session.token);
   assert.equal(fresh.projects.length, 1);
 });
+for (const format of ['jpeg', 'webp', 'png'] as const) {
+  test(`HTTP ${format} reference/result downloads preserve original bytes while previews normalize; owner/type/corruption reject`, async (t) => {
+    const { root, cleanup } = temporaryRoot(t);
+    const app = await startApp(root);
+    cleanup(() => app.close());
+    const w = app.workspace,
+      p = create(w),
+      a = accepted(w, p),
+      other = create(w);
+    const source = sharp({
+      create: {
+        width: 120,
+        height: 80,
+        channels: 3,
+        background: '#3b7381',
+      },
+    });
+    const bytes = await (
+      format === 'png'
+        ? source.png({ compressionLevel: 0, adaptiveFiltering: false })
+        : format === 'jpeg'
+          ? source.jpeg({ quality: 84 })
+          : source.webp({ quality: 81 })
+    ).toBuffer();
+    await w.addReference(
+      p.id,
+      reference(p),
+      bytes,
+      `Original ${format}`,
+      'imagery',
+      'hero',
+    );
+    const r = w.state(p.id).references![0]!.artifact;
+    const job = native(w, w.project(p.id), a);
+    await w.importNative(p.id, binding(job), bytes);
+    const output = currentJob(w, p.id).payload.state.outputs[0]!;
+    const url = (route: string, ref: VersionRef, project = p.id) =>
+      `${app.origin}/api/v1/${route}?project=${project}&id=${ref.id}&version=${ref.version}`;
+    const before = selections(w, p.id);
+    for (const pointer of [r, output]) {
+      const descriptor = (w.read(p.id, pointer).payload.state as ImageState)
+        .image;
+      const original = await fetch(url('asset', pointer));
+      assert.equal(original.status, 200);
+      assert.equal(original.headers.get('content-type'), `image/${format}`);
+      assert.equal(
+        original.headers.get('content-length'),
+        String(bytes.length),
+      );
+      assert.equal(
+        original.headers.get('content-disposition'),
+        `attachment; filename="asset-${descriptor.id}.${format === 'jpeg' ? 'jpg' : format}"`,
+      );
+      const downloaded = Buffer.from(await original.arrayBuffer());
+      assert.deepEqual(downloaded, bytes);
+      assert.equal(
+        createHash('sha256').update(downloaded).digest('hex'),
+        descriptor.checksum,
+      );
+      assert.equal(
+        descriptor.checksum,
+        job.payload.state.manifest.references[0]!.image.checksum,
+      );
+      assert.deepEqual(
+        (await w.originalImage(p.id, pointer)).bytes,
+        downloaded,
+      );
+      const preview = await fetch(url('image', pointer));
+      assert.equal(preview.status, 200);
+      assert.equal(preview.headers.get('content-type'), 'image/png');
+      assert.equal(preview.headers.get('content-disposition'), null);
+      const normalized = Buffer.from(await preview.arrayBuffer());
+      assert.equal((await decode(normalized)).format, 'png');
+      assert.notDeepEqual(
+        normalized,
+        bytes,
+        'fixture must expose preview re-encoding',
+      );
+      assert.deepEqual(normalized, await w.image(p.id, pointer));
+      for (const route of ['asset', 'image']) {
+        const wrongOwner = await fetch(url(route, pointer, other.id));
+        assert.equal(wrongOwner.status, 400);
+        assert.match((await wrongOwner.json()).error, /different project/);
+      }
+    }
+    const wrongType = await fetch(url('asset', a));
+    assert.equal(wrongType.status, 400);
+    assert.match((await wrongType.json()).error, /Not an image/);
+    const descriptor = (w.read(p.id, output).payload.state as ImageState).image;
+    writeFileSync(
+      join(root, 'native-assets', descriptor.id),
+      'corrupt original',
+    );
+    for (const pointer of [r, output]) {
+      for (const route of ['asset', 'image']) {
+        const corrupt = await fetch(url(route, pointer));
+        assert.equal(corrupt.status, 400);
+        assert.match((await corrupt.json()).error, /corrupt/);
+        assert.equal(corrupt.headers.get('content-disposition'), null);
+      }
+    }
+    assert.deepEqual(selections(w, p.id), before);
+  });
+}
 test('corrupted returned image fails read and acceptance with no acceptance writes', async (t) => {
   const { root, w } = setup(t),
     p = create(w),

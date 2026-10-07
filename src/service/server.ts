@@ -65,7 +65,18 @@ export async function startApp(
             freshness: 'pinned',
           });
           const pid = id(projectId);
-          if (path === '/api/v1/image' || path === '/api/v1/asset') {
+          if (path === '/api/v1/asset') {
+            const { bytes, info } = await workspace.originalImage(pid, pointer);
+            const extension = info.format === 'jpeg' ? 'jpg' : info.format;
+            res.writeHead(200, {
+              'Content-Type': 'image/' + info.format,
+              'Content-Length': bytes.length,
+              'Content-Disposition': `attachment; filename="asset-${info.id}.${extension}"`,
+            });
+            res.end(bytes);
+            return;
+          }
+          if (path === '/api/v1/image') {
             const image = await workspace.image(pid, pointer);
             res.writeHead(200, { 'Content-Type': 'image/png' });
             res.end(image);

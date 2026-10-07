@@ -1,0 +1,23 @@
+{
+  "node": "v24.19.0",
+  "platform": "linux",
+  "architecture": "x64",
+  "browser": "143.0.7499.0",
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 1000
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "pageErrors": [],
+  "workflow": "keyboard Tab/Enter and visible focus at both widths, JPEG reference/WebP result original downloads, comparison, stale acceptance, invalid native outcome/corrected upload without reload, stale job rejection/read-back without retry, candidate-only import, closed/late controls, proposal/restart/history, new Branded/Freeroam comparisons and restored owning comparisons",
+  "nativeEvidence": "Authored synthetic attachment; no host generation",
+  "fixtureSHA256": "2f81003c3cf1e06ac2e69594fb6130a5026de918388d23f54b5c4d31a209c1cd",
+  "referenceSHA256": "12461a0922f3e6c4fd3fae2966920b038f8b86f53ce2f767a99420315ada45f8",
+  "returnSHA256": "5e38aa6e4db45dbb0ad67dd77c16963d14d40760e56880ee4d94ef9f5ed2eb6b",
+  "runtimeRoot": "private temporary synthetic root outside checkout"
+}

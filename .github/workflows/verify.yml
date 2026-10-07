@@ -6,8 +6,12 @@ on:
 permissions:
   contents: read
 jobs:
-  linux:
-    runs-on: ubuntu-24.04
+  checks:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -24,6 +28,8 @@ jobs:
       - run: git diff --exit-code -- fixtures/design-os.json
       - run: git diff --check
       - run: npx playwright install --with-deps chromium
+        if: runner.os == 'Linux'
       - run: npm run test:browser
+        if: runner.os == 'Linux'
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-browser-evidence

@@ -98,19 +98,43 @@ async function act(action: () => Promise<void>) {
   }
 }
 async function mutate(path: string, input: unknown, message: string) {
-  state = await request(path, { projectId: state.project!.id, input });
+  const projectId = state.project!.id;
+  try {
+    state = await request(path, { projectId, input });
+  } catch (error) {
+    // A rejected mutation may still have recorded an outcome. Refresh only its owning
+    // workspace; retain the original error and never retry the mutation automatically.
+    try {
+      const current = await request(
+        'workspace?project=' + encodeURIComponent(projectId),
+      );
+      if (
+        state.project?.id === projectId &&
+        JSON.stringify(current) !== JSON.stringify(state)
+      ) {
+        state = current;
+        render();
+      }
+    } catch {
+      // Keep the original failure visible even if the read-back is unavailable.
+    }
+    throw error;
+  }
   notify(message);
   render();
 }
-async function open(id: string) {
-  state = await request('workspace?project=' + encodeURIComponent(id));
+function activate(next: State) {
+  state = next;
   round = '';
   const comparison = all()
     .filter((a) => a.payload.kind === 'website-comparison')
     .at(-1);
   compared = comparison
-    ? (comparison.payload.state as { compared: VersionRef[] }).compared
+    ? [...(comparison.payload.state as { compared: VersionRef[] }).compared]
     : [];
+}
+async function open(id: string) {
+  activate(await request('workspace?project=' + encodeURIComponent(id)));
   render();
 }
 function shell() {
@@ -347,7 +371,7 @@ function bind() {
         const a = b.dataset['action'];
         if (a === 'open') await open(b.dataset['id']!);
         if (a === 'home') {
-          state = await request('session');
+          activate(await request('session'));
           render();
         }
         if (a === 'view') {
@@ -440,18 +464,20 @@ function bind() {
   onForm('#create', async (f) => {
     const { s } = formData(f),
       mode = s('mode');
-    state = await request('projects', {
-      title: s('title'),
-      mode,
-      visualOS:
-        mode === 'branded' && s('visualOS') !== 'new'
-          ? jsonRef(s('visualOS'))
-          : null,
-      palette:
-        mode === 'branded' && s('visualOS') === 'new'
-          ? [s('primary'), s('background'), s('accent')]
-          : null,
-    });
+    activate(
+      await request('projects', {
+        title: s('title'),
+        mode,
+        visualOS:
+          mode === 'branded' && s('visualOS') !== 'new'
+            ? jsonRef(s('visualOS'))
+            : null,
+        palette:
+          mode === 'branded' && s('visualOS') === 'new'
+            ? [s('primary'), s('background'), s('accent')]
+            : null,
+      }),
+    );
     view = 'brief';
     render();
     notify('Website workspace opened.');
@@ -634,6 +660,6 @@ function bind() {
   });
 }
 void act(async () => {
-  state = await request('session');
+  activate(await request('session'));
   render();
 });
