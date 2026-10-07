@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "fictional-service",
+  "revision": 0,
+  "brief": {
+    "id": "brief-synthetic-v1",
+    "audience": "Local residents seeking routine home maintenance",
+    "offer": "Fictional appointment-based home-care service",
+    "response": "Request an appointment",
+    "requiredContent": ["Service descriptions", "Illustrative proof explicitly labelled fictional", "Contact call to action"],
+    "exclusions": ["Real names and client data", "Unsubstantiated guarantees", "Commerce"],
+    "commitments": ["Readable hierarchy", "Calm tone", "Clear primary action"],
+    "unresolved": ["Designer has not accepted a visual direction"],
+    "source": "synthetic"
+  },
+  "references": [
+    {"id": "ref-palette", "path": "fixtures/palette.svg", "role": "palette", "scope": ["hero", "services", "proof", "contact"], "permittedUse": "synthetic-test", "source": "authored geometric fixture"},
+    {"id": "ref-composition", "path": "fixtures/composition.svg", "role": "composition", "scope": ["hero"], "permittedUse": "synthetic-test", "source": "authored geometric fixture"}
+  ],
+  "directions": [
+    {"id": "direction-calm", "status": "proposal", "referenceIds": ["ref-palette", "ref-composition"], "rationale": "Whitespace may make the appointment action easier to identify", "unresolved": ["Needs human comparison"]},
+    {"id": "direction-dense", "status": "proposal", "referenceIds": ["ref-palette"], "rationale": "Compact grouping may make service range easier to scan", "unresolved": ["Needs human comparison"]}
+  ],
+  "style": {"palette": ["#173f45", "#f3ede0", "#de8159"], "font": "system-ui", "spacing": 8},
+  "sections": [
+    {"id": "hero", "kind": "hero", "text": "Home care, clearly arranged. Request an appointment.", "acceptedVersionId": null, "overrides": {}},
+    {"id": "services", "kind": "services", "text": "Routine care. Seasonal checks. Small repairs.", "acceptedVersionId": null, "overrides": {}},
+    {"id": "proof", "kind": "proof", "text": "Illustrative fictional proof. No real endorsement is claimed.", "acceptedVersionId": null, "overrides": {}},
+    {"id": "contact", "kind": "contact", "text": "Request an appointment through the future contact form.", "acceptedVersionId": null, "overrides": {}}
+  ]
+}

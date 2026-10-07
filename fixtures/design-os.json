@@ -1,0 +1,3914 @@
+{
+  "fixtureOnly": true,
+  "visualOS": {
+    "schemaVersion": 1,
+    "version": 1,
+    "projectId": null,
+    "contextRefs": [],
+    "dependencies": [],
+    "assets": [],
+    "constraints": [],
+    "placeholders": [],
+    "approval": "accepted",
+    "permissions": [
+      "read",
+      "write"
+    ],
+    "provenance": {
+      "actor": "synthetic-fixture",
+      "source": "authored fixture",
+      "previous": null
+    },
+    "type": "visual-os",
+    "id": "visual-os-synthetic",
+    "payload": {
+      "values": {
+        "palette": {
+          "value": [
+            "#173f45",
+            "#f3ede0",
+            "#de8159"
+          ],
+          "approved": true
+        },
+        "typeface": {
+          "value": "system-ui",
+          "approved": true
+        },
+        "unreviewedClaim": {
+          "value": "best quality",
+          "approved": false
+        }
+      },
+      "placeholders": {
+        "motion": {
+          "key": "motion",
+          "expected": "motion design input",
+          "reason": "No authoritative value supplied",
+          "dependsOn": [],
+          "mayProceed": [
+            "design.explore"
+          ],
+          "blocks": [
+            "approved-brand-export"
+          ],
+          "prohibitedAssumptions": [
+            "Do not infer an approved motion"
+          ],
+          "resolutionRoutes": [
+            "explicit human input",
+            "reviewed local exploration"
+          ]
+        }
+      }
+    },
+    "integrity": "faab18bd15ed2620b9da6fd47b212cd2a82f6ecf7886019f04a44089bf190859"
+  },
+  "modes": [
+    {
+      "project": {
+        "schemaVersion": 1,
+        "version": 1,
+        "projectId": "website-branded",
+        "contextRefs": [
+          {
+            "id": "visual-os-synthetic",
+            "version": 1,
+            "freshness": "pinned"
+          }
+        ],
+        "dependencies": [],
+        "assets": [],
+        "constraints": [],
+        "placeholders": [],
+        "approval": "proposal",
+        "permissions": [
+          "read",
+          "write"
+        ],
+        "provenance": {
+          "actor": "synthetic-fixture",
+          "source": "authored fixture",
+          "previous": null
+        },
+        "type": "module-project",
+        "id": "website-branded",
+        "payload": {
+          "moduleId": "website",
+          "mode": "branded",
+          "visualOSRef": {
+            "id": "visual-os-synthetic",
+            "version": 1,
+            "freshness": "pinned"
+          },
+          "localContext": {
+            "intent": {
+              "override": "Request a fictional home-care appointment",
+              "hasOverride": true,
+              "derived": null,
+              "hasDerived": false,
+              "placeholder": null,
+              "reviewRequired": false
+            },
+            "content": {
+              "override": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ],
+              "hasOverride": true,
+              "derived": null,
+              "hasDerived": false,
+              "placeholder": null,
+              "reviewRequired": false
+            },
+            "density": {
+              "override": null,
+              "hasOverride": false,
+              "derived": "calm",
+              "hasDerived": true,
+              "placeholder": null,
+              "reviewRequired": true
+            }
+          },
+          "resolvedContext": {
+            "mode": "branded",
+            "fields": {
+              "intent": {
+                "inherited": null,
+                "localOverride": {
+                  "value": "Request a fictional home-care appointment"
+                },
+                "derived": null,
+                "effective": {
+                  "value": "Request a fictional home-care appointment",
+                  "origin": "local-override"
+                },
+                "reviewRequired": false,
+                "placeholder": null
+              },
+              "content": {
+                "inherited": null,
+                "localOverride": {
+                  "value": [
+                    "Routine care",
+                    "Seasonal checks",
+                    "Small repairs"
+                  ]
+                },
+                "derived": null,
+                "effective": {
+                  "value": [
+                    "Routine care",
+                    "Seasonal checks",
+                    "Small repairs"
+                  ],
+                  "origin": "local-override"
+                },
+                "reviewRequired": false,
+                "placeholder": null
+              },
+              "palette": {
+                "inherited": {
+                  "value": [
+                    "#173f45",
+                    "#f3ede0",
+                    "#de8159"
+                  ],
+                  "source": {
+                    "id": "visual-os-synthetic",
+                    "version": 1,
+                    "freshness": "pinned"
+                  }
+                },
+                "localOverride": null,
+                "derived": null,
+                "effective": {
+                  "value": [
+                    "#173f45",
+                    "#f3ede0",
+                    "#de8159"
+                  ],
+                  "origin": "inherited"
+                },
+                "reviewRequired": false,
+                "placeholder": null
+              },
+              "typeface": {
+                "inherited": {
+                  "value": "system-ui",
+                  "source": {
+                    "id": "visual-os-synthetic",
+                    "version": 1,
+                    "freshness": "pinned"
+                  }
+                },
+                "localOverride": null,
+                "derived": null,
+                "effective": {
+                  "value": "system-ui",
+                  "origin": "inherited"
+                },
+                "reviewRequired": false,
+                "placeholder": null
+              },
+              "motion": {
+                "inherited": null,
+                "localOverride": null,
+                "derived": null,
+                "effective": null,
+                "reviewRequired": false,
+                "placeholder": {
+                  "key": "motion",
+                  "expected": "motion design input",
+                  "reason": "No authoritative value supplied",
+                  "dependsOn": [],
+                  "mayProceed": [
+                    "design.explore"
+                  ],
+                  "blocks": [
+                    "approved-brand-export"
+                  ],
+                  "prohibitedAssumptions": [
+                    "Do not infer an approved motion"
+                  ],
+                  "resolutionRoutes": [
+                    "explicit human input",
+                    "reviewed local exploration"
+                  ]
+                }
+              },
+              "density": {
+                "inherited": null,
+                "localOverride": null,
+                "derived": {
+                  "value": "calm"
+                },
+                "effective": {
+                  "value": "calm",
+                  "origin": "derived"
+                },
+                "reviewRequired": true,
+                "placeholder": null
+              },
+              "unreviewedClaim": {
+                "inherited": null,
+                "localOverride": null,
+                "derived": null,
+                "effective": null,
+                "reviewRequired": false,
+                "placeholder": {
+                  "key": "unreviewedClaim",
+                  "expected": "unreviewedClaim design input",
+                  "reason": "No authoritative value supplied",
+                  "dependsOn": [],
+                  "mayProceed": [
+                    "design.explore"
+                  ],
+                  "blocks": [
+                    "approved-brand-export"
+                  ],
+                  "prohibitedAssumptions": [
+                    "Do not infer an approved unreviewedClaim"
+                  ],
+                  "resolutionRoutes": [
+                    "explicit human input",
+                    "reviewed local exploration"
+                  ]
+                }
+              }
+            }
+          },
+          "artifactRefs": []
+        },
+        "integrity": "cddeaf28bfeaf1f0cd76f1c7cc3e8f9da477d61cbb326b780a1c33895a1ad2ce"
+      },
+      "candidates": [
+        {
+          "schemaVersion": 1,
+          "version": 1,
+          "projectId": "website-branded",
+          "contextRefs": [],
+          "dependencies": [
+            {
+              "id": "website-branded",
+              "version": 1,
+              "freshness": "pinned"
+            }
+          ],
+          "assets": [],
+          "constraints": [
+            {
+              "path": "state.parameters.intent",
+              "value": "Request a fictional home-care appointment"
+            },
+            {
+              "path": "state.parameters.content",
+              "value": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            },
+            {
+              "path": "state.parameters.palette",
+              "value": [
+                "#173f45",
+                "#f3ede0",
+                "#de8159"
+              ]
+            }
+          ],
+          "placeholders": [
+            {
+              "key": "motion",
+              "expected": "motion design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved motion"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "unreviewedClaim",
+              "expected": "unreviewedClaim design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved unreviewedClaim"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            }
+          ],
+          "approval": "proposal",
+          "permissions": [
+            "read",
+            "write"
+          ],
+          "provenance": {
+            "actor": "synthetic-fixture",
+            "source": "authored fixture",
+            "previous": null
+          },
+          "type": "design-artifact",
+          "id": "branded-round-candidate-1",
+          "payload": {
+            "moduleId": "website",
+            "kind": "website-design",
+            "scope": "landing-page",
+            "lockedValues": {
+              "intent": "Request a fictional home-care appointment",
+              "content": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ],
+              "palette": [
+                "#173f45",
+                "#f3ede0",
+                "#de8159"
+              ]
+            },
+            "state": {
+              "scope": "landing-page",
+              "intent": "Request a fictional home-care appointment",
+              "thesis": "Synthetic direction 1: coherent hierarchy, space, finish and interaction treatment",
+              "sectionOrder": [
+                "hero",
+                "services",
+                "proof",
+                "contact"
+              ],
+              "parameters": {
+                "intent": "Request a fictional home-care appointment",
+                "content": [
+                  "Routine care",
+                  "Seasonal checks",
+                  "Small repairs"
+                ],
+                "palette": [
+                  "#173f45",
+                  "#f3ede0",
+                  "#de8159"
+                ],
+                "typeface": "system-ui",
+                "density": "calm"
+              },
+              "metrics": [
+                {
+                  "family": "Structural",
+                  "key": "hierarchy",
+                  "relative": 0.2
+                },
+                {
+                  "family": "Spatial",
+                  "key": "whitespace",
+                  "relative": 0.2
+                },
+                {
+                  "family": "Styling",
+                  "key": "edge-expression",
+                  "relative": 0.2
+                },
+                {
+                  "family": "Dynamics",
+                  "key": "motion-intent",
+                  "relative": 0.2
+                }
+              ],
+              "unresolved": [
+                "motion",
+                "unreviewedClaim"
+              ]
+            }
+          },
+          "integrity": "144a5fa00baca8e6b05eb3a0f2669ab6b8a811d5c2fa42e060d4107c4b2522be"
+        },
+        {
+          "schemaVersion": 1,
+          "version": 1,
+          "projectId": "website-branded",
+          "contextRefs": [],
+          "dependencies": [
+            {
+              "id": "website-branded",
+              "version": 1,
+              "freshness": "pinned"
+            }
+          ],
+          "assets": [],
+          "constraints": [
+            {
+              "path": "state.parameters.intent",
+              "value": "Request a fictional home-care appointment"
+            },
+            {
+              "path": "state.parameters.content",
+              "value": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            },
+            {
+              "path": "state.parameters.palette",
+              "value": [
+                "#173f45",
+                "#f3ede0",
+                "#de8159"
+              ]
+            }
+          ],
+          "placeholders": [
+            {
+              "key": "motion",
+              "expected": "motion design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved motion"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "unreviewedClaim",
+              "expected": "unreviewedClaim design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved unreviewedClaim"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            }
+          ],
+          "approval": "proposal",
+          "permissions": [
+            "read",
+            "write"
+          ],
+          "provenance": {
+            "actor": "synthetic-fixture",
+            "source": "authored fixture",
+            "previous": null
+          },
+          "type": "design-artifact",
+          "id": "branded-round-candidate-2",
+          "payload": {
+            "moduleId": "website",
+            "kind": "website-design",
+            "scope": "landing-page",
+            "lockedValues": {
+              "intent": "Request a fictional home-care appointment",
+              "content": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ],
+              "palette": [
+                "#173f45",
+                "#f3ede0",
+                "#de8159"
+              ]
+            },
+            "state": {
+              "scope": "landing-page",
+              "intent": "Request a fictional home-care appointment",
+              "thesis": "Synthetic direction 2: coherent hierarchy, space, finish and interaction treatment",
+              "sectionOrder": [
+                "hero",
+                "services",
+                "proof",
+                "contact"
+              ],
+              "parameters": {
+                "intent": "Request a fictional home-care appointment",
+                "content": [
+                  "Routine care",
+                  "Seasonal checks",
+                  "Small repairs"
+                ],
+                "palette": [
+                  "#173f45",
+                  "#f3ede0",
+                  "#de8159"
+                ],
+                "typeface": "system-ui",
+                "density": "calm"
+              },
+              "metrics": [
+                {
+                  "family": "Structural",
+                  "key": "hierarchy",
+                  "relative": 0.2
+                },
+                {
+                  "family": "Spatial",
+                  "key": "whitespace",
+                  "relative": 0.5
+                },
+                {
+                  "family": "Styling",
+                  "key": "edge-expression",
+                  "relative": 0.5
+                },
+                {
+                  "family": "Dynamics",
+                  "key": "motion-intent",
+                  "relative": 0.5
+                }
+              ],
+              "unresolved": [
+                "motion",
+                "unreviewedClaim"
+              ]
+            }
+          },
+          "integrity": "33bada966d65b79adebedf56c89372597fe28e78bfb36d602c47c0c18e831b10"
+        },
+        {
+          "schemaVersion": 1,
+          "version": 1,
+          "projectId": "website-branded",
+          "contextRefs": [],
+          "dependencies": [
+            {
+              "id": "website-branded",
+              "version": 1,
+              "freshness": "pinned"
+            }
+          ],
+          "assets": [],
+          "constraints": [
+            {
+              "path": "state.parameters.intent",
+              "value": "Request a fictional home-care appointment"
+            },
+            {
+              "path": "state.parameters.content",
+              "value": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            },
+            {
+              "path": "state.parameters.palette",
+              "value": [
+                "#173f45",
+                "#f3ede0",
+                "#de8159"
+              ]
+            }
+          ],
+          "placeholders": [
+            {
+              "key": "motion",
+              "expected": "motion design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved motion"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "unreviewedClaim",
+              "expected": "unreviewedClaim design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved unreviewedClaim"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            }
+          ],
+          "approval": "proposal",
+          "permissions": [
+            "read",
+            "write"
+          ],
+          "provenance": {
+            "actor": "synthetic-fixture",
+            "source": "authored fixture",
+            "previous": null
+          },
+          "type": "design-artifact",
+          "id": "branded-round-candidate-3",
+          "payload": {
+            "moduleId": "website",
+            "kind": "website-design",
+            "scope": "landing-page",
+            "lockedValues": {
+              "intent": "Request a fictional home-care appointment",
+              "content": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ],
+              "palette": [
+                "#173f45",
+                "#f3ede0",
+                "#de8159"
+              ]
+            },
+            "state": {
+              "scope": "landing-page",
+              "intent": "Request a fictional home-care appointment",
+              "thesis": "Synthetic direction 3: coherent hierarchy, space, finish and interaction treatment",
+              "sectionOrder": [
+                "hero",
+                "services",
+                "proof",
+                "contact"
+              ],
+              "parameters": {
+                "intent": "Request a fictional home-care appointment",
+                "content": [
+                  "Routine care",
+                  "Seasonal checks",
+                  "Small repairs"
+                ],
+                "palette": [
+                  "#173f45",
+                  "#f3ede0",
+                  "#de8159"
+                ],
+                "typeface": "system-ui",
+                "density": "calm"
+              },
+              "metrics": [
+                {
+                  "family": "Structural",
+                  "key": "hierarchy",
+                  "relative": 0.2
+                },
+                {
+                  "family": "Spatial",
+                  "key": "whitespace",
+                  "relative": 0.8
+                },
+                {
+                  "family": "Styling",
+                  "key": "edge-expression",
+                  "relative": 0.8
+                },
+                {
+                  "family": "Dynamics",
+                  "key": "motion-intent",
+                  "relative": 0.8
+                }
+              ],
+              "unresolved": [
+                "motion",
+                "unreviewedClaim"
+              ]
+            }
+          },
+          "integrity": "2ea1f1a6744f79c6ed7a668ff689b70e561133f045e44a31efe84ab370d71216"
+        },
+        {
+          "schemaVersion": 1,
+          "version": 1,
+          "projectId": "website-branded",
+          "contextRefs": [],
+          "dependencies": [
+            {
+              "id": "website-branded",
+              "version": 1,
+              "freshness": "pinned"
+            }
+          ],
+          "assets": [],
+          "constraints": [
+            {
+              "path": "state.parameters.intent",
+              "value": "Request a fictional home-care appointment"
+            },
+            {
+              "path": "state.parameters.content",
+              "value": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            },
+            {
+              "path": "state.parameters.palette",
+              "value": [
+                "#173f45",
+                "#f3ede0",
+                "#de8159"
+              ]
+            }
+          ],
+          "placeholders": [
+            {
+              "key": "motion",
+              "expected": "motion design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved motion"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "unreviewedClaim",
+              "expected": "unreviewedClaim design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved unreviewedClaim"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            }
+          ],
+          "approval": "proposal",
+          "permissions": [
+            "read",
+            "write"
+          ],
+          "provenance": {
+            "actor": "synthetic-fixture",
+            "source": "authored fixture",
+            "previous": null
+          },
+          "type": "design-artifact",
+          "id": "branded-round-candidate-4",
+          "payload": {
+            "moduleId": "website",
+            "kind": "website-design",
+            "scope": "landing-page",
+            "lockedValues": {
+              "intent": "Request a fictional home-care appointment",
+              "content": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ],
+              "palette": [
+                "#173f45",
+                "#f3ede0",
+                "#de8159"
+              ]
+            },
+            "state": {
+              "scope": "landing-page",
+              "intent": "Request a fictional home-care appointment",
+              "thesis": "Synthetic direction 4: coherent hierarchy, space, finish and interaction treatment",
+              "sectionOrder": [
+                "hero",
+                "services",
+                "proof",
+                "contact"
+              ],
+              "parameters": {
+                "intent": "Request a fictional home-care appointment",
+                "content": [
+                  "Routine care",
+                  "Seasonal checks",
+                  "Small repairs"
+                ],
+                "palette": [
+                  "#173f45",
+                  "#f3ede0",
+                  "#de8159"
+                ],
+                "typeface": "system-ui",
+                "density": "calm"
+              },
+              "metrics": [
+                {
+                  "family": "Structural",
+                  "key": "hierarchy",
+                  "relative": 0.5
+                },
+                {
+                  "family": "Spatial",
+                  "key": "whitespace",
+                  "relative": 0.2
+                },
+                {
+                  "family": "Styling",
+                  "key": "edge-expression",
+                  "relative": 0.5
+                },
+                {
+                  "family": "Dynamics",
+                  "key": "motion-intent",
+                  "relative": 0.8
+                }
+              ],
+              "unresolved": [
+                "motion",
+                "unreviewedClaim"
+              ]
+            }
+          },
+          "integrity": "2331d748fd2ff82de98faafbe53226d487af79d2fb2efda9cc3fbb2eec10ccc3"
+        },
+        {
+          "schemaVersion": 1,
+          "version": 1,
+          "projectId": "website-branded",
+          "contextRefs": [],
+          "dependencies": [
+            {
+              "id": "website-branded",
+              "version": 1,
+              "freshness": "pinned"
+            }
+          ],
+          "assets": [],
+          "constraints": [
+            {
+              "path": "state.parameters.intent",
+              "value": "Request a fictional home-care appointment"
+            },
+            {
+              "path": "state.parameters.content",
+              "value": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            },
+            {
+              "path": "state.parameters.palette",
+              "value": [
+                "#173f45",
+                "#f3ede0",
+                "#de8159"
+              ]
+            }
+          ],
+          "placeholders": [
+            {
+              "key": "motion",
+              "expected": "motion design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved motion"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "unreviewedClaim",
+              "expected": "unreviewedClaim design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved unreviewedClaim"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            }
+          ],
+          "approval": "proposal",
+          "permissions": [
+            "read",
+            "write"
+          ],
+          "provenance": {
+            "actor": "synthetic-fixture",
+            "source": "authored fixture",
+            "previous": null
+          },
+          "type": "design-artifact",
+          "id": "branded-round-candidate-5",
+          "payload": {
+            "moduleId": "website",
+            "kind": "website-design",
+            "scope": "landing-page",
+            "lockedValues": {
+              "intent": "Request a fictional home-care appointment",
+              "content": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ],
+              "palette": [
+                "#173f45",
+                "#f3ede0",
+                "#de8159"
+              ]
+            },
+            "state": {
+              "scope": "landing-page",
+              "intent": "Request a fictional home-care appointment",
+              "thesis": "Synthetic direction 5: coherent hierarchy, space, finish and interaction treatment",
+              "sectionOrder": [
+                "hero",
+                "services",
+                "proof",
+                "contact"
+              ],
+              "parameters": {
+                "intent": "Request a fictional home-care appointment",
+                "content": [
+                  "Routine care",
+                  "Seasonal checks",
+                  "Small repairs"
+                ],
+                "palette": [
+                  "#173f45",
+                  "#f3ede0",
+                  "#de8159"
+                ],
+                "typeface": "system-ui",
+                "density": "calm"
+              },
+              "metrics": [
+                {
+                  "family": "Structural",
+                  "key": "hierarchy",
+                  "relative": 0.5
+                },
+                {
+                  "family": "Spatial",
+                  "key": "whitespace",
+                  "relative": 0.5
+                },
+                {
+                  "family": "Styling",
+                  "key": "edge-expression",
+                  "relative": 0.8
+                },
+                {
+                  "family": "Dynamics",
+                  "key": "motion-intent",
+                  "relative": 0.2
+                }
+              ],
+              "unresolved": [
+                "motion",
+                "unreviewedClaim"
+              ]
+            }
+          },
+          "integrity": "a25d872258e92056f46401aeccadf6d60539cf835563ea0d6b836af1cce305bc"
+        },
+        {
+          "schemaVersion": 1,
+          "version": 1,
+          "projectId": "website-branded",
+          "contextRefs": [],
+          "dependencies": [
+            {
+              "id": "website-branded",
+              "version": 1,
+              "freshness": "pinned"
+            }
+          ],
+          "assets": [],
+          "constraints": [
+            {
+              "path": "state.parameters.intent",
+              "value": "Request a fictional home-care appointment"
+            },
+            {
+              "path": "state.parameters.content",
+              "value": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            },
+            {
+              "path": "state.parameters.palette",
+              "value": [
+                "#173f45",
+                "#f3ede0",
+                "#de8159"
+              ]
+            }
+          ],
+          "placeholders": [
+            {
+              "key": "motion",
+              "expected": "motion design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved motion"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "unreviewedClaim",
+              "expected": "unreviewedClaim design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved unreviewedClaim"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            }
+          ],
+          "approval": "proposal",
+          "permissions": [
+            "read",
+            "write"
+          ],
+          "provenance": {
+            "actor": "synthetic-fixture",
+            "source": "authored fixture",
+            "previous": null
+          },
+          "type": "design-artifact",
+          "id": "branded-round-candidate-6",
+          "payload": {
+            "moduleId": "website",
+            "kind": "website-design",
+            "scope": "landing-page",
+            "lockedValues": {
+              "intent": "Request a fictional home-care appointment",
+              "content": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ],
+              "palette": [
+                "#173f45",
+                "#f3ede0",
+                "#de8159"
+              ]
+            },
+            "state": {
+              "scope": "landing-page",
+              "intent": "Request a fictional home-care appointment",
+              "thesis": "Synthetic direction 6: coherent hierarchy, space, finish and interaction treatment",
+              "sectionOrder": [
+                "hero",
+                "services",
+                "proof",
+                "contact"
+              ],
+              "parameters": {
+                "intent": "Request a fictional home-care appointment",
+                "content": [
+                  "Routine care",
+                  "Seasonal checks",
+                  "Small repairs"
+                ],
+                "palette": [
+                  "#173f45",
+                  "#f3ede0",
+                  "#de8159"
+                ],
+                "typeface": "system-ui",
+                "density": "calm"
+              },
+              "metrics": [
+                {
+                  "family": "Structural",
+                  "key": "hierarchy",
+                  "relative": 0.5
+                },
+                {
+                  "family": "Spatial",
+                  "key": "whitespace",
+                  "relative": 0.8
+                },
+                {
+                  "family": "Styling",
+                  "key": "edge-expression",
+                  "relative": 0.2
+                },
+                {
+                  "family": "Dynamics",
+                  "key": "motion-intent",
+                  "relative": 0.5
+                }
+              ],
+              "unresolved": [
+                "motion",
+                "unreviewedClaim"
+              ]
+            }
+          },
+          "integrity": "b24fe80bf8e939780dc635b5d0b140804410a3fefe8f2dbbe66d079f59b7d3ee"
+        },
+        {
+          "schemaVersion": 1,
+          "version": 1,
+          "projectId": "website-branded",
+          "contextRefs": [],
+          "dependencies": [
+            {
+              "id": "website-branded",
+              "version": 1,
+              "freshness": "pinned"
+            }
+          ],
+          "assets": [],
+          "constraints": [
+            {
+              "path": "state.parameters.intent",
+              "value": "Request a fictional home-care appointment"
+            },
+            {
+              "path": "state.parameters.content",
+              "value": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            },
+            {
+              "path": "state.parameters.palette",
+              "value": [
+                "#173f45",
+                "#f3ede0",
+                "#de8159"
+              ]
+            }
+          ],
+          "placeholders": [
+            {
+              "key": "motion",
+              "expected": "motion design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved motion"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "unreviewedClaim",
+              "expected": "unreviewedClaim design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved unreviewedClaim"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            }
+          ],
+          "approval": "proposal",
+          "permissions": [
+            "read",
+            "write"
+          ],
+          "provenance": {
+            "actor": "synthetic-fixture",
+            "source": "authored fixture",
+            "previous": null
+          },
+          "type": "design-artifact",
+          "id": "branded-round-candidate-7",
+          "payload": {
+            "moduleId": "website",
+            "kind": "website-design",
+            "scope": "landing-page",
+            "lockedValues": {
+              "intent": "Request a fictional home-care appointment",
+              "content": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ],
+              "palette": [
+                "#173f45",
+                "#f3ede0",
+                "#de8159"
+              ]
+            },
+            "state": {
+              "scope": "landing-page",
+              "intent": "Request a fictional home-care appointment",
+              "thesis": "Synthetic direction 7: coherent hierarchy, space, finish and interaction treatment",
+              "sectionOrder": [
+                "hero",
+                "services",
+                "proof",
+                "contact"
+              ],
+              "parameters": {
+                "intent": "Request a fictional home-care appointment",
+                "content": [
+                  "Routine care",
+                  "Seasonal checks",
+                  "Small repairs"
+                ],
+                "palette": [
+                  "#173f45",
+                  "#f3ede0",
+                  "#de8159"
+                ],
+                "typeface": "system-ui",
+                "density": "calm"
+              },
+              "metrics": [
+                {
+                  "family": "Structural",
+                  "key": "hierarchy",
+                  "relative": 0.8
+                },
+                {
+                  "family": "Spatial",
+                  "key": "whitespace",
+                  "relative": 0.2
+                },
+                {
+                  "family": "Styling",
+                  "key": "edge-expression",
+                  "relative": 0.8
+                },
+                {
+                  "family": "Dynamics",
+                  "key": "motion-intent",
+                  "relative": 0.5
+                }
+              ],
+              "unresolved": [
+                "motion",
+                "unreviewedClaim"
+              ]
+            }
+          },
+          "integrity": "bfcbc9511dd7bcc8477a3f8b3bf6daa4b3bca78fb212bc2590ccd46cdd74a5b6"
+        },
+        {
+          "schemaVersion": 1,
+          "version": 1,
+          "projectId": "website-branded",
+          "contextRefs": [],
+          "dependencies": [
+            {
+              "id": "website-branded",
+              "version": 1,
+              "freshness": "pinned"
+            }
+          ],
+          "assets": [],
+          "constraints": [
+            {
+              "path": "state.parameters.intent",
+              "value": "Request a fictional home-care appointment"
+            },
+            {
+              "path": "state.parameters.content",
+              "value": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            },
+            {
+              "path": "state.parameters.palette",
+              "value": [
+                "#173f45",
+                "#f3ede0",
+                "#de8159"
+              ]
+            }
+          ],
+          "placeholders": [
+            {
+              "key": "motion",
+              "expected": "motion design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved motion"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "unreviewedClaim",
+              "expected": "unreviewedClaim design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved unreviewedClaim"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            }
+          ],
+          "approval": "proposal",
+          "permissions": [
+            "read",
+            "write"
+          ],
+          "provenance": {
+            "actor": "synthetic-fixture",
+            "source": "authored fixture",
+            "previous": null
+          },
+          "type": "design-artifact",
+          "id": "branded-round-candidate-8",
+          "payload": {
+            "moduleId": "website",
+            "kind": "website-design",
+            "scope": "landing-page",
+            "lockedValues": {
+              "intent": "Request a fictional home-care appointment",
+              "content": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ],
+              "palette": [
+                "#173f45",
+                "#f3ede0",
+                "#de8159"
+              ]
+            },
+            "state": {
+              "scope": "landing-page",
+              "intent": "Request a fictional home-care appointment",
+              "thesis": "Synthetic direction 8: coherent hierarchy, space, finish and interaction treatment",
+              "sectionOrder": [
+                "hero",
+                "services",
+                "proof",
+                "contact"
+              ],
+              "parameters": {
+                "intent": "Request a fictional home-care appointment",
+                "content": [
+                  "Routine care",
+                  "Seasonal checks",
+                  "Small repairs"
+                ],
+                "palette": [
+                  "#173f45",
+                  "#f3ede0",
+                  "#de8159"
+                ],
+                "typeface": "system-ui",
+                "density": "calm"
+              },
+              "metrics": [
+                {
+                  "family": "Structural",
+                  "key": "hierarchy",
+                  "relative": 0.8
+                },
+                {
+                  "family": "Spatial",
+                  "key": "whitespace",
+                  "relative": 0.5
+                },
+                {
+                  "family": "Styling",
+                  "key": "edge-expression",
+                  "relative": 0.2
+                },
+                {
+                  "family": "Dynamics",
+                  "key": "motion-intent",
+                  "relative": 0.8
+                }
+              ],
+              "unresolved": [
+                "motion",
+                "unreviewedClaim"
+              ]
+            }
+          },
+          "integrity": "71eb5e17f3dd0825b5d6d31baf6fcd7a901161e6c7ccedd5a9ae9f3b260ece17"
+        },
+        {
+          "schemaVersion": 1,
+          "version": 1,
+          "projectId": "website-branded",
+          "contextRefs": [],
+          "dependencies": [
+            {
+              "id": "website-branded",
+              "version": 1,
+              "freshness": "pinned"
+            }
+          ],
+          "assets": [],
+          "constraints": [
+            {
+              "path": "state.parameters.intent",
+              "value": "Request a fictional home-care appointment"
+            },
+            {
+              "path": "state.parameters.content",
+              "value": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            },
+            {
+              "path": "state.parameters.palette",
+              "value": [
+                "#173f45",
+                "#f3ede0",
+                "#de8159"
+              ]
+            }
+          ],
+          "placeholders": [
+            {
+              "key": "motion",
+              "expected": "motion design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved motion"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "unreviewedClaim",
+              "expected": "unreviewedClaim design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved unreviewedClaim"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            }
+          ],
+          "approval": "proposal",
+          "permissions": [
+            "read",
+            "write"
+          ],
+          "provenance": {
+            "actor": "synthetic-fixture",
+            "source": "authored fixture",
+            "previous": null
+          },
+          "type": "design-artifact",
+          "id": "branded-round-candidate-9",
+          "payload": {
+            "moduleId": "website",
+            "kind": "website-design",
+            "scope": "landing-page",
+            "lockedValues": {
+              "intent": "Request a fictional home-care appointment",
+              "content": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ],
+              "palette": [
+                "#173f45",
+                "#f3ede0",
+                "#de8159"
+              ]
+            },
+            "state": {
+              "scope": "landing-page",
+              "intent": "Request a fictional home-care appointment",
+              "thesis": "Synthetic direction 9: coherent hierarchy, space, finish and interaction treatment",
+              "sectionOrder": [
+                "hero",
+                "services",
+                "proof",
+                "contact"
+              ],
+              "parameters": {
+                "intent": "Request a fictional home-care appointment",
+                "content": [
+                  "Routine care",
+                  "Seasonal checks",
+                  "Small repairs"
+                ],
+                "palette": [
+                  "#173f45",
+                  "#f3ede0",
+                  "#de8159"
+                ],
+                "typeface": "system-ui",
+                "density": "calm"
+              },
+              "metrics": [
+                {
+                  "family": "Structural",
+                  "key": "hierarchy",
+                  "relative": 0.8
+                },
+                {
+                  "family": "Spatial",
+                  "key": "whitespace",
+                  "relative": 0.8
+                },
+                {
+                  "family": "Styling",
+                  "key": "edge-expression",
+                  "relative": 0.5
+                },
+                {
+                  "family": "Dynamics",
+                  "key": "motion-intent",
+                  "relative": 0.2
+                }
+              ],
+              "unresolved": [
+                "motion",
+                "unreviewedClaim"
+              ]
+            }
+          },
+          "integrity": "c52bfa83ea8667633be9e24fb211db2b8f4a8026485bdc33d6f4d6a37d108f46"
+        }
+      ],
+      "bundle": {
+        "schemaVersion": 1,
+        "version": 1,
+        "projectId": "website-branded",
+        "contextRefs": [
+          {
+            "id": "visual-os-synthetic",
+            "version": 1,
+            "freshness": "pinned"
+          }
+        ],
+        "dependencies": [],
+        "assets": [],
+        "constraints": [],
+        "placeholders": [],
+        "approval": "proposal",
+        "permissions": [
+          "read",
+          "write"
+        ],
+        "provenance": {
+          "actor": "synthetic-fixture",
+          "source": "authored fixture",
+          "previous": null
+        },
+        "type": "iteration-bundle",
+        "id": "branded-round",
+        "payload": {
+          "projectRef": {
+            "id": "website-branded",
+            "version": 1,
+            "freshness": "pinned"
+          },
+          "baseState": null,
+          "scope": "landing-page",
+          "inherited": {
+            "palette": [
+              "#173f45",
+              "#f3ede0",
+              "#de8159"
+            ],
+            "typeface": "system-ui"
+          },
+          "locked": {
+            "intent": "Request a fictional home-care appointment",
+            "content": [
+              "Routine care",
+              "Seasonal checks",
+              "Small repairs"
+            ],
+            "palette": [
+              "#173f45",
+              "#f3ede0",
+              "#de8159"
+            ]
+          },
+          "exploring": [
+            {
+              "family": "Structural",
+              "key": "hierarchy",
+              "relative": 0.5
+            },
+            {
+              "family": "Spatial",
+              "key": "whitespace",
+              "relative": 0.5
+            },
+            {
+              "family": "Styling",
+              "key": "edge-expression",
+              "relative": 0.5
+            },
+            {
+              "family": "Dynamics",
+              "key": "motion-intent",
+              "relative": 0.5
+            }
+          ],
+          "placeholders": [
+            {
+              "key": "motion",
+              "expected": "motion design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved motion"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "unreviewedClaim",
+              "expected": "unreviewedClaim design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved unreviewedClaim"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            }
+          ],
+          "variationPlan": {
+            "strategy": "coherent-grid",
+            "amplitude": 0.6
+          },
+          "candidateCount": 9,
+          "candidates": [
+            {
+              "id": "branded-round-candidate-1",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            {
+              "id": "branded-round-candidate-2",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            {
+              "id": "branded-round-candidate-3",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            {
+              "id": "branded-round-candidate-4",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            {
+              "id": "branded-round-candidate-5",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            {
+              "id": "branded-round-candidate-6",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            {
+              "id": "branded-round-candidate-7",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            {
+              "id": "branded-round-candidate-8",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            {
+              "id": "branded-round-candidate-9",
+              "version": 1,
+              "freshness": "pinned"
+            }
+          ],
+          "selection": null,
+          "status": "candidates-ready",
+          "capabilities": [
+            {
+              "capabilityId": "design.explore",
+              "inputType": "module-project",
+              "outputType": "design-artifact"
+            }
+          ],
+          "executionRefs": []
+        },
+        "integrity": "e63d63073da5ac1d75e4558efb0f66b2d3b2c36802e6cb873569619cf2bb1f5f"
+      },
+      "metadata": {
+        "schemaVersion": 1,
+        "artifact": {
+          "id": "branded-round-candidate-5",
+          "version": 1,
+          "freshness": "pinned"
+        },
+        "project": {
+          "id": "website-branded",
+          "version": 1,
+          "freshness": "pinned"
+        },
+        "visualOS": {
+          "id": "visual-os-synthetic",
+          "version": 1,
+          "freshness": "pinned"
+        },
+        "bundle": {
+          "id": "branded-round",
+          "version": 1,
+          "freshness": "pinned"
+        },
+        "ledgerProjectId": "website-branded",
+        "artifactIntegrity": "a25d872258e92056f46401aeccadf6d60539cf835563ea0d6b836af1cce305bc"
+      }
+    },
+    {
+      "project": {
+        "schemaVersion": 1,
+        "version": 1,
+        "projectId": "website-freeroam",
+        "contextRefs": [],
+        "dependencies": [],
+        "assets": [],
+        "constraints": [],
+        "placeholders": [],
+        "approval": "proposal",
+        "permissions": [
+          "read",
+          "write"
+        ],
+        "provenance": {
+          "actor": "synthetic-fixture",
+          "source": "authored fixture",
+          "previous": null
+        },
+        "type": "module-project",
+        "id": "website-freeroam",
+        "payload": {
+          "moduleId": "website",
+          "mode": "freeroam",
+          "visualOSRef": null,
+          "localContext": {
+            "intent": {
+              "override": "Request a fictional home-care appointment",
+              "hasOverride": true,
+              "derived": null,
+              "hasDerived": false,
+              "placeholder": null,
+              "reviewRequired": false
+            },
+            "content": {
+              "override": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ],
+              "hasOverride": true,
+              "derived": null,
+              "hasDerived": false,
+              "placeholder": null,
+              "reviewRequired": false
+            },
+            "density": {
+              "override": null,
+              "hasOverride": false,
+              "derived": "calm",
+              "hasDerived": true,
+              "placeholder": null,
+              "reviewRequired": true
+            }
+          },
+          "resolvedContext": {
+            "mode": "freeroam",
+            "fields": {
+              "intent": {
+                "inherited": null,
+                "localOverride": {
+                  "value": "Request a fictional home-care appointment"
+                },
+                "derived": null,
+                "effective": {
+                  "value": "Request a fictional home-care appointment",
+                  "origin": "local-override"
+                },
+                "reviewRequired": false,
+                "placeholder": null
+              },
+              "content": {
+                "inherited": null,
+                "localOverride": {
+                  "value": [
+                    "Routine care",
+                    "Seasonal checks",
+                    "Small repairs"
+                  ]
+                },
+                "derived": null,
+                "effective": {
+                  "value": [
+                    "Routine care",
+                    "Seasonal checks",
+                    "Small repairs"
+                  ],
+                  "origin": "local-override"
+                },
+                "reviewRequired": false,
+                "placeholder": null
+              },
+              "palette": {
+                "inherited": null,
+                "localOverride": null,
+                "derived": null,
+                "effective": null,
+                "reviewRequired": false,
+                "placeholder": {
+                  "key": "palette",
+                  "expected": "palette design input",
+                  "reason": "No authoritative value supplied",
+                  "dependsOn": [],
+                  "mayProceed": [
+                    "design.explore"
+                  ],
+                  "blocks": [
+                    "approved-brand-export"
+                  ],
+                  "prohibitedAssumptions": [
+                    "Do not infer an approved palette"
+                  ],
+                  "resolutionRoutes": [
+                    "explicit human input",
+                    "reviewed local exploration"
+                  ]
+                }
+              },
+              "typeface": {
+                "inherited": null,
+                "localOverride": null,
+                "derived": null,
+                "effective": null,
+                "reviewRequired": false,
+                "placeholder": {
+                  "key": "typeface",
+                  "expected": "typeface design input",
+                  "reason": "No authoritative value supplied",
+                  "dependsOn": [],
+                  "mayProceed": [
+                    "design.explore"
+                  ],
+                  "blocks": [
+                    "approved-brand-export"
+                  ],
+                  "prohibitedAssumptions": [
+                    "Do not infer an approved typeface"
+                  ],
+                  "resolutionRoutes": [
+                    "explicit human input",
+                    "reviewed local exploration"
+                  ]
+                }
+              },
+              "motion": {
+                "inherited": null,
+                "localOverride": null,
+                "derived": null,
+                "effective": null,
+                "reviewRequired": false,
+                "placeholder": {
+                  "key": "motion",
+                  "expected": "motion design input",
+                  "reason": "No authoritative value supplied",
+                  "dependsOn": [],
+                  "mayProceed": [
+                    "design.explore"
+                  ],
+                  "blocks": [
+                    "approved-brand-export"
+                  ],
+                  "prohibitedAssumptions": [
+                    "Do not infer an approved motion"
+                  ],
+                  "resolutionRoutes": [
+                    "explicit human input",
+                    "reviewed local exploration"
+                  ]
+                }
+              },
+              "density": {
+                "inherited": null,
+                "localOverride": null,
+                "derived": {
+                  "value": "calm"
+                },
+                "effective": {
+                  "value": "calm",
+                  "origin": "derived"
+                },
+                "reviewRequired": true,
+                "placeholder": null
+              }
+            }
+          },
+          "artifactRefs": []
+        },
+        "integrity": "49e580f9443f9d1a95e4973a82dc5f516321aa4282a91196270acb5fca5279aa"
+      },
+      "candidates": [
+        {
+          "schemaVersion": 1,
+          "version": 1,
+          "projectId": "website-freeroam",
+          "contextRefs": [],
+          "dependencies": [
+            {
+              "id": "website-freeroam",
+              "version": 1,
+              "freshness": "pinned"
+            }
+          ],
+          "assets": [],
+          "constraints": [
+            {
+              "path": "state.parameters.intent",
+              "value": "Request a fictional home-care appointment"
+            },
+            {
+              "path": "state.parameters.content",
+              "value": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            }
+          ],
+          "placeholders": [
+            {
+              "key": "palette",
+              "expected": "palette design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved palette"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "typeface",
+              "expected": "typeface design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved typeface"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "motion",
+              "expected": "motion design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved motion"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            }
+          ],
+          "approval": "proposal",
+          "permissions": [
+            "read",
+            "write"
+          ],
+          "provenance": {
+            "actor": "synthetic-fixture",
+            "source": "authored fixture",
+            "previous": null
+          },
+          "type": "design-artifact",
+          "id": "freeroam-round-candidate-1",
+          "payload": {
+            "moduleId": "website",
+            "kind": "website-design",
+            "scope": "landing-page",
+            "lockedValues": {
+              "intent": "Request a fictional home-care appointment",
+              "content": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            },
+            "state": {
+              "scope": "landing-page",
+              "intent": "Request a fictional home-care appointment",
+              "thesis": "Synthetic direction 1: coherent hierarchy, space, finish and interaction treatment",
+              "sectionOrder": [
+                "hero",
+                "services",
+                "proof",
+                "contact"
+              ],
+              "parameters": {
+                "intent": "Request a fictional home-care appointment",
+                "content": [
+                  "Routine care",
+                  "Seasonal checks",
+                  "Small repairs"
+                ],
+                "density": "calm"
+              },
+              "metrics": [
+                {
+                  "family": "Structural",
+                  "key": "hierarchy",
+                  "relative": 0.2
+                },
+                {
+                  "family": "Spatial",
+                  "key": "whitespace",
+                  "relative": 0.2
+                },
+                {
+                  "family": "Styling",
+                  "key": "edge-expression",
+                  "relative": 0.2
+                },
+                {
+                  "family": "Dynamics",
+                  "key": "motion-intent",
+                  "relative": 0.2
+                }
+              ],
+              "unresolved": [
+                "palette",
+                "typeface",
+                "motion"
+              ]
+            }
+          },
+          "integrity": "5329e1006b566f2b45c73e839e2517fc52ae207149c98d4ee7040970e7a130f5"
+        },
+        {
+          "schemaVersion": 1,
+          "version": 1,
+          "projectId": "website-freeroam",
+          "contextRefs": [],
+          "dependencies": [
+            {
+              "id": "website-freeroam",
+              "version": 1,
+              "freshness": "pinned"
+            }
+          ],
+          "assets": [],
+          "constraints": [
+            {
+              "path": "state.parameters.intent",
+              "value": "Request a fictional home-care appointment"
+            },
+            {
+              "path": "state.parameters.content",
+              "value": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            }
+          ],
+          "placeholders": [
+            {
+              "key": "palette",
+              "expected": "palette design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved palette"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "typeface",
+              "expected": "typeface design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved typeface"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "motion",
+              "expected": "motion design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved motion"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            }
+          ],
+          "approval": "proposal",
+          "permissions": [
+            "read",
+            "write"
+          ],
+          "provenance": {
+            "actor": "synthetic-fixture",
+            "source": "authored fixture",
+            "previous": null
+          },
+          "type": "design-artifact",
+          "id": "freeroam-round-candidate-2",
+          "payload": {
+            "moduleId": "website",
+            "kind": "website-design",
+            "scope": "landing-page",
+            "lockedValues": {
+              "intent": "Request a fictional home-care appointment",
+              "content": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            },
+            "state": {
+              "scope": "landing-page",
+              "intent": "Request a fictional home-care appointment",
+              "thesis": "Synthetic direction 2: coherent hierarchy, space, finish and interaction treatment",
+              "sectionOrder": [
+                "hero",
+                "services",
+                "proof",
+                "contact"
+              ],
+              "parameters": {
+                "intent": "Request a fictional home-care appointment",
+                "content": [
+                  "Routine care",
+                  "Seasonal checks",
+                  "Small repairs"
+                ],
+                "density": "calm"
+              },
+              "metrics": [
+                {
+                  "family": "Structural",
+                  "key": "hierarchy",
+                  "relative": 0.2
+                },
+                {
+                  "family": "Spatial",
+                  "key": "whitespace",
+                  "relative": 0.5
+                },
+                {
+                  "family": "Styling",
+                  "key": "edge-expression",
+                  "relative": 0.5
+                },
+                {
+                  "family": "Dynamics",
+                  "key": "motion-intent",
+                  "relative": 0.5
+                }
+              ],
+              "unresolved": [
+                "palette",
+                "typeface",
+                "motion"
+              ]
+            }
+          },
+          "integrity": "198090ec1cbaabd9e4f5413c31265e794722fea05e9cdad0986b8bf9375ebdce"
+        },
+        {
+          "schemaVersion": 1,
+          "version": 1,
+          "projectId": "website-freeroam",
+          "contextRefs": [],
+          "dependencies": [
+            {
+              "id": "website-freeroam",
+              "version": 1,
+              "freshness": "pinned"
+            }
+          ],
+          "assets": [],
+          "constraints": [
+            {
+              "path": "state.parameters.intent",
+              "value": "Request a fictional home-care appointment"
+            },
+            {
+              "path": "state.parameters.content",
+              "value": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            }
+          ],
+          "placeholders": [
+            {
+              "key": "palette",
+              "expected": "palette design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved palette"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "typeface",
+              "expected": "typeface design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved typeface"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "motion",
+              "expected": "motion design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved motion"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            }
+          ],
+          "approval": "proposal",
+          "permissions": [
+            "read",
+            "write"
+          ],
+          "provenance": {
+            "actor": "synthetic-fixture",
+            "source": "authored fixture",
+            "previous": null
+          },
+          "type": "design-artifact",
+          "id": "freeroam-round-candidate-3",
+          "payload": {
+            "moduleId": "website",
+            "kind": "website-design",
+            "scope": "landing-page",
+            "lockedValues": {
+              "intent": "Request a fictional home-care appointment",
+              "content": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            },
+            "state": {
+              "scope": "landing-page",
+              "intent": "Request a fictional home-care appointment",
+              "thesis": "Synthetic direction 3: coherent hierarchy, space, finish and interaction treatment",
+              "sectionOrder": [
+                "hero",
+                "services",
+                "proof",
+                "contact"
+              ],
+              "parameters": {
+                "intent": "Request a fictional home-care appointment",
+                "content": [
+                  "Routine care",
+                  "Seasonal checks",
+                  "Small repairs"
+                ],
+                "density": "calm"
+              },
+              "metrics": [
+                {
+                  "family": "Structural",
+                  "key": "hierarchy",
+                  "relative": 0.2
+                },
+                {
+                  "family": "Spatial",
+                  "key": "whitespace",
+                  "relative": 0.8
+                },
+                {
+                  "family": "Styling",
+                  "key": "edge-expression",
+                  "relative": 0.8
+                },
+                {
+                  "family": "Dynamics",
+                  "key": "motion-intent",
+                  "relative": 0.8
+                }
+              ],
+              "unresolved": [
+                "palette",
+                "typeface",
+                "motion"
+              ]
+            }
+          },
+          "integrity": "ab7b8b089ae8cb2f6155292626cfd94b19891ec632d6dfbe8d8d5c81e42a9d2a"
+        },
+        {
+          "schemaVersion": 1,
+          "version": 1,
+          "projectId": "website-freeroam",
+          "contextRefs": [],
+          "dependencies": [
+            {
+              "id": "website-freeroam",
+              "version": 1,
+              "freshness": "pinned"
+            }
+          ],
+          "assets": [],
+          "constraints": [
+            {
+              "path": "state.parameters.intent",
+              "value": "Request a fictional home-care appointment"
+            },
+            {
+              "path": "state.parameters.content",
+              "value": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            }
+          ],
+          "placeholders": [
+            {
+              "key": "palette",
+              "expected": "palette design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved palette"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "typeface",
+              "expected": "typeface design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved typeface"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "motion",
+              "expected": "motion design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved motion"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            }
+          ],
+          "approval": "proposal",
+          "permissions": [
+            "read",
+            "write"
+          ],
+          "provenance": {
+            "actor": "synthetic-fixture",
+            "source": "authored fixture",
+            "previous": null
+          },
+          "type": "design-artifact",
+          "id": "freeroam-round-candidate-4",
+          "payload": {
+            "moduleId": "website",
+            "kind": "website-design",
+            "scope": "landing-page",
+            "lockedValues": {
+              "intent": "Request a fictional home-care appointment",
+              "content": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            },
+            "state": {
+              "scope": "landing-page",
+              "intent": "Request a fictional home-care appointment",
+              "thesis": "Synthetic direction 4: coherent hierarchy, space, finish and interaction treatment",
+              "sectionOrder": [
+                "hero",
+                "services",
+                "proof",
+                "contact"
+              ],
+              "parameters": {
+                "intent": "Request a fictional home-care appointment",
+                "content": [
+                  "Routine care",
+                  "Seasonal checks",
+                  "Small repairs"
+                ],
+                "density": "calm"
+              },
+              "metrics": [
+                {
+                  "family": "Structural",
+                  "key": "hierarchy",
+                  "relative": 0.5
+                },
+                {
+                  "family": "Spatial",
+                  "key": "whitespace",
+                  "relative": 0.2
+                },
+                {
+                  "family": "Styling",
+                  "key": "edge-expression",
+                  "relative": 0.5
+                },
+                {
+                  "family": "Dynamics",
+                  "key": "motion-intent",
+                  "relative": 0.8
+                }
+              ],
+              "unresolved": [
+                "palette",
+                "typeface",
+                "motion"
+              ]
+            }
+          },
+          "integrity": "95b20ea3c23f47378359452f6ca6e1561077c4e75c5123cdf91e1b8f99247ba1"
+        },
+        {
+          "schemaVersion": 1,
+          "version": 1,
+          "projectId": "website-freeroam",
+          "contextRefs": [],
+          "dependencies": [
+            {
+              "id": "website-freeroam",
+              "version": 1,
+              "freshness": "pinned"
+            }
+          ],
+          "assets": [],
+          "constraints": [
+            {
+              "path": "state.parameters.intent",
+              "value": "Request a fictional home-care appointment"
+            },
+            {
+              "path": "state.parameters.content",
+              "value": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            }
+          ],
+          "placeholders": [
+            {
+              "key": "palette",
+              "expected": "palette design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved palette"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "typeface",
+              "expected": "typeface design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved typeface"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "motion",
+              "expected": "motion design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved motion"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            }
+          ],
+          "approval": "proposal",
+          "permissions": [
+            "read",
+            "write"
+          ],
+          "provenance": {
+            "actor": "synthetic-fixture",
+            "source": "authored fixture",
+            "previous": null
+          },
+          "type": "design-artifact",
+          "id": "freeroam-round-candidate-5",
+          "payload": {
+            "moduleId": "website",
+            "kind": "website-design",
+            "scope": "landing-page",
+            "lockedValues": {
+              "intent": "Request a fictional home-care appointment",
+              "content": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            },
+            "state": {
+              "scope": "landing-page",
+              "intent": "Request a fictional home-care appointment",
+              "thesis": "Synthetic direction 5: coherent hierarchy, space, finish and interaction treatment",
+              "sectionOrder": [
+                "hero",
+                "services",
+                "proof",
+                "contact"
+              ],
+              "parameters": {
+                "intent": "Request a fictional home-care appointment",
+                "content": [
+                  "Routine care",
+                  "Seasonal checks",
+                  "Small repairs"
+                ],
+                "density": "calm"
+              },
+              "metrics": [
+                {
+                  "family": "Structural",
+                  "key": "hierarchy",
+                  "relative": 0.5
+                },
+                {
+                  "family": "Spatial",
+                  "key": "whitespace",
+                  "relative": 0.5
+                },
+                {
+                  "family": "Styling",
+                  "key": "edge-expression",
+                  "relative": 0.8
+                },
+                {
+                  "family": "Dynamics",
+                  "key": "motion-intent",
+                  "relative": 0.2
+                }
+              ],
+              "unresolved": [
+                "palette",
+                "typeface",
+                "motion"
+              ]
+            }
+          },
+          "integrity": "d88a258089e19351aa04a705e50d54f522d48159c01992c0b701b6702e435cab"
+        },
+        {
+          "schemaVersion": 1,
+          "version": 1,
+          "projectId": "website-freeroam",
+          "contextRefs": [],
+          "dependencies": [
+            {
+              "id": "website-freeroam",
+              "version": 1,
+              "freshness": "pinned"
+            }
+          ],
+          "assets": [],
+          "constraints": [
+            {
+              "path": "state.parameters.intent",
+              "value": "Request a fictional home-care appointment"
+            },
+            {
+              "path": "state.parameters.content",
+              "value": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            }
+          ],
+          "placeholders": [
+            {
+              "key": "palette",
+              "expected": "palette design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved palette"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "typeface",
+              "expected": "typeface design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved typeface"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "motion",
+              "expected": "motion design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved motion"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            }
+          ],
+          "approval": "proposal",
+          "permissions": [
+            "read",
+            "write"
+          ],
+          "provenance": {
+            "actor": "synthetic-fixture",
+            "source": "authored fixture",
+            "previous": null
+          },
+          "type": "design-artifact",
+          "id": "freeroam-round-candidate-6",
+          "payload": {
+            "moduleId": "website",
+            "kind": "website-design",
+            "scope": "landing-page",
+            "lockedValues": {
+              "intent": "Request a fictional home-care appointment",
+              "content": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            },
+            "state": {
+              "scope": "landing-page",
+              "intent": "Request a fictional home-care appointment",
+              "thesis": "Synthetic direction 6: coherent hierarchy, space, finish and interaction treatment",
+              "sectionOrder": [
+                "hero",
+                "services",
+                "proof",
+                "contact"
+              ],
+              "parameters": {
+                "intent": "Request a fictional home-care appointment",
+                "content": [
+                  "Routine care",
+                  "Seasonal checks",
+                  "Small repairs"
+                ],
+                "density": "calm"
+              },
+              "metrics": [
+                {
+                  "family": "Structural",
+                  "key": "hierarchy",
+                  "relative": 0.5
+                },
+                {
+                  "family": "Spatial",
+                  "key": "whitespace",
+                  "relative": 0.8
+                },
+                {
+                  "family": "Styling",
+                  "key": "edge-expression",
+                  "relative": 0.2
+                },
+                {
+                  "family": "Dynamics",
+                  "key": "motion-intent",
+                  "relative": 0.5
+                }
+              ],
+              "unresolved": [
+                "palette",
+                "typeface",
+                "motion"
+              ]
+            }
+          },
+          "integrity": "544e0cec848b96bb7cd622e539937fb59cc13f16c567c4ef8bc55f82306c2bda"
+        },
+        {
+          "schemaVersion": 1,
+          "version": 1,
+          "projectId": "website-freeroam",
+          "contextRefs": [],
+          "dependencies": [
+            {
+              "id": "website-freeroam",
+              "version": 1,
+              "freshness": "pinned"
+            }
+          ],
+          "assets": [],
+          "constraints": [
+            {
+              "path": "state.parameters.intent",
+              "value": "Request a fictional home-care appointment"
+            },
+            {
+              "path": "state.parameters.content",
+              "value": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            }
+          ],
+          "placeholders": [
+            {
+              "key": "palette",
+              "expected": "palette design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved palette"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "typeface",
+              "expected": "typeface design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved typeface"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "motion",
+              "expected": "motion design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved motion"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            }
+          ],
+          "approval": "proposal",
+          "permissions": [
+            "read",
+            "write"
+          ],
+          "provenance": {
+            "actor": "synthetic-fixture",
+            "source": "authored fixture",
+            "previous": null
+          },
+          "type": "design-artifact",
+          "id": "freeroam-round-candidate-7",
+          "payload": {
+            "moduleId": "website",
+            "kind": "website-design",
+            "scope": "landing-page",
+            "lockedValues": {
+              "intent": "Request a fictional home-care appointment",
+              "content": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            },
+            "state": {
+              "scope": "landing-page",
+              "intent": "Request a fictional home-care appointment",
+              "thesis": "Synthetic direction 7: coherent hierarchy, space, finish and interaction treatment",
+              "sectionOrder": [
+                "hero",
+                "services",
+                "proof",
+                "contact"
+              ],
+              "parameters": {
+                "intent": "Request a fictional home-care appointment",
+                "content": [
+                  "Routine care",
+                  "Seasonal checks",
+                  "Small repairs"
+                ],
+                "density": "calm"
+              },
+              "metrics": [
+                {
+                  "family": "Structural",
+                  "key": "hierarchy",
+                  "relative": 0.8
+                },
+                {
+                  "family": "Spatial",
+                  "key": "whitespace",
+                  "relative": 0.2
+                },
+                {
+                  "family": "Styling",
+                  "key": "edge-expression",
+                  "relative": 0.8
+                },
+                {
+                  "family": "Dynamics",
+                  "key": "motion-intent",
+                  "relative": 0.5
+                }
+              ],
+              "unresolved": [
+                "palette",
+                "typeface",
+                "motion"
+              ]
+            }
+          },
+          "integrity": "35fcb8ebd437f89126c8f714783d52dfcac0b1eae9a0cd8153df01878c23724f"
+        },
+        {
+          "schemaVersion": 1,
+          "version": 1,
+          "projectId": "website-freeroam",
+          "contextRefs": [],
+          "dependencies": [
+            {
+              "id": "website-freeroam",
+              "version": 1,
+              "freshness": "pinned"
+            }
+          ],
+          "assets": [],
+          "constraints": [
+            {
+              "path": "state.parameters.intent",
+              "value": "Request a fictional home-care appointment"
+            },
+            {
+              "path": "state.parameters.content",
+              "value": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            }
+          ],
+          "placeholders": [
+            {
+              "key": "palette",
+              "expected": "palette design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved palette"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "typeface",
+              "expected": "typeface design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved typeface"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "motion",
+              "expected": "motion design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved motion"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            }
+          ],
+          "approval": "proposal",
+          "permissions": [
+            "read",
+            "write"
+          ],
+          "provenance": {
+            "actor": "synthetic-fixture",
+            "source": "authored fixture",
+            "previous": null
+          },
+          "type": "design-artifact",
+          "id": "freeroam-round-candidate-8",
+          "payload": {
+            "moduleId": "website",
+            "kind": "website-design",
+            "scope": "landing-page",
+            "lockedValues": {
+              "intent": "Request a fictional home-care appointment",
+              "content": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            },
+            "state": {
+              "scope": "landing-page",
+              "intent": "Request a fictional home-care appointment",
+              "thesis": "Synthetic direction 8: coherent hierarchy, space, finish and interaction treatment",
+              "sectionOrder": [
+                "hero",
+                "services",
+                "proof",
+                "contact"
+              ],
+              "parameters": {
+                "intent": "Request a fictional home-care appointment",
+                "content": [
+                  "Routine care",
+                  "Seasonal checks",
+                  "Small repairs"
+                ],
+                "density": "calm"
+              },
+              "metrics": [
+                {
+                  "family": "Structural",
+                  "key": "hierarchy",
+                  "relative": 0.8
+                },
+                {
+                  "family": "Spatial",
+                  "key": "whitespace",
+                  "relative": 0.5
+                },
+                {
+                  "family": "Styling",
+                  "key": "edge-expression",
+                  "relative": 0.2
+                },
+                {
+                  "family": "Dynamics",
+                  "key": "motion-intent",
+                  "relative": 0.8
+                }
+              ],
+              "unresolved": [
+                "palette",
+                "typeface",
+                "motion"
+              ]
+            }
+          },
+          "integrity": "924f9624f932eb9aa435b1366e5a2dea36eb087158869026ffa2bf5965e9e9ab"
+        },
+        {
+          "schemaVersion": 1,
+          "version": 1,
+          "projectId": "website-freeroam",
+          "contextRefs": [],
+          "dependencies": [
+            {
+              "id": "website-freeroam",
+              "version": 1,
+              "freshness": "pinned"
+            }
+          ],
+          "assets": [],
+          "constraints": [
+            {
+              "path": "state.parameters.intent",
+              "value": "Request a fictional home-care appointment"
+            },
+            {
+              "path": "state.parameters.content",
+              "value": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            }
+          ],
+          "placeholders": [
+            {
+              "key": "palette",
+              "expected": "palette design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved palette"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "typeface",
+              "expected": "typeface design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved typeface"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "motion",
+              "expected": "motion design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved motion"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            }
+          ],
+          "approval": "proposal",
+          "permissions": [
+            "read",
+            "write"
+          ],
+          "provenance": {
+            "actor": "synthetic-fixture",
+            "source": "authored fixture",
+            "previous": null
+          },
+          "type": "design-artifact",
+          "id": "freeroam-round-candidate-9",
+          "payload": {
+            "moduleId": "website",
+            "kind": "website-design",
+            "scope": "landing-page",
+            "lockedValues": {
+              "intent": "Request a fictional home-care appointment",
+              "content": [
+                "Routine care",
+                "Seasonal checks",
+                "Small repairs"
+              ]
+            },
+            "state": {
+              "scope": "landing-page",
+              "intent": "Request a fictional home-care appointment",
+              "thesis": "Synthetic direction 9: coherent hierarchy, space, finish and interaction treatment",
+              "sectionOrder": [
+                "hero",
+                "services",
+                "proof",
+                "contact"
+              ],
+              "parameters": {
+                "intent": "Request a fictional home-care appointment",
+                "content": [
+                  "Routine care",
+                  "Seasonal checks",
+                  "Small repairs"
+                ],
+                "density": "calm"
+              },
+              "metrics": [
+                {
+                  "family": "Structural",
+                  "key": "hierarchy",
+                  "relative": 0.8
+                },
+                {
+                  "family": "Spatial",
+                  "key": "whitespace",
+                  "relative": 0.8
+                },
+                {
+                  "family": "Styling",
+                  "key": "edge-expression",
+                  "relative": 0.5
+                },
+                {
+                  "family": "Dynamics",
+                  "key": "motion-intent",
+                  "relative": 0.2
+                }
+              ],
+              "unresolved": [
+                "palette",
+                "typeface",
+                "motion"
+              ]
+            }
+          },
+          "integrity": "fa2224f7aec3bb6198d02691df7349bdeddb61198afe679b452e077012b5668d"
+        }
+      ],
+      "bundle": {
+        "schemaVersion": 1,
+        "version": 1,
+        "projectId": "website-freeroam",
+        "contextRefs": [],
+        "dependencies": [],
+        "assets": [],
+        "constraints": [],
+        "placeholders": [],
+        "approval": "proposal",
+        "permissions": [
+          "read",
+          "write"
+        ],
+        "provenance": {
+          "actor": "synthetic-fixture",
+          "source": "authored fixture",
+          "previous": null
+        },
+        "type": "iteration-bundle",
+        "id": "freeroam-round",
+        "payload": {
+          "projectRef": {
+            "id": "website-freeroam",
+            "version": 1,
+            "freshness": "pinned"
+          },
+          "baseState": null,
+          "scope": "landing-page",
+          "inherited": {},
+          "locked": {
+            "intent": "Request a fictional home-care appointment",
+            "content": [
+              "Routine care",
+              "Seasonal checks",
+              "Small repairs"
+            ]
+          },
+          "exploring": [
+            {
+              "family": "Structural",
+              "key": "hierarchy",
+              "relative": 0.5
+            },
+            {
+              "family": "Spatial",
+              "key": "whitespace",
+              "relative": 0.5
+            },
+            {
+              "family": "Styling",
+              "key": "edge-expression",
+              "relative": 0.5
+            },
+            {
+              "family": "Dynamics",
+              "key": "motion-intent",
+              "relative": 0.5
+            }
+          ],
+          "placeholders": [
+            {
+              "key": "palette",
+              "expected": "palette design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved palette"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "typeface",
+              "expected": "typeface design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved typeface"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            },
+            {
+              "key": "motion",
+              "expected": "motion design input",
+              "reason": "No authoritative value supplied",
+              "dependsOn": [],
+              "mayProceed": [
+                "design.explore"
+              ],
+              "blocks": [
+                "approved-brand-export"
+              ],
+              "prohibitedAssumptions": [
+                "Do not infer an approved motion"
+              ],
+              "resolutionRoutes": [
+                "explicit human input",
+                "reviewed local exploration"
+              ]
+            }
+          ],
+          "variationPlan": {
+            "strategy": "coherent-grid",
+            "amplitude": 0.6
+          },
+          "candidateCount": 9,
+          "candidates": [
+            {
+              "id": "freeroam-round-candidate-1",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            {
+              "id": "freeroam-round-candidate-2",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            {
+              "id": "freeroam-round-candidate-3",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            {
+              "id": "freeroam-round-candidate-4",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            {
+              "id": "freeroam-round-candidate-5",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            {
+              "id": "freeroam-round-candidate-6",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            {
+              "id": "freeroam-round-candidate-7",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            {
+              "id": "freeroam-round-candidate-8",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            {
+              "id": "freeroam-round-candidate-9",
+              "version": 1,
+              "freshness": "pinned"
+            }
+          ],
+          "selection": null,
+          "status": "candidates-ready",
+          "capabilities": [
+            {
+              "capabilityId": "design.explore",
+              "inputType": "module-project",
+              "outputType": "design-artifact"
+            }
+          ],
+          "executionRefs": []
+        },
+        "integrity": "dc1fffaa276a6041379b0b1660d983884ff2a4c5f0c9137a21e185043e3b7cc4"
+      },
+      "metadata": {
+        "schemaVersion": 1,
+        "artifact": {
+          "id": "freeroam-round-candidate-5",
+          "version": 1,
+          "freshness": "pinned"
+        },
+        "project": {
+          "id": "website-freeroam",
+          "version": 1,
+          "freshness": "pinned"
+        },
+        "visualOS": null,
+        "bundle": {
+          "id": "freeroam-round",
+          "version": 1,
+          "freshness": "pinned"
+        },
+        "ledgerProjectId": "website-freeroam",
+        "artifactIntegrity": "d88a258089e19351aa04a705e50d54f522d48159c01992c0b701b6702e435cab"
+      }
+    }
+  ],
+  "template": {
+    "schemaVersion": 1,
+    "version": 1,
+    "projectId": null,
+    "contextRefs": [],
+    "dependencies": [],
+    "assets": [],
+    "constraints": [],
+    "placeholders": [],
+    "approval": "proposal",
+    "permissions": [
+      "read",
+      "write"
+    ],
+    "provenance": {
+      "actor": "synthetic-fixture",
+      "source": "authored fixture",
+      "previous": null
+    },
+    "type": "bundle-template",
+    "id": "website-exploration-template",
+    "payload": {
+      "name": "Landing page broad exploration",
+      "scope": "landing-page",
+      "requiredContext": [
+        "intent"
+      ],
+      "preservedPaths": [
+        "intent",
+        "content"
+      ],
+      "candidateCount": 9,
+      "dimensions": [
+        {
+          "family": "Structural",
+          "key": "hierarchy",
+          "relative": 0.5
+        },
+        {
+          "family": "Spatial",
+          "key": "whitespace",
+          "relative": 0.5
+        },
+        {
+          "family": "Styling",
+          "key": "edge-expression",
+          "relative": 0.5
+        },
+        {
+          "family": "Dynamics",
+          "key": "motion-intent",
+          "relative": 0.5
+        }
+      ],
+      "capabilityIds": [
+        "design.explore"
+      ],
+      "variationStrategy": "coherent-grid"
+    },
+    "integrity": "30e8609391da21b810b878510ce59bc6f819581dbe88350706b3d4ffa12f4b8a"
+  },
+  "capabilities": {
+    "schemaVersion": 1,
+    "version": 1,
+    "projectId": null,
+    "contextRefs": [],
+    "dependencies": [],
+    "assets": [],
+    "constraints": [],
+    "placeholders": [],
+    "approval": "proposal",
+    "permissions": [
+      "read",
+      "write"
+    ],
+    "provenance": {
+      "actor": "synthetic-fixture",
+      "source": "authored fixture",
+      "previous": null
+    },
+    "type": "capability-registry",
+    "id": "capabilities-synthetic",
+    "payload": {
+      "capabilities": [
+        {
+          "id": "design.explore",
+          "version": 1,
+          "inputType": "module-project",
+          "outputType": "design-artifact"
+        },
+        {
+          "id": "image.edit",
+          "version": 1,
+          "inputType": "design-artifact",
+          "outputType": "design-artifact"
+        }
+      ],
+      "executors": [
+        {
+          "id": "fixture-design",
+          "kind": "deterministic",
+          "capabilities": [
+            "design.explore"
+          ],
+          "available": true,
+          "observedSettings": null
+        },
+        {
+          "id": "manual-import",
+          "kind": "human",
+          "capabilities": [
+            "image.edit"
+          ],
+          "available": true,
+          "observedSettings": null
+        },
+        {
+          "id": "cloud-unconfigured",
+          "kind": "cloud",
+          "capabilities": [
+            "image.edit"
+          ],
+          "available": false,
+          "observedSettings": null
+        },
+        {
+          "id": "local-unconfigured",
+          "kind": "local",
+          "capabilities": [
+            "image.edit"
+          ],
+          "available": false,
+          "observedSettings": null
+        },
+        {
+          "id": "chinvat-unconfigured",
+          "kind": "chinvat",
+          "capabilities": [
+            "image.edit"
+          ],
+          "available": false,
+          "observedSettings": null
+        }
+      ]
+    },
+    "integrity": "162ac1bec54d4e4d7369ab9b7f853f9f540d538e36a7ca2fdba960c181210e22"
+  }
+}

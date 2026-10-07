@@ -1,0 +1,8 @@
+{
+  "recipeVersion": "fixture-material-v1",
+  "instruction": "Change selected material to orange; preserve the synthetic corner mark",
+  "referenceIds": ["ref-palette"],
+  "outcomes": ["success", "failure", "unknown", "cancelled"],
+  "settings": {"fixtureSeed": 0},
+  "limitations": "Deterministic RGB data; no image provider, quality, cost, or remote cancellation evidence"
+}
