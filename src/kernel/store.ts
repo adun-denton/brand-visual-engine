@@ -68,6 +68,16 @@ export class KernelStore {
   put<T>(input: NodePacket<T>, port = writePort(input.type)): NodePacket<T> {
     return this.transaction(() => this.insert(input, port));
   }
+  /** One local workflow write; every packet still crosses its declared gate. */
+  putMany(packets: NodePacket<unknown>[]): void {
+    if (!packets.length) throw new Error('empty write');
+    this.transaction(() => { for (const input of packets) this.insert(input, writePort(input.type)); });
+  }
+  /** Bounded app discovery. Reads retain the same identity/integrity checks as lookup. */
+  latestPackets(): NodePacket<unknown>[] {
+    return this.db.prepare('SELECT id, MAX(version) AS version FROM kernel_packets GROUP BY id ORDER BY id').all()
+      .map(row => this.lookup({ id: row['id'] as string, version: row['version'] as number, freshness: 'pinned' })!);
+  }
   importSnapshot(projectId: string, packets: NodePacket<unknown>[], actor: string, reason: string): void {
     this.transaction(() => {
       if (!packets.length || packets.some(p => p.projectId !== projectId)) throw new Error('import scope mismatch');

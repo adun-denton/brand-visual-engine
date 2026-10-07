@@ -103,3 +103,25 @@ a reviewer must re-read the pinned task and latest task meaning, inspect the exa
 repeat relevant commands from a fresh checkout, probe the stated invariants independently, and
 record acceptance or repairs in MSB. Consequential visual choices require designer/operator review.
 The implementing session must not mark its own canonical task complete.
+
+## Local workspace checks
+
+The retained 54 tests remain; 16 workspace/service groups cover current-input no-write acceptance,
+reference ownership/type and revisions, reviewed proposal uncertainty, real PNG/JPEG/WebP decoding,
+truncation/dimension/animation/byte limits, invalid original bindings, wrong project/scope/stale job,
+duplicate/late/closed returns, corruption, metadata controls, host/origin/token/nested boundaries,
+and copied closed-root restoration with unchanged legacy data. Three HTTP regressions use JPEG,
+WebP and non-default PNG references and returned results to compare original downloads byte-for-byte
+against manifest checksums, independently of normalized previews. Wrong-owner, wrong-type and corrupt
+file controls reject without acceptance changes. All test stores and servers close before removal
+of their synthetic roots; CI runs the unmodified suite on Linux and Windows Node 24.19.0.
+Run `npm run build` and
+`npm run test:browser` after installing Chromium; see [workspace.md](workspace.md) for exact setup.
+The browser check exercises actual forms/downloads/uploads, 1440px/390px overflow, skip-link/focus,
+comparison, reference revision/stale acceptance, native result/section acceptance, proposal import,
+Branded context and fresh process/browser reconstruction. It also checks recorded invalid native
+outcomes followed by corrected uploads without reopening, stale-job rejection without automatic
+retry, closed late-return controls, and new Branded/Freeroam project comparisons followed by restoring
+the prior owning comparison. JPEG reference and WebP result links exercise actual original downloads.
+[Synthetic evidence](evidence/) is technical
+implementer evidence only. Native-host generation and independent round trip remain separate checks.
