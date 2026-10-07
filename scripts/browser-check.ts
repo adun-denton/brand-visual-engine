@@ -75,6 +75,37 @@ const noOverflow = async () => {
     ),
   ).toBe(true);
 };
+async function keyboardViews() {
+  await page.getByRole('button', { name: '01 Brief & references' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(
+    page.getByRole('heading', { name: 'A useful brief' }),
+  ).toBeVisible();
+  for (const [name, heading] of [
+    ['02 Explore & compare', 'Find a direction worth pursuing.'],
+    ['03 Native handoff', 'Take the request. Bring back the result.'],
+    ['04 History', 'Every choice has a trail.'],
+  ] as const) {
+    await page.keyboard.press('Tab');
+    const tab = page.getByRole('button', { name });
+    await expect(tab).toBeFocused();
+    await expect
+      .poll(async () => {
+        const box = await tab.boundingBox();
+        return (
+          !!box && box.x >= 0 && box.x + box.width <= page.viewportSize()!.width
+        );
+      })
+      .toBe(true);
+    expect(await tab.evaluate((el) => getComputedStyle(el).outlineWidth)).toBe(
+      '3px',
+    );
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('heading', { name: heading })).toBeVisible();
+    await expect(tab).toBeFocused();
+  }
+  await page.getByRole('button', { name: '01 Brief & references' }).click();
+}
 const image = join(
   resolve(import.meta.dirname, '..'),
   'fixtures/native-return.png',
@@ -99,6 +130,7 @@ try {
   await expect(
     page.locator('.context-field').filter({ hasText: 'palette' }),
   ).toContainText('Placeholder');
+  await keyboardViews();
   // Error recovery: invalid image is visible; corrected file then saves.
   await page.locator('#add-reference input[type=file]').setInputFiles({
     name: 'invalid.png',
@@ -236,6 +268,7 @@ try {
     'no brand approval',
   );
   await page.setViewportSize({ width: 390, height: 844 });
+  await keyboardViews();
   await page.getByRole('button', { name: '01 Brief & references' }).click();
   await noOverflow();
   await page.evaluate(() => scrollTo(0, 0));
@@ -335,7 +368,7 @@ try {
     ],
     pageErrors: errors,
     workflow:
-      'entry, sparse Freeroam, invalid/correct reference, compare two, accept design, revise reference, stale acceptance rejection, native export/result/section acceptance, reviewed direction, process/context restart and historical read',
+      'keyboard Tab/Enter across all views with visible focus at both widths, entry, sparse Freeroam, invalid/correct reference, compare two, accept design, revise reference, stale acceptance rejection, native export/result/section acceptance, reviewed direction, process/context restart and historical read',
     nativeEvidence: 'Authored synthetic attachment; no host generation',
     fixtureSHA256: createHash('sha256')
       .update(readFileSync(image))

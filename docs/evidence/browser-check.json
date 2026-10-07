@@ -14,7 +14,7 @@
     }
   ],
   "pageErrors": [],
-  "workflow": "entry, sparse Freeroam, invalid/correct reference, compare two, accept design, revise reference, stale acceptance rejection, native export/result/section acceptance, reviewed direction, process/context restart and historical read",
+  "workflow": "keyboard Tab/Enter across all views with visible focus at both widths, entry, sparse Freeroam, invalid/correct reference, compare two, accept design, revise reference, stale acceptance rejection, native export/result/section acceptance, reviewed direction, process/context restart and historical read",
   "nativeEvidence": "Authored synthetic attachment; no host generation",
   "fixtureSHA256": "2f81003c3cf1e06ac2e69594fb6130a5026de918388d23f54b5c4d31a209c1cd",
   "runtimeRoot": "private temporary synthetic root outside checkout"

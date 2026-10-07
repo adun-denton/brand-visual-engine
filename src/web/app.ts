@@ -323,6 +323,10 @@ function onForm(
     });
 }
 function bind() {
+  for (const tab of document.querySelectorAll<HTMLButtonElement>('.tab'))
+    tab.addEventListener('focus', () =>
+      tab.scrollIntoView({ block: 'nearest', inline: 'nearest' }),
+    );
   for (const preview of document.querySelectorAll<HTMLElement>(
     '[data-preview-palette]',
   )) {
