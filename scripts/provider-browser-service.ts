@@ -17,8 +17,9 @@ const scene = (color: string) =>
   )
     .png()
     .toBuffer();
-const original = await scene('#de8159'),
-  edited = await scene('#719876');
+// An unconfigured service cannot submit; avoid preparing transport-only artwork on startup.
+const original = enabled ? await scene('#de8159') : null,
+  edited = enabled ? await scene('#719876') : null;
 let calls = 0;
 const app = await startApp(root, port, undefined, {
   apiKey: enabled ? 'offline-fixture-key' : null,
@@ -87,7 +88,7 @@ const app = await startApp(root, port, undefined, {
       JSON.stringify({
         data: [
           {
-            b64_json: (url.endsWith('/edits') ? edited : original).toString(
+            b64_json: (url.endsWith('/edits') ? edited : original)!.toString(
               'base64',
             ),
           },

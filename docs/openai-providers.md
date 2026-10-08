@@ -137,6 +137,10 @@ cleanup and cannot yield passing evidence. This avoids the documented Windows be
 [child-process signals](https://nodejs.org/api/child_process.html#subprocesskillsignal). There are no
 fixture transport/control routes in the production service. Windows and Linux CI run both browser scripts
 and retain their final JSON receipts and screenshots as workflow artifacts.
+Readiness has a 60-second deadline for fixture initialization; shutdown/request acknowledgment is
+bounded at 15 seconds, followed only on failure by at most five seconds of forced cleanup. Startup
+failures include the fixture's bounded stdout/stderr diagnostics. Unconfigured startup skips artwork
+that only the injected transport consumes.
 
 `docs/evidence/provider-browser-check.json` and `providers-*.png` contain public-safe technical inspection.
 Desktop 1440×1000 and mobile 390×844 include focused captures of assistant/comparison/outcome regions.

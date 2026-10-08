@@ -16,6 +16,9 @@ export interface FixtureProcess {
   closed: Promise<{ code: number | null; signal: NodeJS.Signals | null }>;
 }
 const timeoutMs = 15000;
+// Bound authored-media/service startup separately from shutdown. Windows CI exceeded
+// the original 15-second readiness deadline; shutdown still has the tighter bound.
+const startupTimeoutMs = 60000;
 async function bounded<T>(
   promise: Promise<T>,
   ms: number,
@@ -91,13 +94,17 @@ export async function startFixture(
           ),
         );
       }),
-      timeoutMs,
+      startupTimeoutMs,
       'Fixture service did not acknowledge startup',
     );
     return { child, origin, closed };
   } catch (e) {
     await forceCleanup({ child, closed });
-    throw e;
+    throw new Error(
+      (e instanceof Error ? e.message : 'Fixture startup failed') +
+        '\n' +
+        diagnostic,
+    );
   } finally {
     child.off('message', ready);
     child.off('error', failed);
