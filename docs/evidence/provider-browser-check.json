@@ -11,26 +11,71 @@
   "shutdownReceipts": [
     {
       "type": "bve-fixture-closed",
-      "id": "fc42e49c-d537-419a-a3ef-ee1a230e8a17",
+      "id": "e0b06efe-b0e7-48cd-8e2b-0d8a41967d0b",
       "offlineTransportCalls": 0,
       "realProviderCalls": 0
     },
     {
       "type": "bve-fixture-closed",
-      "id": "100e9f29-7cd1-44cd-8cb5-67b5b0e7c4f4",
+      "id": "f19402c4-5313-4154-aeb1-912ae2ea553d",
       "offlineTransportCalls": 4,
       "realProviderCalls": 0
     },
     {
       "type": "bve-fixture-closed",
-      "id": "449cd998-bfe5-4739-97d9-313c90fea16a",
+      "id": "b4133ae1-0c2c-4242-91ca-1e1c4d4288de",
       "offlineTransportCalls": 0,
       "realProviderCalls": 0
     }
   ],
+  "preparationSynchronization": {
+    "delayedResponse": "second successful preparation held until old-queued/busy/no-submit assertions complete",
+    "previousQueuedAttempt": {
+      "id": "api-attempt-9c7a8b81-b847-4d0a-8ce8-693e13f95a66",
+      "version": 1,
+      "freshness": "pinned"
+    },
+    "preparedAttempt": {
+      "id": "api-attempt-3a1a2ac4-6abf-4388-b896-93917e464872",
+      "version": 1,
+      "freshness": "pinned"
+    },
+    "submissionRequests": [
+      {
+        "id": "api-attempt-9c7a8b81-b847-4d0a-8ce8-693e13f95a66",
+        "version": 1,
+        "freshness": "pinned"
+      },
+      {
+        "id": "api-attempt-3a1a2ac4-6abf-4388-b896-93917e464872",
+        "version": 1,
+        "freshness": "pinned"
+      },
+      {
+        "id": "api-attempt-68b7efd5-864d-464b-ab7b-5b225c2431b5",
+        "version": 1,
+        "freshness": "pinned"
+      },
+      {
+        "id": "api-attempt-a2b57ac6-ebbe-443a-a2f2-8bde943b5c4a",
+        "version": 1,
+        "freshness": "pinned"
+      },
+      {
+        "id": "api-attempt-d25cea6b-9d25-4fd0-b2e7-cb5502c34d61",
+        "version": 1,
+        "freshness": "pinned"
+      }
+    ],
+    "intendedAssistantSubmissions": 1,
+    "preparedAttemptReturned": "returned",
+    "staleAttemptUnchanged": true
+  },
   "checks": [
     "unconfigured disabled submit",
     "stale request actionable error",
+    "delayed prepare with old queued job; exact returned identity and idle before one submission",
+    "five distinct HTTP submissions: one intentional stale rejection and four fixture calls",
     "text/vision fixture and human edited review",
     "generation/edit serialized adapter fixture",
     "manual native import unchanged",

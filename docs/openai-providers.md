@@ -137,6 +137,12 @@ cleanup and cannot yield passing evidence. This avoids the documented Windows be
 [child-process signals](https://nodejs.org/api/child_process.html#subprocesskillsignal). There are no
 fixture transport/control routes in the production service. Windows and Linux CI run both browser scripts
 and retain their final JSON receipts and screenshots as workflow artifacts.
+The browser test identifies each new attempt from its preparation response, waits for that exact row
+and the completed action, and submits its immutable pointer once. An assertion-controlled delayed-response
+regression keeps an earlier queued/stale row visible until these synchronization controls are checked.
+The final receipt records the prepared/previous pointers and exact HTTP submissions separately from
+the child's authoritative transport counts. Only read-only outcome refresh is polled; no chargeable
+submission is retried and no fixture control endpoint is exposed by production.
 Readiness has a 60-second deadline for fixture initialization; shutdown/request acknowledgment is
 bounded at 15 seconds, followed only on failure by at most five seconds of forced cleanup. Startup
 failures include the fixture's bounded stdout/stderr diagnostics. Unconfigured startup skips artwork

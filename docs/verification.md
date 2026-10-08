@@ -144,6 +144,15 @@ The lifecycle test checks acknowledged store closure, completed stdio, closed-ro
 failed-startup cleanup. The complete provider browser workflow also uses reasoning plus a final proposal,
 requires exact acknowledged counts `[0, 4, 0]`, and writes its receipt only after graceful process closure.
 
+The provider browser regression holds the second successful preparation response while the earlier
+stale job remains queued. Before releasing it, assertions require a busy application, two durably queued
+jobs without observations, only the old visible row, and no new submission. Preparation correlates the
+successful response's newly created attempt with its rendered pointer and waits for the action to finish.
+Submission clicks that exact attempt once; only read-only outcome refresh is polled. The completed flow
+requires one intended assistant submission/result, an unchanged stale job, five distinct HTTP submissions
+(one intentional stale rejection plus four injected calls), and the retained exact IPC counts. The gate
+uses assertion-controlled response delivery, without timing sleeps or automatic provider retries.
+
 ```sh
 npm run build
 npm run test:browser

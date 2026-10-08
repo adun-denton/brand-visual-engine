@@ -22,6 +22,7 @@ import type {
   DesignArtifact,
   NodePacket,
   IterationBundle,
+  VersionRef,
 } from '../src/kernel/contracts.ts';
 import type {
   ProviderJob,
@@ -74,6 +75,37 @@ let context = await browser.newContext({
 const errors: string[] = [];
 page.on('pageerror', (e) => errors.push(e.message));
 let pid = '';
+const submissionRequests: VersionRef[] = [];
+page.on('request', (request) => {
+  if (
+    request.method() === 'POST' &&
+    new URL(request.url()).pathname === '/api/v1/provider/submit'
+  )
+    submissionRequests.push(request.postDataJSON().input.job as VersionRef);
+});
+let releasePreparation!: () => void;
+const preparationDelivery = new Promise<void>((resolve) => {
+  releasePreparation = resolve;
+});
+let preparationHeld!: (attempt: VersionRef) => void;
+const heldPreparation = new Promise<VersionRef>((resolve) => {
+  preparationHeld = resolve;
+});
+let successfulPreparations = 0;
+// Deliberately hold the second successful prepare response while the old queued job is visible.
+// Release is controlled by assertions, not elapsed time or an arbitrary sleep.
+await page.route('**/api/v1/provider/prepare', async (route) => {
+  const response = await route.fetch();
+  if (response.ok() && ++successfulPreparations === 2) {
+    const snapshot = (await response.json()) as ReturnType<Workspace['state']>;
+    const attempt = snapshot
+      .artifacts!.filter((a) => a.payload.kind === 'website-provider-job')
+      .at(-1)!;
+    preparationHeld(reference(attempt));
+    await preparationDelivery;
+  }
+  await route.fulfill({ response });
+});
 async function state() {
   return (await (
     await fetch(origin + '/api/v1/workspace?project=' + pid)
@@ -118,12 +150,22 @@ const apiView = async () => {
   ).toBeVisible();
 };
 const lastJob = () => page.locator('.api-job').last();
+const jobRow = (attempt: VersionRef) =>
+  page.locator(`.api-job[data-attempt=${JSON.stringify(attempt.id)}]`);
+const idle = () =>
+  expect(page.locator('#app')).not.toHaveAttribute('aria-busy', 'true');
 async function prepare(
   operation: string,
   instructions: string,
   artifact?: string,
   referenceInput = false,
-) {
+): Promise<VersionRef> {
+  await idle();
+  const previousIds = await page
+    .locator('.api-job')
+    .evaluateAll((rows) =>
+      rows.map((row) => (row as HTMLElement).dataset['attempt']!),
+    );
   const f = page.locator('#provider-prepare');
   await f.locator('[name=operation]').selectOption(operation);
   await f.locator('[name=instructions]').fill(instructions);
@@ -132,18 +174,97 @@ async function prepare(
   else
     for (const box of await f.locator('[name=reference]').all())
       await box.uncheck();
+  const prepared = page.waitForResponse(
+    (response) => {
+      const request = response.request();
+      if (
+        request.method() !== 'POST' ||
+        new URL(response.url()).pathname !== '/api/v1/provider/prepare'
+      )
+        return false;
+      const body = request.postDataJSON();
+      return (
+        body.projectId === pid &&
+        body.input.operation === operation &&
+        body.input.instructions === instructions
+      );
+    },
+    { timeout: 15000 },
+  );
   await f.getByRole('button', { name: 'Save immutable request' }).click();
-  await expect(lastJob().getByText('queued', { exact: true })).toBeVisible();
+  const response = await prepared;
+  expect(response.ok()).toBe(true);
+  const snapshot = (await response.json()) as ReturnType<Workspace['state']>;
+  const created = snapshot.artifacts!.filter(
+    (a) =>
+      a.payload.kind === 'website-provider-job' && !previousIds.includes(a.id),
+  );
+  expect(created).toHaveLength(1);
+  const attempt = reference(created[0]!);
+  const job = created[0]!.payload.state as ProviderJob;
+  expect(job.request.project.id).toBe(pid);
+  expect(job.request.attemptId).toBe(attempt.id);
+  expect(job.request.operation).toBe(operation);
+  expect(job.request.instructions).toBe(instructions);
+  expect(job.status).toBe('queued');
+  await expect(page.locator('.api-job')).toHaveCount(previousIds.length + 1);
+  await expect(
+    jobRow(attempt).getByText('queued', { exact: true }),
+  ).toBeVisible();
+  await idle();
+  expect(
+    JSON.parse(
+      (await jobRow(attempt)
+        .getByRole('button', { name: 'Submit this API attempt' })
+        .getAttribute('data-job'))!,
+    ),
+  ).toEqual(attempt);
+  return attempt;
 }
-async function submit(expected = 'returned') {
-  await lastJob()
-    .getByRole('button', { name: 'Submit this API attempt' })
-    .click();
+async function submit(attempt: VersionRef, expected = 'returned') {
+  await idle();
+  const button = jobRow(attempt).getByRole('button', {
+    name: 'Submit this API attempt',
+  });
+  expect(JSON.parse((await button.getAttribute('data-job'))!)).toEqual(attempt);
+  await expect(button).toBeEnabled();
+  const submitted = page.waitForResponse(
+    (response) => {
+      const request = response.request();
+      if (
+        request.method() !== 'POST' ||
+        new URL(response.url()).pathname !== '/api/v1/provider/submit'
+      )
+        return false;
+      const body = request.postDataJSON();
+      return (
+        body.projectId === pid &&
+        body.input.job.id === attempt.id &&
+        body.input.job.version === attempt.version
+      );
+    },
+    { timeout: 15000 },
+  );
+  await button.click(); // Exactly one submission; only read-only refresh is polled below.
+  expect((await submitted).ok()).toBe(true);
+  await idle();
   await expect(async () => {
+    await idle();
+    const refreshed = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'GET' &&
+        new URL(response.url()).pathname === '/api/v1/workspace' &&
+        new URL(response.url()).searchParams.get('project') === pid,
+      { timeout: 15000 },
+    );
     await page
       .getByRole('button', { name: 'Refresh provider outcomes' })
       .click();
-    await expect(lastJob().getByText(expected, { exact: true })).toBeVisible();
+    expect((await refreshed).ok()).toBe(true);
+    await idle();
+    await expect(
+      jobRow(attempt).getByText(expected, { exact: true }),
+    ).toBeVisible();
   }).toPass({ timeout: 15000 });
 }
 try {
@@ -166,9 +287,14 @@ try {
   await expect(page.locator('.candidate')).toHaveCount(9);
   await apiView();
   await expect(page.getByText(/API credentials unconfigured/)).toBeVisible();
-  await prepare('assistant', 'Synthetic unconfigured request');
+  const unconfiguredAttempt = await prepare(
+    'assistant',
+    'Synthetic unconfigured request',
+  );
   await expect(
-    lastJob().getByRole('button', { name: 'Submit this API attempt' }),
+    jobRow(unconfiguredAttempt).getByRole('button', {
+      name: 'Submit this API attempt',
+    }),
   ).toBeDisabled();
   await screen('providers-unconfigured-desktop');
   await page.setViewportSize({ width: 390, height: 844 });
@@ -198,19 +324,69 @@ try {
   await add.getByRole('button', { name: 'Attach reference' }).click();
   await expect(page.locator('.reference-card')).toHaveCount(1);
   await apiView();
-  await lastJob()
+  await jobRow(unconfiguredAttempt)
     .getByRole('button', { name: 'Submit this API attempt' })
     .click();
   await expect(page.locator('#notice')).toContainText('Project changed');
   await screen('providers-stale-error-desktop');
-  await prepare(
+  let preparationCompleted = false;
+  let heldAttempt!: VersionRef;
+  const preparingAssistant = prepare(
     'assistant',
     'Propose a quiet synthetic direction',
     undefined,
     true,
-  );
-  await submit();
-  const review = lastJob().locator('.assistant-review');
+  ).then((result) => {
+    preparationCompleted = true;
+    return result;
+  });
+  try {
+    heldAttempt = await Promise.race([
+      heldPreparation,
+      preparingAssistant.then(() => heldPreparation),
+    ]);
+    await expect(page.locator('#app')).toHaveAttribute('aria-busy', 'true');
+    await expect(page.locator('.api-job')).toHaveCount(1);
+    await expect(lastJob().getByText('queued', { exact: true })).toBeVisible();
+    expect(submissionRequests).toHaveLength(1); // Earlier intentional stale rejection only.
+    const persisted = await state();
+    const jobs = persisted.artifacts!.filter(
+      (a) => a.payload.kind === 'website-provider-job',
+    );
+    expect(jobs).toHaveLength(2);
+    expect(jobs.map((a) => (a.payload.state as ProviderJob).status)).toEqual([
+      'queued',
+      'queued',
+    ]);
+    expect(
+      jobs.every(
+        (a) => (a.payload.state as ProviderJob).observations.length === 0,
+      ),
+    ).toBe(true);
+    expect(jobs.at(-1)!.id).toBe(heldAttempt.id);
+    expect(preparationCompleted).toBe(false);
+  } finally {
+    releasePreparation();
+  }
+  const assistantAttempt = await preparingAssistant;
+  expect(assistantAttempt).toEqual(heldAttempt);
+  await submit(assistantAttempt);
+  expect(submissionRequests).toEqual([unconfiguredAttempt, assistantAttempt]);
+  const assistantState = await state();
+  const oldJob = assistantState.artifacts!.find(
+    (a) => a.id === unconfiguredAttempt.id,
+  )!.payload.state as ProviderJob;
+  const returnedAssistant = assistantState.artifacts!.find(
+    (a) => a.id === assistantAttempt.id,
+  )!.payload.state as ProviderJob;
+  expect(oldJob.status).toBe('queued');
+  expect(oldJob.observations).toEqual([]);
+  expect(returnedAssistant.status).toBe('returned');
+  expect(returnedAssistant.outputs).toHaveLength(1);
+  expect(
+    returnedAssistant.observations.filter((o) => o.kind === 'result'),
+  ).toHaveLength(1);
+  const review = jobRow(assistantAttempt).locator('.assistant-review');
   await review
     .locator('[name=rationale]')
     .fill('Human edited: keep a calm composition and test heading contrast.');
@@ -229,16 +405,16 @@ try {
   const current = await state(),
     first = (current.bundles!.at(-1) as NodePacket<IterationBundle>).payload
       .candidates[0]!;
-  await prepare(
+  const generationAttempt = await prepare(
     'generate',
     'Generate an authored offline fixture',
     JSON.stringify(first),
   );
-  await submit();
+  await submit(generationAttempt);
   let currentState = await state();
-  const gen = currentState
-      .artifacts!.filter((a) => a.payload.kind === 'website-provider-job')
-      .at(-1) as NodePacket<DesignArtifact<ProviderJob>>,
+  const gen = currentState.artifacts!.find(
+      (a) => a.id === generationAttempt.id,
+    ) as NodePacket<DesignArtifact<ProviderJob>>,
     generated = gen.payload.state.outputs[0]!;
   // Retained native path: UI creates its original manifest and explicitly imports original bytes.
   await page.getByRole('button', { name: '03 Native handoff' }).click();
@@ -257,17 +433,17 @@ try {
     .artifacts!.filter((a) => a.payload.kind === 'website-image')
     .at(-1)!;
   await apiView();
-  await prepare(
+  const editAttempt = await prepare(
     'edit',
     'Refine using an owned input and selected reference',
     JSON.stringify(generated),
     true,
   );
-  await submit();
+  await submit(editAttempt);
   currentState = await state();
-  const edit = currentState
-      .artifacts!.filter((a) => a.payload.kind === 'website-provider-job')
-      .at(-1) as NodePacket<DesignArtifact<ProviderJob>>,
+  const edit = currentState.artifacts!.find(
+      (a) => a.id === editAttempt.id,
+    ) as NodePacket<DesignArtifact<ProviderJob>>,
     edited = edit.payload.state.outputs[0]!;
   const compare = page.locator('#image-comparison');
   await compare
@@ -289,7 +465,7 @@ try {
   await noOverflow();
   await screen('providers-comparison-mobile');
   await page.setViewportSize({ width: 1440, height: 1000 });
-  const accept = lastJob().locator('.accept-image');
+  const accept = jobRow(editAttempt).locator('.accept-image');
   await accept
     .locator('[name=reason]')
     .fill('Explicitly accept this synthetic API candidate');
@@ -299,7 +475,9 @@ try {
   currentState = await state();
   expect(currentState.accepted!.hero).toEqual(edited);
   const downloadEvent = page.waitForEvent('download');
-  await lastJob().getByRole('link', { name: 'Download API original' }).click();
+  await jobRow(editAttempt)
+    .getByRole('link', { name: 'Download API original' })
+    .click();
   const download = await downloadEvent,
     path = join(runtime, 'api-original-download.png');
   await download.saveAs(path);
@@ -309,10 +487,10 @@ try {
   const result = currentState.artifacts!.find((a) => a.id === edited.id)!
     .payload.state as ApiImage;
   expect(downloadedHash).toBe(result.image.checksum);
-  await prepare('assistant', 'fixture rate limit');
-  await submit('failed');
+  const rateLimitAttempt = await prepare('assistant', 'fixture rate limit');
+  await submit(rateLimitAttempt, 'failed');
   await expect(
-    lastJob().getByText('rate-limit', { exact: true }),
+    jobRow(rateLimitAttempt).getByText('rate-limit', { exact: true }),
   ).toBeVisible();
   await screen('providers-rate-limit-desktop');
   await page.getByRole('button', { name: '05 Images & assistant' }).focus();
@@ -350,6 +528,14 @@ try {
     0, 4, 0,
   ]);
   expect(shutdownReceipts.every((r) => r.realProviderCalls === 0)).toBe(true);
+  expect(submissionRequests).toEqual([
+    unconfiguredAttempt,
+    assistantAttempt,
+    generationAttempt,
+    editAttempt,
+    rateLimitAttempt,
+  ]);
+  expect(new Set(submissionRequests.map((a) => a.id)).size).toBe(5);
   const receipt =
     JSON.stringify(
       {
@@ -364,9 +550,24 @@ try {
         shutdown:
           'acknowledged test-only IPC; stores closed and child/stdio completed',
         shutdownReceipts,
+        preparationSynchronization: {
+          delayedResponse:
+            'second successful preparation held until old-queued/busy/no-submit assertions complete',
+          previousQueuedAttempt: unconfiguredAttempt,
+          preparedAttempt: assistantAttempt,
+          submissionRequests,
+          intendedAssistantSubmissions: submissionRequests.filter(
+            (a) => a.id === assistantAttempt.id,
+          ).length,
+          preparedAttemptReturned: returnedAssistant.status,
+          staleAttemptUnchanged:
+            oldJob.status === 'queued' && oldJob.observations.length === 0,
+        },
         checks: [
           'unconfigured disabled submit',
           'stale request actionable error',
+          'delayed prepare with old queued job; exact returned identity and idle before one submission',
+          'five distinct HTTP submissions: one intentional stale rejection and four fixture calls',
           'text/vision fixture and human edited review',
           'generation/edit serialized adapter fixture',
           'manual native import unchanged',
@@ -394,6 +595,7 @@ try {
     'Provider browser checks passed; offline transport only, 0 real provider calls.',
   );
 } finally {
+  releasePreparation();
   try {
     await context.close();
   } finally {
