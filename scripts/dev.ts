@@ -15,7 +15,9 @@ const port = Number(process.env['BVE_PORT'] ?? 4173);
 if (!Number.isSafeInteger(port) || port < 1 || port > 65535)
   throw new Error('Invalid BVE_PORT');
 const app = await startApp(root, port);
-console.log('Local workspace: ' + app.origin + ' (manual providers only)');
+console.log(
+  'Local workspace: ' + app.origin + ' (explicit provider submissions only)',
+);
 for (const signal of ['SIGINT', 'SIGTERM'] as const)
   process.on(signal, () => {
     void app.close().then(() => process.exit(0));

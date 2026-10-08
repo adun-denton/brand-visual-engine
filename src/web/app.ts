@@ -1,4 +1,11 @@
 import type {
+  ProviderJob,
+  ApiImage,
+  AssistantProposal,
+  AssistantReview,
+} from '../modules/website/provider-contracts.ts';
+import type { Providers } from '../service/providers.ts';
+import type {
   CapabilityRegistry,
   DesignArtifact,
   IterationBundle,
@@ -16,6 +23,7 @@ import type {
   DirectionProposal,
 } from '../modules/website/workspace-contracts.ts';
 interface State {
+  providers?: ReturnType<Providers['status']>;
   projects: NodePacket<ModuleProject>[];
   visualOS: NodePacket<VisualOS>[];
   capabilities: CapabilityRegistry;
@@ -138,7 +146,7 @@ async function open(id: string) {
   render();
 }
 function shell() {
-  return `<div class="shell"><aside class="sidebar"><a class="brand" href="/" aria-label="AI Design OS home"><span class="mark">◈</span><span>Design OS<small>LOCAL STUDIO</small></span></a><p class="eyebrow">WORKSPACES</p><nav aria-label="Projects">${state.projects.map((p) => button(String(p.payload.localContext['title']?.override ?? 'Website'), 'open', `data-id="${e(p.id)}"`, state.project?.id === p.id ? 'project active' : 'project')).join('')}</nav>${button('+ New workspace', 'home', '', 'new-project')}<div class="sidebar-bottom"><span class="dot"></span> Local & private<br><small>Manual image handoff<br>Cloud / local AI unconfigured</small></div></aside><main id="main" tabindex="-1">${state.project ? workspace() : entry()}</main></div>`;
+  return `<div class="shell"><aside class="sidebar"><a class="brand" href="/" aria-label="AI Design OS home"><span class="mark">◈</span><span>Design OS<small>LOCAL STUDIO</small></span></a><p class="eyebrow">WORKSPACES</p><nav aria-label="Projects">${state.projects.map((p) => button(String(p.payload.localContext['title']?.override ?? 'Website'), 'open', `data-id="${e(p.id)}"`, state.project?.id === p.id ? 'project active' : 'project')).join('')}</nav>${button('+ New workspace', 'home', '', 'new-project')}<div class="sidebar-bottom"><span class="dot"></span> Local & private<br><small>Manual image handoff<br>API configuration shown in Images & assistant</small></div></aside><main id="main" tabindex="-1">${state.project ? workspace() : entry()}</main></div>`;
 }
 function entry() {
   return `<section class="entry"><p class="eyebrow">ONE MODULE. TWO STARTING POINTS.</p><h1>Make intent<br><em>inspectable.</em></h1><p class="intro">A place to explore a website, compare directions and keep the reasons behind your choices.</p><form id="create" class="panel"><h2>Open Website</h2><label>Workspace name<input name="title" required maxlength="100" value="Fictional Home Care"></label><div class="mode-choices"><label><input type="radio" name="mode" value="freeroam" checked> <strong>Freeroam</strong><small>Start with your brief. Brand inputs can stay unresolved.</small></label><label><input type="radio" name="mode" value="branded"> <strong>Branded</strong><small>Explicitly create or mount a minimal VisualOS.</small></label></div><label>VisualOS for Branded<select name="visualOS">${option('new', 'Create and approve this manual palette')}${state.visualOS.map((p) => option(JSON.stringify(ptr(p)), 'Saved VisualOS · ' + p.id.slice(-8))).join('')}</select></label><div class="palette-inputs"><label>Primary<input type="color" name="primary" value="#173f45"></label><label>Background<input type="color" name="background" value="#f3ede0"></label><label>Accent<input type="color" name="accent" value="#de8159"></label></div><p class="hint">Branded creation approves only these explicit palette values and system typography. Motion remains unresolved.</p><button class="primary" type="submit">Enter Website <span aria-hidden="true">↗</span></button></form><p class="hint">Website is the only available module. Synthetic proposals are deterministic, with no AI quality score.</p></section>`;
@@ -150,6 +158,7 @@ function workspace() {
     ['explore', '02', 'Explore & compare'],
     ['native', '03', 'Native handoff'],
     ['history', '04', 'History'],
+    ['providers', '05', 'Images & assistant'],
   ]
     .map(([key, n, label]) =>
       button(
@@ -161,7 +170,7 @@ function workspace() {
     )
     .join(
       '',
-    )}</nav>${view === 'brief' ? brief() : view === 'explore' ? explore() : view === 'native' ? native() : history()}</div>`;
+    )}</nav>${view === 'brief' ? brief() : view === 'explore' ? explore() : view === 'native' ? native() : view === 'providers' ? providerView() : history()}</div>`;
 }
 function brief() {
   const p = state.project!;
@@ -192,6 +201,7 @@ function preview(p: NodePacket<DesignArtifact<unknown>>) {
     ![
       'website-design',
       'website-image',
+      'website-api-image',
       'website-reference',
       'website-direction',
     ].includes(p.payload.kind)
@@ -199,6 +209,7 @@ function preview(p: NodePacket<DesignArtifact<unknown>>) {
     return `<pre>${e(JSON.stringify(p.payload.state, null, 2))}</pre>`;
   if (
     p.payload.kind === 'website-image' ||
+    p.payload.kind === 'website-api-image' ||
     p.payload.kind === 'website-reference'
   )
     return `<div class="image-preview"><img alt="Returned image candidate" src="${imageUrl(ptr(p))}"></div>`;
@@ -256,9 +267,11 @@ function native() {
     (p) => p.payload.kind === 'website-native-job',
   ) as NodePacket<DesignArtifact<NativeJob>>[];
   const inputs = all().filter((p) =>
-    ['website-design', 'website-image'].includes(p.payload.kind),
+    ['website-design', 'website-image', 'website-api-image'].includes(
+      p.payload.kind,
+    ),
   );
-  return `<section class="panel native-intro"><p class="eyebrow">MANUAL NATIVE HANDOFF</p><h2>Take the request. Bring back the result.</h2><p>Export a job-bound manifest, use your authorized ChatGPT or Codex host, then return an image to that original job. This app makes no provider calls.</p><form id="native"><div class="two-col"><label>Original design or image<select name="artifact" required>${inputs.map((p) => option(JSON.stringify(ptr(p)), p.payload.kind === 'website-design' ? (p.payload.state as WebsiteDesignState).thesis : 'Image ' + p.id.slice(-8))).join('')}</select></label><label>Section scope<select name="scope">${['hero', 'services', 'proof', 'contact'].map((x) => option(x, x)).join('')}</select></label></div><label>Instructions<textarea name="instructions" required rows="3" placeholder="Describe the image to generate or the change to make."></textarea></label><label>Preserve <small>One requirement per line</small><textarea name="preservation" rows="2" placeholder="Keep the reference palette\nLeave space for the hero heading"></textarea></label><button class="primary" type="submit" ${!inputs.length ? 'disabled' : ''}>Create native request</button></form>${!inputs.length ? '<p class="hint">Explore a design first to give this request an original input.</p>' : ''}</section><div class="job-list">${
+  return `<section class="panel native-intro"><p class="eyebrow">MANUAL NATIVE HANDOFF</p><h2>Take the request. Bring back the result.</h2><p>Export a job-bound manifest, use your authorized ChatGPT or Codex host, then return an image to that original job. The native path is a manual handoff; this app does not call your host tool.</p><form id="native"><div class="two-col"><label>Original design or image<select name="artifact" required>${inputs.map((p) => option(JSON.stringify(ptr(p)), p.payload.kind === 'website-design' ? (p.payload.state as WebsiteDesignState).thesis : 'Image ' + p.id.slice(-8))).join('')}</select></label><label>Section scope<select name="scope">${['hero', 'services', 'proof', 'contact'].map((x) => option(x, x)).join('')}</select></label></div><label>Instructions<textarea name="instructions" required rows="3" placeholder="Describe the image to generate or the change to make."></textarea></label><label>Preserve <small>One requirement per line</small><textarea name="preservation" rows="2" placeholder="Keep the reference palette\nLeave space for the hero heading"></textarea></label><button class="primary" type="submit" ${!inputs.length ? 'disabled' : ''}>Create native request</button></form>${!inputs.length ? '<p class="hint">Explore a design first to give this request an original input.</p>' : ''}</section><div class="job-list">${
     jobs.length
       ? jobs
           .map((p) => {
@@ -275,6 +288,67 @@ function native() {
           .join('')
       : '<section class="panel empty"><strong>No native requests yet.</strong><p>Requests and returned images will keep their original inputs across restart.</p></section>'
   }</div>`;
+}
+function providerView() {
+  const config = state.providers;
+  const inputs = all().filter((a) =>
+    ['website-design', 'website-image', 'website-api-image'].includes(
+      a.payload.kind,
+    ),
+  );
+  const images = inputs.filter((a) => a.payload.kind !== 'website-design');
+  const jobs = all().filter(
+    (a) => a.payload.kind === 'website-provider-job',
+  ) as NodePacket<DesignArtifact<ProviderJob>>[];
+  const comparison = all()
+    .filter((a) => a.payload.kind === 'website-image-comparison')
+    .at(-1);
+  const c = comparison?.payload.state as
+    | { compared: VersionRef[]; selected: VersionRef | null; reason: string }
+    | undefined;
+  const refs = state.references?.filter((r) => r.selected) ?? [];
+  return `<section class="panel provider-config"><p class="eyebrow">OPTIONAL CLOUD CAPABILITIES</p><h2>Images & design assistant</h2>${config?.verificationMode === 'offline-transport-fixture' ? '<p class="badge unresolved">OFFLINE TRANSPORT FIXTURE · no provider called</p>' : ''}<p>Prepare a request, inspect its inputs, then explicitly submit. Manual native handoff stays available.</p><div class="two-col"><p><strong>Image model</strong><br>${e(config?.imageModel ?? 'Unconfigured')}</p><p><strong>Text / vision model</strong><br>${e(config?.assistantModel ?? 'Unconfigured')}</p></div><p class="badge ${config?.available ? '' : 'unresolved'}">${config?.configured ? 'Credential configured on server' : 'API credentials unconfigured'} · ${config?.authorized ? 'Run policy configured' : 'No approved run budget'} · account access unverified</p><p class="hint">${config?.budget ? `Run ${e(config.budget.runId)} · ${config.budget.callsUsed}/${config.budget.maxCalls} calls claimed · $${config.budget.reservedUSD.toFixed(2)} reserved of $${config.budget.capUSD.toFixed(2)} reservation cap. $${config.budget.reserveUSD.toFixed(2)} reserved per call. This approved call bound is an alternative to a guaranteed dollar maximum; actual billing is unknown.` : 'No chargeable submission is available until you configure credentials and an explicitly approved private run policy.'}</p>${config?.persistenceFailed ? '<p class="notice error">Provider history could not be committed. Stop and inspect the copied private runtime.</p>' : ''}<p class="hint">One PNG per image request. Editing uses the original image plus up to four chosen references. Generation uses text; choose no image references. Seed, CFG, masks and exact pixel preservation are unavailable in this recipe.</p>${button('Refresh provider outcomes', 'provider-refresh')}</section>
+  <section class="panel"><h2>Prepare without sending</h2><form id="provider-prepare"><div class="two-col"><label>Operation<select name="operation">${option('generate', 'Generate section image')}${option('edit', 'Edit / refine section image')}${option('assistant', 'Text / vision direction proposal')}</select></label><label>Section<select name="scope">${['hero', 'services', 'proof', 'contact'].map((x) => option(x, x)).join('')}</select></label></div><label>Original design / image <small>Assistant uses the current brief instead</small><select name="artifact">${inputs.map((a) => option(JSON.stringify(ptr(a)), a.payload.kind + ' · ' + a.payload.scope + ' · ' + a.id.slice(-8))).join('')}</select></label><label>Instructions<textarea name="instructions" required rows="3" placeholder="Describe a section image, a refinement, or a direction to explore."></textarea></label><div class="two-col"><label>Image size<select name="size">${['1024x1024', '1536x1024', '1024x1536'].map((x) => option(x, x)).join('')}</select></label><label>Image quality<select name="quality">${['low', 'medium', 'high'].map((x) => option(x, x)).join('')}</select></label></div><p class="hint">Assistant: no tools, maximum 2,000 output tokens. These image controls apply only to image requests.</p><fieldset><legend>Chosen image references <small>Up to four; editing or assistant only</small></legend>${refs.map((r) => `<label class="check"><input type="checkbox" name="reference" value="${encoded(r.artifact)}">${e(r.label)} · ${e(r.role)} · ${e(r.scope)}</label>`).join('') || '<p class="hint">No selected references. Add them in Brief & references.</p>'}</fieldset><button type="submit">Save immutable request</button></form></section>
+  <div class="job-list">${jobs
+    .map((a) => {
+      const j = a.payload.state,
+        m = j.request;
+      return `<section class="panel api-job" data-attempt="${e(a.id)}"><div class="job-heading"><h2>${e(m.operation)} · ${e(m.scope)}</h2><span class="badge ${j.status === 'outcome-uncertain' ? 'unresolved' : ''}">${e(j.status)}</span></div><p>${e(m.instructions)}</p><p class="hint">OpenAI API · requested ${e(m.model)} · recipe ${e(m.recipe)}<br>Brief v${m.project.version} · ${m.references.length} selected image references · input ${e(m.artifact?.id.slice(-8) ?? 'brief only')}<br>${m.operation === 'assistant' ? 'No tools; 2,000 output tokens maximum' : `${e(m.settings.size)} · ${e(m.settings.quality)} · one opaque PNG`}<br>App attempt ${e(a.id)} is separate from transport/result IDs.</p><details><summary>Inspect immutable request</summary><pre class="json-result">${e(JSON.stringify(m, null, 2))}</pre></details><div class="button-row">${button('Submit this API attempt', 'provider-submit', `data-job="${encoded(ptr(a))}" ${j.status !== 'queued' || !config?.available ? 'disabled' : ''}`, 'primary')}${button('Cancel API attempt locally', 'provider-cancel', `data-job="${encoded(ptr(a))}" ${!['queued', 'submitting', 'running', 'outcome-uncertain'].includes(j.status) ? 'disabled' : ''}`)}</div><p class="hint">Submission uses one reserved call. Local cancellation cannot promise remote cancellation or zero charge. No automatic retry.</p>${j.observations.map((o) => `<div class="outcome"><strong>${e(o.kind)}</strong><p>${e(o.message)}</p><small>Transport ${e(o.transportRequestId ?? 'unknown')} · result ${e(o.resultId ?? 'unknown')} · reported model ${e(o.reportedModel ?? 'unknown')} · actual cost unknown</small><pre class="json-result">${e(JSON.stringify({ usage: o.usage, reportedSettings: o.reportedSettings }, null, 2))}</pre></div>`).join('')}${j.outputs
+        .map(find)
+        .filter((a): a is NodePacket<DesignArtifact<unknown>> => !!a)
+        .map((a) => {
+          if (a.payload.kind === 'website-api-image') {
+            const i = a.payload.state as ApiImage;
+            return `<article class="image-result">${preview(a)}<p>API candidate · ${e(i.outcome)} · ${i.image.width} × ${i.image.height}</p><small>SHA-256 ${e(i.image.checksum)}</small><a class="text-link" href="${imageUrl(ptr(a)).replace('/image?', '/asset?')}">Download API original</a><form class="accept-image" data-artifact="${encoded(ptr(a))}" data-scope="${e(a.payload.scope)}"><label>Acceptance reason<input name="reason" required></label><label class="check"><input type="checkbox" name="historical"> I reviewed the original, possibly historical inputs</label><button type="submit" ${j.status !== 'returned' ? 'disabled' : ''}>Accept API section image</button></form></article>`;
+          }
+          const raw = a.payload.state as AssistantProposal,
+            p = raw.proposal;
+          return `<article class="assistant-proposal"><h3>${e(p.title)}</h3><span class="badge unresolved">Unreviewed assistant proposal · no brand approval</span><p class="hint">Brief v${raw.project.version} · ${raw.sourceReferences.length} pinned reference sources</p><form class="assistant-review" data-proposal="${encoded(ptr(a))}"><label>Proposal title<input name="title" required value="${e(p.title)}"></label><label>Rationale<textarea name="rationale" required rows="3">${e(p.rationale)}</textarea></label><label>Constraints<textarea name="constraints" rows="2">${e(p.constraints.join('\n'))}</textarea></label><label>Uncertainty<textarea name="uncertainty" required rows="2">${e(p.uncertainty)}</textarea></label><label>Unresolved choices<textarea name="unresolved" rows="2">${e(p.unresolved.join('\n'))}</textarea></label><label>Human review reason<input name="reason" required></label><button type="submit" ${j.status !== 'returned' ? 'disabled' : ''}>Record my edited review</button></form></article>`;
+        })
+        .join(
+          '',
+        )}<form class="provider-reconcile" data-job="${encoded(ptr(a))}"><label>Reconciliation evidence <small>Remote retrieval is unavailable here; check provider records independently</small><input name="reason" required placeholder="Evidence reference, time and conclusion"></label><label>Reservation decision<select name="disposition">${option('retain', 'Keep reservation; acknowledge reviewed outcome')}${option('release', 'Release only with verified no-charge evidence')}</select></label><label class="check"><input type="checkbox" name="verified"> I verified that this attempt incurred no charge</label><button type="submit" ${!['outcome-uncertain', 'cancelled-locally', 'failed', 'returned'].includes(j.status) ? 'disabled' : ''}>Record reconciliation</button></form></section>`;
+    })
+    .join('')}</div>
+  <section class="panel comparison"><h2>Compare section images</h2><p>Choose native and API alternatives for the same section. Save a selection with a reason; acceptance stays separate.</p><form id="image-comparison"><div class="two-col">${['first', 'second'].map((k) => `<label>${k === 'first' ? 'First image' : 'Second image'}<select name="${k}" required>${images.map((a) => option(JSON.stringify(ptr(a)), (a.payload.kind === 'website-api-image' ? 'API' : 'Native') + ' · ' + a.payload.scope + ' · ' + a.id.slice(-8), match(c?.compared[k === 'first' ? 0 : 1], ptr(a)) || (!c && images[k === 'first' ? 0 : 1]?.id === a.id))).join('')}</select></label>`).join('')}</div><label>Selection<select name="selected">${option('none', 'Keep selection unresolved', !c?.selected)}${option('first', 'Select first image', !!c?.selected && match(c.selected, c.compared[0]!))}${option('second', 'Select second image', !!c?.selected && match(c.selected, c.compared[1]!))}</select></label><label>Comparison reason<input name="reason" required value="${e(c?.reason ?? '')}"></label><button type="submit" ${images.length < 2 ? 'disabled' : ''}>Save image comparison / selection</button></form>${
+    c
+      ? `<p>${e(c.reason)}</p><div class="comparison-grid">${c.compared
+          .map(find)
+          .filter((a): a is NodePacket<DesignArtifact<unknown>> => !!a)
+          .map(
+            (a) =>
+              `<article><h3>${a.payload.kind === 'website-api-image' ? 'API' : 'Native'} · ${e(a.payload.scope)}</h3>${preview(a)}<span class="badge">${match(c.selected, ptr(a)) ? 'Selected · acceptance separate' : 'Alternative'}</span></article>`,
+          )
+          .join('')}</div>`
+      : ''
+  }</section>
+  ${all()
+    .filter((a) => a.payload.kind === 'website-assistant-review')
+    .map((a) => {
+      const r = a.payload.state as AssistantReview;
+      return `<section class="panel"><h2>Human reviewed: ${e(r.proposal.title)}</h2><p>${e(r.proposal.rationale)}</p><p>Uncertainty: ${e(r.proposal.uncertainty)}</p><p class="hint">${e(r.reason)} · ${e(r.actor)}. Website proposal; VisualOS approval unchanged.</p></section>`;
+    })
+    .join('')}`;
 }
 function history() {
   const events = state.ledger?.events ?? [];
@@ -369,6 +443,22 @@ function bind() {
     b.addEventListener('click', () => {
       void act(async () => {
         const a = b.dataset['action'];
+        if (a === 'provider-refresh') await open(state.project!.id);
+        if (a === 'provider-submit')
+          await mutate(
+            'provider/submit',
+            { job: jsonRef(b.dataset['job']!) },
+            'Attempt claimed. Refresh to inspect its outcome; no automatic retry.',
+          );
+        if (a === 'provider-cancel')
+          await mutate(
+            'provider/cancel',
+            {
+              job: jsonRef(b.dataset['job']!),
+              reason: 'Operator cancelled locally',
+            },
+            'Local cancellation recorded; remote outcome/cost unknown.',
+          );
         if (a === 'open') await open(b.dataset['id']!);
         if (a === 'home') {
           activate(await request('session'));
@@ -600,6 +690,75 @@ function bind() {
         allowHistorical: false,
       },
       'Exact design version accepted locally.',
+    );
+  });
+  onForm('#provider-prepare', async (f) => {
+    const { s, d } = formData(f);
+    await mutate(
+      'provider/prepare',
+      {
+        expectedProject: ptr(state.project!),
+        artifact:
+          s('operation') === 'assistant' ? null : jsonRef(s('artifact')),
+        scope: s('scope'),
+        operation: s('operation'),
+        instructions: s('instructions'),
+        size: s('size'),
+        quality: s('quality'),
+        references: d.getAll('reference').map((x) => jsonRef(String(x))),
+      },
+      'Request saved. Inspect it before an explicit API submission.',
+    );
+  });
+  onForm('.assistant-review', async (f) => {
+    const { s, lines } = formData(f);
+    await mutate(
+      'provider/review',
+      {
+        expectedProject: ptr(state.project!),
+        proposal: jsonRef(f.dataset['proposal']!),
+        edited: {
+          title: s('title'),
+          rationale: s('rationale'),
+          constraints: lines('constraints'),
+          uncertainty: s('uncertainty'),
+          unresolved: lines('unresolved'),
+        },
+        reason: s('reason'),
+      },
+      'Human edited review recorded; no brand approval or acceptance changed.',
+    );
+  });
+  onForm('#image-comparison', async (f) => {
+    const { s } = formData(f),
+      first = jsonRef(s('first')),
+      second = jsonRef(s('second'));
+    await mutate(
+      'provider/compare',
+      {
+        compared: [first, second],
+        selected:
+          s('selected') === 'none'
+            ? null
+            : s('selected') === 'first'
+              ? first
+              : second,
+        reason: s('reason'),
+      },
+      'Image comparison and selection saved; acceptance remains separate.',
+    );
+  });
+  onForm('.provider-reconcile', async (f) => {
+    const { s, d } = formData(f);
+    await mutate(
+      'provider/reconcile',
+      {
+        job: jsonRef(f.dataset['job']!),
+        reason: s('reason'),
+        verifiedNoCharge: s('disposition') === 'release' && d.has('verified'),
+        acknowledgeUncertain: s('disposition') === 'retain',
+      },
+      'Operator reconciliation recorded. Reservation and original history remain inspectable.',
     );
   });
   onForm('#native', async (f) => {

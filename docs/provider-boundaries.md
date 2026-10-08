@@ -1,7 +1,8 @@
 # Provider boundaries
 
-Documentation review: 2026-10-06. These are adapter requirements and evidence boundaries, not a
-claim that live provider adapters ship. The [local workspace](workspace.md) adds manual native
+Original S0 documentation review: 2026-10-06. The table preserves historical S0 evidence.
+Current implementation/configuration and sources rechecked on 2026-10-08 are in
+[local API providers](openai-providers.md); offline tests do not prove live account compatibility. The [local workspace](workspace.md) adds manual native
 export/import with decoded files and immutable original-job bindings. It does not call a host tool.
 Only deterministic fixtures execute; the table below retains the original S0 evidence boundary.
 
@@ -31,6 +32,6 @@ local/remote distinction. Store project history independently of provider choice
 configuration and text/vision assistant configuration are separate. Human review promotes a proposal;
 provider selection cannot silently approve brand rules or reset a brief.
 
-Manual native file export/import is implemented as described in workspace.md. No credential handling,
-in-app design assistant, OpenAI API integration or ComfyUI worker is implemented here. The full image formats, usage accounting, idempotency and retry
-behavior must be checked with real providers in their bounded integration assignments.
+Manual native file export/import is implemented as described in workspace.md. Server-only credential configuration, in-app image/assistant adapters and persistent claim/reservation
+behavior are implemented and tested offline. Live provider behavior/usage/billing remains pending;
+ComfyUI is unimplemented. Verify each live integration within its separately approved budget.

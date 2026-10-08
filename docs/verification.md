@@ -125,3 +125,28 @@ retry, closed late-return controls, and new Branded/Freeroam project comparisons
 the prior owning comparison. JPEG reference and WebP result links exercise actual original downloads.
 [Synthetic evidence](evidence/) is technical
 implementer evidence only. Native-host generation and independent round trip remain separate checks.
+
+## Optional API adapter checks (offline)
+
+The suite now retains all 70 workspace/foundation tests and adds 24 provider regressions, for 94
+top-level tests. They exercise serialized JSON/multipart/Responses boundaries, original bytes/parent
+lineage, missing configuration/budget, unsupported controls, duplicate/independent-instance claims,
+source/owner checks, refusal/rate-limit/malformed/oversized/corrupt output, timeout/network uncertainty,
+process interruption, late/cancelled results, cross-project persisted run limits, explicit reconciliation,
+storage failure, assistant review and copied-root native/API comparison history. No test calls OpenAI.
+
+```sh
+npm run build
+npm run test:browser
+npm run test:browser:providers
+node scripts/serialize-design-fixtures.ts
+git diff --exit-code -- fixtures/design-os.json
+git diff --check
+```
+
+Both browser scripts use temporary synthetic roots. The provider script uses a test-only injected
+transport and records zero real provider calls. Sources, supported controls, secret/budget boundaries,
+proposed opt-in live review and limitations are in [local capability providers](openai-providers.md).
+The retained Windows/Linux Node 24.19.0 CI runs all unit/smoke/build/fixture checks; Linux runs both
+browser workflows. Record actual run results before claiming success. Windows directory durability
+and real provider/account verification remain unproven by these checks.

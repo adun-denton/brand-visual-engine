@@ -1,0 +1,28 @@
+{
+  "runtime": "v24.19.0",
+  "platform": "linux",
+  "architecture": "x64",
+  "browser": "143.0.7499.0",
+  "desktop": "1440x1000",
+  "mobile": "390x844",
+  "realProviderCalls": 0,
+  "offlineTransportCalls": 4,
+  "checks": [
+    "unconfigured disabled submit",
+    "stale request actionable error",
+    "text/vision fixture and human edited review",
+    "generation/edit serialized adapter fixture",
+    "manual native import unchanged",
+    "same-section native/API comparison and explicit selection",
+    "separate acceptance",
+    "download original SHA-256",
+    "rate limit without retry",
+    "keyboard active-tab focus",
+    "no horizontal overflow",
+    "new process/context restart",
+    "closed whole-root copy",
+    "accepted/artifact/ledger read-back equality"
+  ],
+  "downloadChecksum": "bb23c98da45e0320c4fafa9928fb0590d6ade9db64269dcdd871a23f213e8682",
+  "pageErrors": []
+}

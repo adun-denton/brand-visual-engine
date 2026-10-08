@@ -3,7 +3,8 @@
 This describes executable contracts in this checkout, not a roadmap or canonical task status.
 Website is the only implemented module. The [local workspace](workspace.md) now exposes these shared
 contracts through a browser and bounded manual image adapter. The S0 model below remains applicable;
-there is no live provider, semantic AI evaluation or deployment.
+the additive [API adapters](openai-providers.md) are tested offline, with live provider verification pending.
+There is no semantic AI evaluation or deployment.
 The existing spike is adapted in place rather than discarded.
 
 ## Ownership and boundary

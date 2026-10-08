@@ -33,3 +33,7 @@ jobs:
         if: runner.os == 'Linux'
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-browser-evidence
+      - run: npm run test:browser:providers
+        if: runner.os == 'Linux'
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-provider-browser-evidence

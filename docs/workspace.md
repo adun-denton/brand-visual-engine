@@ -1,8 +1,9 @@
 # Local Website workspace
 
 A thin, single-operator OS shell runs Website in Branded or Freeroam mode. The browser uses the
-same module and shared kernel in both modes. It does not call providers, mount metadata suggestions,
-approve reviewed direction proposals, or produce a production website.
+same module and shared kernel in both modes. API capabilities are optional and require explicit server credentials/run approval and user submission.
+It does not silently mount metadata suggestions, approve brand context or produce a production website.
+See [in-app provider boundaries and spending](openai-providers.md) for the additive image/assistant path.
 
 ## Run and storage
 
@@ -59,7 +60,8 @@ schema, asset identity, fixed derived RGB paths, byte checksums and raster dimen
 raw legacy methods over HTTP or runs legacy job recovery. Existing legacy snapshots remain readable.
 The databases are not unified: old jobs/decisions remain historical; the kernel owns new acceptance.
 Both stores and both asset folders must be preserved together. There is no implicit legacy import,
-remote provider execution, external job reconciliation, schema migration or automatic Git sync.
+implicit provider execution, schema migration or automatic Git sync. Explicit API attempts/reconciliation
+are described separately in openai-providers.md.
 
 ## Browser workflow
 
@@ -109,7 +111,7 @@ bounded parsed invalid images record job outcomes. Missing/corrupt private stora
 without emitting its full path or regenerating accepted work. The local token/origin checks are not
 multi-user authentication or production security. Decoding is bounded but not an OS sandbox; imports
 from adversarial sources and redistribution of native dependencies need a separate security/license
-review. No automatic chargeable retry occurs because no provider is submitted here.
+review. No automatic chargeable retry occurs. API submission is a separate explicit action under an approved policy.
 
 ## Dependencies and evidence
 

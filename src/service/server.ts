@@ -1,3 +1,5 @@
+import { Providers } from './providers.ts';
+import type { ProviderConfig } from './providers.ts';
 import { createServer } from 'node:http';
 import type { Server } from 'node:http';
 import { randomBytes } from 'node:crypto';
@@ -9,6 +11,7 @@ import { MAX_IMAGE_BYTES } from './assets.ts';
 export interface RunningApp {
   server: Server;
   workspace: Workspace;
+  providers: Providers;
   origin: string;
   close: () => Promise<void>;
 }
@@ -16,16 +19,30 @@ export async function startApp(
   root: string,
   port = 0,
   webRoot = join(import.meta.dirname, '../../dist'),
+  providerConfig?: ProviderConfig,
 ): Promise<RunningApp> {
   const workspace = new Workspace(root),
     token = randomBytes(32).toString('hex');
+  const providers = new Providers(workspace, providerConfig);
   let origin = '';
   const server = createServer(async (req, res) => {
     const json = (status: number, body: unknown) => {
       res.writeHead(status, {
         'Content-Type': 'application/json; charset=utf-8',
       });
-      res.end(JSON.stringify(body));
+      res.end(
+        JSON.stringify(
+          body && typeof body === 'object'
+            ? {
+                ...body,
+                ...('capabilities' in body
+                  ? { capabilities: providers.registry() }
+                  : {}),
+                providers: providers.status(),
+              }
+            : body,
+        ),
+      );
     };
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -153,6 +170,24 @@ export async function startApp(
           case '/api/v1/accept':
             result = workspace.accept(pid, v);
             break;
+          case '/api/v1/provider/prepare':
+            result = providers.prepare(pid, v);
+            break;
+          case '/api/v1/provider/submit':
+            result = providers.submit(pid, v);
+            break;
+          case '/api/v1/provider/cancel':
+            result = providers.cancel(pid, v);
+            break;
+          case '/api/v1/provider/reconcile':
+            result = providers.reconcile(pid, v);
+            break;
+          case '/api/v1/provider/review':
+            result = providers.review(pid, v);
+            break;
+          case '/api/v1/provider/compare':
+            result = providers.compare(pid, v);
+            break;
           case '/api/v1/native':
             result = workspace.native(pid, v);
             break;
@@ -247,8 +282,10 @@ export async function startApp(
   return {
     server,
     workspace,
+    providers,
     origin,
     close: async () => {
+      await providers.close();
       await new Promise<void>((resolve, reject) =>
         server.close((e) => (e ? reject(e) : resolve())),
       );

@@ -5,8 +5,9 @@ contracts connect brand intent, visual references, Website design exploration, i
 local design decisions.
 
 This repository contains a local browser workspace, shared kernel, Website exploration, persistence,
-manual native-image export/import, legacy asset compatibility and synthetic fixtures. Live providers
-and production website composition are not implemented. Broader intended behavior remains below.
+manual native-image export/import, server-side OpenAI image/assistant adapters, legacy asset compatibility
+and synthetic fixtures. Provider wiring is tested offline; live account/usage/quality verification remains
+pending. Production website composition is not implemented. Broader intended behavior remains below.
 
 The application is standalone and is developed/tested with synthetic website briefs, sample assets,
 and mock providers. No existing website or client pilot is required to start development. Real
@@ -68,6 +69,7 @@ browser checks and limitations. No provider call or production deployment is sta
 
 - [Shared foundation, context modes and legacy mapping](docs/design-os-contracts.md)
 - [Legacy standalone interfaces and persistence](docs/standalone-contracts.md)
+- [In-app providers, configuration, spending and recovery](docs/openai-providers.md)
 - [Provider capabilities and evidence boundaries](docs/provider-boundaries.md)
 - [Technical checks and designer review rubric](docs/verification.md)
 
