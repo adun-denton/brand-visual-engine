@@ -227,7 +227,13 @@ export class Providers {
       freshness: 'pinned',
     });
   }
-  prepare(pid: string, input: unknown) {
+  prepare(
+    pid: string,
+    input: unknown,
+    companions?: (
+      job: NodePacket<DesignArtifact<ProviderJob>>,
+    ) => NodePacket<unknown>[],
+  ) {
     const r = record(input, [
       'expectedProject',
       'artifact',
@@ -250,7 +256,11 @@ export class Providers {
     if (
       operation === 'edit' &&
       (!a ||
-        !['website-image', 'website-api-image'].includes(a.payload.kind) ||
+        ![
+          'website-image',
+          'website-api-image',
+          'website-region-image',
+        ].includes(a.payload.kind) ||
         a.payload.scope !== scope)
     )
       throw new InputError('Edit starts from an image in this section');
@@ -336,7 +346,14 @@ export class Providers {
       refs.map((r) => r.image),
     );
     const { integrity: _, ...body } = j;
-    this.workspace.kernel.put(packet({ ...body, id: m.attemptId }));
+    const prepared = packet<DesignArtifact<ProviderJob>>({
+      ...body,
+      id: m.attemptId,
+    });
+    this.workspace.kernel.putMany([
+      prepared,
+      ...(companions?.(prepared) ?? []),
+    ]);
     return this.workspace.state(pid);
   }
   private change(
@@ -860,7 +877,12 @@ export class Providers {
     const images = refs.map((r) => this.workspace.read(pid, r));
     if (
       images.some(
-        (a) => !['website-image', 'website-api-image'].includes(a.payload.kind),
+        (a) =>
+          ![
+            'website-image',
+            'website-api-image',
+            'website-region-image',
+          ].includes(a.payload.kind),
       ) ||
       images[0]!.payload.scope !== images[1]!.payload.scope
     )

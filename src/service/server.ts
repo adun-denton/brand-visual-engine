@@ -1,4 +1,5 @@
 import { Providers } from './providers.ts';
+import { Regions } from './regions.ts';
 import type { ProviderConfig } from './providers.ts';
 import { createServer } from 'node:http';
 import type { Server } from 'node:http';
@@ -12,6 +13,7 @@ export interface RunningApp {
   server: Server;
   workspace: Workspace;
   providers: Providers;
+  regions: Regions;
   origin: string;
   close: () => Promise<void>;
 }
@@ -24,6 +26,7 @@ export async function startApp(
   const workspace = new Workspace(root),
     token = randomBytes(32).toString('hex');
   const providers = new Providers(workspace, providerConfig);
+  const regions = new Regions(workspace, providers);
   let origin = '';
   const server = createServer(async (req, res) => {
     const json = (status: number, body: unknown) => {
@@ -74,7 +77,8 @@ export async function startApp(
           path === '/api/v1/manifest' ||
           path === '/api/v1/artifact' ||
           path === '/api/v1/image' ||
-          path === '/api/v1/asset'
+          path === '/api/v1/asset' ||
+          path === '/api/v1/region/bundle'
         ) {
           const pointer = ref({
             id: url.searchParams.get('id'),
@@ -82,6 +86,10 @@ export async function startApp(
             freshness: 'pinned',
           });
           const pid = id(projectId);
+          if (path === '/api/v1/region/bundle') {
+            json(200, await regions.bundle(pid, pointer));
+            return;
+          }
           if (path === '/api/v1/asset') {
             const { bytes, info } = await workspace.originalImage(pid, pointer);
             const extension = info.format === 'jpeg' ? 'jpg' : info.format;
@@ -155,6 +163,24 @@ export async function startApp(
         const pid = id(outer['projectId']);
         const v = outer['input'];
         switch (path) {
+          case '/api/v1/region/select':
+            result = await regions.select(pid, v);
+            break;
+          case '/api/v1/region/prepare':
+            result = regions.prepare(pid, v);
+            break;
+          case '/api/v1/region/collect':
+            result = regions.collect(pid, v);
+            break;
+          case '/api/v1/region/compose':
+            result = await regions.compose(pid, v);
+            break;
+          case '/api/v1/region/compare':
+            result = regions.compare(pid, v);
+            break;
+          case '/api/v1/region/accept':
+            result = await regions.accept(pid, v);
+            break;
           case '/api/v1/revise':
             result = workspace.reviseProject(pid, v);
             break;
@@ -283,6 +309,7 @@ export async function startApp(
     server,
     workspace,
     providers,
+    regions,
     origin,
     close: async () => {
       await providers.close();

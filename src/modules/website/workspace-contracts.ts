@@ -1,4 +1,5 @@
 import { validateProviderArtifact } from './provider-contracts.ts';
+import { validateRegionArtifact } from './region-contracts.ts';
 import type { VersionRef } from '../../kernel/contracts.ts';
 import type { ImageInfo } from '../../service/assets.ts';
 import {
@@ -137,6 +138,7 @@ export function parseImageInfo(value: unknown): ImageInfo {
   };
 }
 export function validateWorkspaceArtifact(p: Record<string, unknown>): boolean {
+  if (validateRegionArtifact(p)) return true;
   if (validateProviderArtifact(p)) return true;
   const kind = p['kind'];
   if (

@@ -3,6 +3,7 @@
 A thin, single-operator OS shell runs Website in Branded or Freeroam mode. The browser uses the
 same module and shared kernel in both modes. API capabilities are optional and require explicit server credentials/run approval and user submission.
 It does not silently mount metadata suggestions, approve brand context or produce a production website.
+See [regional selection, native bundle and strict-composite workflow](regions.md) for bound edits.
 See [in-app provider boundaries and spending](openai-providers.md) for the additive image/assistant path.
 
 ## Run and storage

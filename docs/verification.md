@@ -169,3 +169,22 @@ The retained Windows/Linux Node 24.19.0 CI runs all unit/smoke/build/fixture che
 workflows, uploading public-safe receipts/screenshots for each platform. Record actual run results before
 claiming success. Windows directory durability
 and real provider/account verification remain unproven by these checks.
+
+## Regional workflow checks
+
+The 100 retained tests are joined by 19 regional groups (119 top-level tests). Coverage includes
+1254-square production RGBA masks/composites, PNG/JPEG/WebP and orientation, non-square geometry,
+source/version/dimension/mask rejection without writes, source/overlay separation, byte-exact native
+bundle/reference/null metadata, immutable raw/strict lineage, outside RGB/alpha, closed-copy reopen,
+geometry rejection, late/cancelled results, concurrent selection/composite/acceptance conflicts,
+unsupported recipes, type/owner/scope bindings, strict-policy bypass rejection, replacement-source active selection/competing initial save conflicts, second-connection
+freshness revalidation inside acceptance, injected atomic-write failure/retry, Branded context
+preservation and one-call regional execution through the existing offline API adapter.
+
+`npm run test:browser:regions` adds the actual regional form workflow at 1440×1000 and 390×844.
+Receipts require one intended injected API submission, private IPC counts `[1,0]`, zero real calls,
+exact source bytes, native bundle files, outside-mask RGB/alpha, explicit comparison/acceptance,
+correct historical crops after a selection revision and closed-root/fresh-session equality. The
+retained provider receipt still requires exactly four offline calls and `[0,4,0]`; neither assertion
+is weakened. Screenshots and receipts are uploaded by both CI platforms. These are AI technical
+fixtures; the regional designer rubric above requires separate operator/designer judgment.

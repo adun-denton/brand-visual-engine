@@ -37,10 +37,14 @@ jobs:
       - run: npm run test:browser:providers
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-provider-browser-evidence
+      - run: npm run test:browser:regions
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-region-browser-evidence
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: offline-browser-evidence-${{ matrix.os }}
           path: |
             ${{ runner.temp }}/bve-browser-evidence
             ${{ runner.temp }}/bve-provider-browser-evidence
+            ${{ runner.temp }}/bve-region-browser-evidence
           if-no-files-found: error
