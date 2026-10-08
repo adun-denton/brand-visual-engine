@@ -8,6 +8,7 @@ const root = process.argv[2],
   enabled = process.argv[4] === 'fixture';
 if (!root || !Number.isSafeInteger(port))
   throw new Error('Disposable fixture root and port required');
+if (!process.send) throw new Error('Test fixture requires private parent IPC');
 const scene = (color: string) =>
   sharp(
     Buffer.from(
@@ -52,6 +53,15 @@ const app = await startApp(root, port, undefined, {
           model: ASSISTANT_MODELS[0],
           output: [
             {
+              id: 'rs_fixture',
+              type: 'reasoning',
+              summary: [],
+              encrypted_content: 'synthetic-opaque-metadata',
+            },
+            {
+              id: 'msg_fixture',
+              role: 'assistant',
+              status: 'completed',
               type: 'message',
               content: [
                 {
@@ -89,10 +99,40 @@ const app = await startApp(root, port, undefined, {
   },
 });
 console.log('Offline fixture workspace: ' + app.origin);
-for (const signal of ['SIGTERM', 'SIGINT'] as const)
-  process.on(signal, () => {
-    void app.close().then(() => {
-      console.log('Offline transport calls: ' + calls + '; real API calls: 0');
-      process.exit(0);
+let closing: Promise<void> | null = null;
+const close = () => (closing ??= app.close());
+process.on('message', (message: unknown) => {
+  const m = message as { type?: unknown; id?: unknown } | null;
+  if (m?.type !== 'bve-fixture-shutdown' || typeof m.id !== 'string' || closing)
+    return;
+  void close()
+    .then(
+      () =>
+        new Promise<void>((r, reject) =>
+          process.send!(
+            {
+              type: 'bve-fixture-closed',
+              id: m.id,
+              offlineTransportCalls: calls,
+              realProviderCalls: 0,
+            },
+            undefined,
+            undefined,
+            (e: Error | null) => (e ? reject(e) : r()),
+          ),
+        ),
+    )
+    .then(() => {
+      process.disconnect(); // Natural exit drains stdio; parent waits for close.
+    })
+    .catch(() => {
+      process.exitCode = 1;
+      if (process.connected) process.disconnect();
     });
+});
+process.on('disconnect', () => {
+  void close().catch(() => {
+    process.exitCode = 1;
   });
+});
+process.send!({ type: 'bve-fixture-ready', origin: app.origin });

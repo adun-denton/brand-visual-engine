@@ -61,6 +61,44 @@ export interface ProviderResult {
   proposal: Proposal | null;
   evidence: Partial<Observation>;
 }
+function object(x: unknown): Record<string, unknown> {
+  if (!x || typeof x !== 'object' || Array.isArray(x)) throw new Error();
+  return x as Record<string, unknown>;
+}
+/** Reasoning is metadata, not proposal text. Only one final assistant message is usable. */
+function assistantContent(output: unknown): Record<string, unknown> {
+  if (!Array.isArray(output) || !output.length) throw new Error();
+  const items = output.map(object);
+  for (const item of items.slice(0, -1)) {
+    if (
+      item['type'] !== 'reasoning' ||
+      !Array.isArray(item['summary']) ||
+      (item['status'] !== undefined && item['status'] !== 'completed') ||
+      (item['encrypted_content'] !== undefined &&
+        item['encrypted_content'] !== null &&
+        typeof item['encrypted_content'] !== 'string')
+    )
+      throw new Error();
+    for (const summary of item['summary']) {
+      const part = object(summary);
+      if (part['type'] !== 'summary_text' || typeof part['text'] !== 'string')
+        throw new Error();
+    }
+  }
+  const message = items.at(-1)!;
+  if (
+    message['type'] !== 'message' ||
+    (message['role'] !== undefined && message['role'] !== 'assistant') ||
+    (message['status'] !== undefined && message['status'] !== 'completed') ||
+    (message['phase'] !== undefined &&
+      message['phase'] !== null &&
+      message['phase'] !== 'final_answer') ||
+    !Array.isArray(message['content']) ||
+    message['content'].length !== 1
+  )
+    throw new Error();
+  return object(message['content'][0]);
+}
 /** One transport call, no SDK, retries, URL fetching, tools or remote conversation state. */
 export async function executeOpenAI(
   m: ProviderRequest,
@@ -259,16 +297,12 @@ export async function executeOpenAI(
           false,
           evidence,
         );
-      const output = data['output'];
+      const c = assistantContent(data['output']);
       if (
-        !Array.isArray(output) ||
-        output.length !== 1 ||
-        output[0]?.type !== 'message' ||
-        !Array.isArray(output[0]?.content)
+        c['type'] === 'refusal' &&
+        typeof c['refusal'] === 'string' &&
+        c['refusal'].length <= 32000
       )
-        throw new Error();
-      const c = output[0].content;
-      if (c.some((x: { type?: string }) => x.type === 'refusal'))
         throw new ProviderFailure(
           'refusal',
           'Assistant refused this proposal. No review or approval was recorded.',
@@ -276,15 +310,14 @@ export async function executeOpenAI(
           evidence,
         );
       if (
-        c.length !== 1 ||
-        c[0]?.type !== 'output_text' ||
-        typeof c[0]?.text !== 'string' ||
-        c[0].text.length > 32000
+        c['type'] !== 'output_text' ||
+        typeof c['text'] !== 'string' ||
+        c['text'].length > 32000
       )
         throw new Error();
       return {
         bytes: null,
-        proposal: parseProposal(JSON.parse(c[0].text)),
+        proposal: parseProposal(JSON.parse(c['text'])),
         evidence,
       };
     }

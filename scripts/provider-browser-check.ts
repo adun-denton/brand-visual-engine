@@ -1,6 +1,9 @@
 import { chromium, expect } from '@playwright/test';
-import { spawn } from 'node:child_process';
-import type { ChildProcess } from 'node:child_process';
+import { startFixture, stopFixture } from './provider-browser-lifecycle.ts';
+import type {
+  FixtureProcess,
+  FixtureReceipt,
+} from './provider-browser-lifecycle.ts';
 import {
   mkdtempSync,
   mkdirSync,
@@ -34,53 +37,35 @@ await once(reservation, 'listening');
 const port = (reservation.address() as { port: number }).port;
 await new Promise<void>((r) => reservation.close(() => r()));
 const origin = 'http://127.0.0.1:' + port;
-let service: ChildProcess | null = null;
+let service: FixtureProcess | null = null;
 let transportCalls = 0;
+const shutdownReceipts: FixtureReceipt[] = [];
 async function start(mode: string) {
-  service = spawn(
-    process.execPath,
-    ['scripts/provider-browser-service.ts', runtime, String(port), mode],
-    {
-      cwd: resolve(import.meta.dirname, '..'),
-      stdio: ['ignore', 'pipe', 'pipe'],
-    },
-  );
-  await new Promise<void>((r, reject) => {
-    const timer = setTimeout(
-      () => reject(new Error('Fixture service did not start')),
-      15000,
-    );
-    service!.stdout!.on('data', (b) => {
-      if (String(b).includes('Offline fixture workspace:')) {
-        clearTimeout(timer);
-        r();
-      }
-    });
-    service!.once('exit', (code) => {
-      clearTimeout(timer);
-      reject(new Error('Fixture service exited ' + code));
-    });
-  });
+  service = await startFixture(runtime, port, mode);
+  expect(service.origin).toBe(origin);
 }
 async function stop() {
   if (service) {
-    service.stdout!.on('data', (b) => {
-      const m = /Offline transport calls: (\d+)/.exec(String(b));
-      if (m) transportCalls += Number(m[1]);
-    });
-    service.kill('SIGTERM');
-    await once(service, 'exit');
+    const stopped = service;
     service = null;
+    const receipt = await stopFixture(stopped);
+    shutdownReceipts.push(receipt);
+    transportCalls += receipt.offlineTransportCalls;
   }
 }
 await start('unconfigured');
-const browser = await chromium.launch({
-  headless: true,
-  ...(process.env['BVE_CHROMIUM_EXECUTABLE']
-    ? { executablePath: process.env['BVE_CHROMIUM_EXECUTABLE'] }
-    : {}),
-  args: ['--no-sandbox', '--disable-dev-shm-usage'],
-});
+const browser = await chromium
+  .launch({
+    headless: true,
+    ...(process.env['BVE_CHROMIUM_EXECUTABLE']
+      ? { executablePath: process.env['BVE_CHROMIUM_EXECUTABLE'] }
+      : {}),
+    args: ['--no-sandbox', '--disable-dev-shm-usage'],
+  })
+  .catch(async (e) => {
+    await stop();
+    throw e;
+  });
 let context = await browser.newContext({
     viewport: { width: 1440, height: 1000 },
     acceptDownloads: true,
@@ -361,8 +346,11 @@ try {
   expect(errors).toEqual([]);
   await stop();
   expect(transportCalls).toBe(4);
-  writeFileSync(
-    join(evidence, 'provider-browser-check.json'),
+  expect(shutdownReceipts.map((r) => r.offlineTransportCalls)).toEqual([
+    0, 4, 0,
+  ]);
+  expect(shutdownReceipts.every((r) => r.realProviderCalls === 0)).toBe(true);
+  const receipt =
     JSON.stringify(
       {
         runtime: process.version,
@@ -373,6 +361,9 @@ try {
         mobile: '390x844',
         realProviderCalls: 0,
         offlineTransportCalls: transportCalls,
+        shutdown:
+          'acknowledged test-only IPC; stores closed and child/stdio completed',
+        shutdownReceipts,
         checks: [
           'unconfigured disabled submit',
           'stale request actionable error',
@@ -387,6 +378,8 @@ try {
           'no horizontal overflow',
           'new process/context restart',
           'closed whole-root copy',
+          'three acknowledged graceful IPC closes with exact transport counts',
+          'reasoning-plus-final-message browser assistant',
           'accepted/artifact/ledger read-back equality',
         ],
         downloadChecksum: downloadedHash,
@@ -394,13 +387,20 @@ try {
       },
       null,
       2,
-    ) + '\n',
-  );
+    ) + '\n';
+  writeFileSync(join(evidence, 'provider-browser-check.json'), receipt);
+  console.log('Provider browser evidence receipt:\n' + receipt);
   console.log(
     'Provider browser checks passed; offline transport only, 0 real provider calls.',
   );
 } finally {
-  await context.close();
-  await browser.close();
-  await stop();
+  try {
+    await context.close();
+  } finally {
+    try {
+      await browser.close();
+    } finally {
+      await stop();
+    }
+  }
 }

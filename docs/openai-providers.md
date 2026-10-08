@@ -109,17 +109,34 @@ the application. A separate human edit/review artifact references the raw unrevi
 rationale, uncertainty, actor and reason. Stale/cancelled proposals cannot be reviewed as current. This
 records a Website proposal; it never mounts, approves or promotes a VisualOS.
 
+Completed assistant responses may contain documented reasoning metadata followed by one final assistant
+message. The adapter validates these item types and reads only that message's single proposal text or
+refusal. Empty/nonempty reasoning summaries and opaque encrypted metadata are tolerated and discarded;
+they never become proposal text, persisted reasoning or instructions. Tool/unknown output items, multiple
+messages, non-final messages and mixed/malformed content fail the contract. Proposal schema checks,
+safe usage/request/result IDs, one transport call and distinct human review remain unchanged. See the
+[official reasoning response example](https://developers.openai.com/api/docs/guides/reasoning).
+
 Image comparison requires two distinct owned image candidates for one section; saved selection/reason and
 original paths survive reopening. Image acceptance is a separate explicit action with a reason. Switching
 providers preserves briefs, references, accepted work and append-only history.
 
 ## Offline verification and recovery
 
-Run retained locked-install/types/94-test/build/smoke/fixture checks documented in [verification](verification.md),
+Run retained locked-install/types/100-test/build/smoke/fixture checks documented in [verification](verification.md),
 then both browser scripts. The provider script launches a **test-only injected transport** in a separate
 process, with authored labeled images; it records four simulated calls and **zero real provider calls**.
 It is not a provider account/quality/usage/cost test. Test-only execution provenance is
 `api-transport-fixture`; production requests record `openai-api`. Screenshots identify fixture mode.
+
+The fixture uses a private parent/child IPC channel to acknowledge startup and graceful shutdown. It
+closes the providers and both stores before acknowledging the actual in-memory transport count; the
+parent awaits child and stdio completion before copying the root or writing its final receipt. Three
+acknowledged counts must be exactly `[0, 4, 0]`, with zero real calls. Forced termination is bounded failure
+cleanup and cannot yield passing evidence. This avoids the documented Windows behavior of
+[child-process signals](https://nodejs.org/api/child_process.html#subprocesskillsignal). There are no
+fixture transport/control routes in the production service. Windows and Linux CI run both browser scripts
+and retain their final JSON receipts and screenshots as workflow artifacts.
 
 `docs/evidence/provider-browser-check.json` and `providers-*.png` contain public-safe technical inspection.
 Desktop 1440×1000 and mobile 390×844 include focused captures of assistant/comparison/outcome regions.

@@ -129,11 +129,20 @@ implementer evidence only. Native-host generation and independent round trip rem
 ## Optional API adapter checks (offline)
 
 The suite now retains all 70 workspace/foundation tests and adds 24 provider regressions, for 94
-top-level tests. They exercise serialized JSON/multipart/Responses boundaries, original bytes/parent
+top-level tests before the envelope/shutdown repairs. They exercise serialized JSON/multipart/Responses boundaries, original bytes/parent
 lineage, missing configuration/budget, unsupported controls, duplicate/independent-instance claims,
 source/owner checks, refusal/rate-limit/malformed/oversized/corrupt output, timeout/network uncertainty,
 process interruption, late/cancelled results, cross-project persisted run limits, explicit reconciliation,
 storage failure, assistant review and copied-root native/API comparison history. No test calls OpenAI.
+
+Five assistant-envelope regression groups and one portable fixture-lifecycle group bring the total to
+100 top-level tests, retaining all 94 preceding tests. Direct adapter and persisted-job checks cover
+reasoning plus valid proposal/refusal, available IDs/numeric usage, no retries, restart equality and
+distinct edited human review without VisualOS approval. Negative envelopes cover tools, unknown types,
+multiple/non-final messages, malformed reasoning/content/schema and ambiguous mixed refusal/text.
+The lifecycle test checks acknowledged store closure, completed stdio, closed-root copy/reopen and
+failed-startup cleanup. The complete provider browser workflow also uses reasoning plus a final proposal,
+requires exact acknowledged counts `[0, 4, 0]`, and writes its receipt only after graceful process closure.
 
 ```sh
 npm run build
@@ -147,6 +156,7 @@ git diff --check
 Both browser scripts use temporary synthetic roots. The provider script uses a test-only injected
 transport and records zero real provider calls. Sources, supported controls, secret/budget boundaries,
 proposed opt-in live review and limitations are in [local capability providers](openai-providers.md).
-The retained Windows/Linux Node 24.19.0 CI runs all unit/smoke/build/fixture checks; Linux runs both
-browser workflows. Record actual run results before claiming success. Windows directory durability
+The retained Windows/Linux Node 24.19.0 CI runs all unit/smoke/build/fixture checks and both browser
+workflows, uploading public-safe receipts/screenshots for each platform. Record actual run results before
+claiming success. Windows directory durability
 and real provider/account verification remain unproven by these checks.

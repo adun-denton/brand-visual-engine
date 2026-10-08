@@ -29,11 +29,18 @@ jobs:
       - run: git diff --check
       - run: npx playwright install --with-deps chromium
         if: runner.os == 'Linux'
+      - run: npx playwright install chromium
+        if: runner.os == 'Windows'
       - run: npm run test:browser
-        if: runner.os == 'Linux'
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-browser-evidence
       - run: npm run test:browser:providers
-        if: runner.os == 'Linux'
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-provider-browser-evidence
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: offline-browser-evidence-${{ matrix.os }}
+          path: |
+            ${{ runner.temp }}/bve-browser-evidence
+            ${{ runner.temp }}/bve-provider-browser-evidence
+          if-no-files-found: error

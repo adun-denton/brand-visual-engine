@@ -7,6 +7,27 @@
   "mobile": "390x844",
   "realProviderCalls": 0,
   "offlineTransportCalls": 4,
+  "shutdown": "acknowledged test-only IPC; stores closed and child/stdio completed",
+  "shutdownReceipts": [
+    {
+      "type": "bve-fixture-closed",
+      "id": "fc42e49c-d537-419a-a3ef-ee1a230e8a17",
+      "offlineTransportCalls": 0,
+      "realProviderCalls": 0
+    },
+    {
+      "type": "bve-fixture-closed",
+      "id": "100e9f29-7cd1-44cd-8cb5-67b5b0e7c4f4",
+      "offlineTransportCalls": 4,
+      "realProviderCalls": 0
+    },
+    {
+      "type": "bve-fixture-closed",
+      "id": "449cd998-bfe5-4739-97d9-313c90fea16a",
+      "offlineTransportCalls": 0,
+      "realProviderCalls": 0
+    }
+  ],
   "checks": [
     "unconfigured disabled submit",
     "stale request actionable error",
@@ -21,6 +42,8 @@
     "no horizontal overflow",
     "new process/context restart",
     "closed whole-root copy",
+    "three acknowledged graceful IPC closes with exact transport counts",
+    "reasoning-plus-final-message browser assistant",
     "accepted/artifact/ledger read-back equality"
   ],
   "downloadChecksum": "bb23c98da45e0320c4fafa9928fb0590d6ade9db64269dcdd871a23f213e8682",

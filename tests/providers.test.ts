@@ -65,6 +65,44 @@ const assistantResponse = (proposal: unknown = fixtureProposal) =>
     }),
     { headers: { 'x-request-id': 'req_assistant' } },
   );
+const reasoning = (summary: string | null = null) => ({
+  id: 'rs_synthetic',
+  type: 'reasoning',
+  summary: summary === null ? [] : [{ type: 'summary_text', text: summary }],
+  encrypted_content: 'synthetic-opaque-metadata',
+});
+const finalMessage = (content: object[]) => ({
+  id: 'msg_synthetic',
+  type: 'message',
+  role: 'assistant',
+  status: 'completed',
+  content,
+});
+const proposalMessage = () =>
+  finalMessage([
+    {
+      type: 'output_text',
+      text: JSON.stringify(fixtureProposal),
+      annotations: [],
+    },
+  ]);
+const refusalMessage = () => finalMessage([{ type: 'refusal', refusal: 'No' }]);
+const envelopeResponse = (output: unknown[]) =>
+  new Response(
+    JSON.stringify({
+      id: 'resp_envelope',
+      model: ASSISTANT_MODELS[0],
+      status: 'completed',
+      output,
+      usage: {
+        input_tokens: 10,
+        output_tokens: 20,
+        total_tokens: 30,
+        output_tokens_details: { reasoning_tokens: 12 },
+      },
+    }),
+    { headers: { 'x-request-id': 'req_envelope' } },
+  );
 export function config(
   transport: Transport,
   extra: Partial<ProviderConfig> = {},
@@ -182,6 +220,242 @@ function invariant(w: Workspace, pid: string) {
       .events.filter((e) => e.kind === 'acceptance'),
   });
 }
+
+test('assistant adapter accepts documented reasoning metadata plus one final proposal without persisting reasoning', async (t) => {
+  const s = setup(t, async () => assistantResponse());
+  const request = s.queue('assistant', null).payload.state.request;
+  for (const metadata of [
+    reasoning(),
+    reasoning('This is metadata, not a proposal.'),
+  ]) {
+    let calls = 0;
+    const result = await executeOpenAI(
+      request,
+      key,
+      {},
+      [],
+      new AbortController().signal,
+      async () => {
+        calls++;
+        return envelopeResponse([
+          metadata,
+          {
+            ...proposalMessage(),
+            phase: metadata.summary.length ? 'final_answer' : null,
+          },
+        ]);
+      },
+    );
+    assert.deepEqual(result.proposal, fixtureProposal);
+    assert.equal(result.bytes, null);
+    assert.equal(calls, 1);
+    assert.equal(result.evidence.transportRequestId, 'req_envelope');
+    assert.equal(result.evidence.resultId, 'resp_envelope');
+    assert.equal(result.evidence.reportedModel, ASSISTANT_MODELS[0]);
+    assert.deepEqual(result.evidence.usage, {
+      input_tokens: 10,
+      output_tokens: 20,
+      total_tokens: 30,
+      output_tokens_details: { reasoning_tokens: 12 },
+    });
+    assert.ok(!canonical(result).includes('synthetic-opaque-metadata'));
+  }
+});
+test('assistant adapter preserves refusal classification and evidence beside reasoning', async (t) => {
+  const s = setup(t, async () => assistantResponse());
+  const request = s.queue('assistant', null).payload.state.request;
+  let calls = 0;
+  await assert.rejects(
+    executeOpenAI(
+      request,
+      key,
+      {},
+      [],
+      new AbortController().signal,
+      async () => {
+        calls++;
+        return envelopeResponse([reasoning(), refusalMessage()]);
+      },
+    ),
+    (e: unknown) => {
+      assert.ok(e instanceof ProviderFailure);
+      assert.equal(e.kind, 'refusal');
+      assert.equal(e.uncertain, false);
+      assert.equal(e.evidence.resultId, 'resp_envelope');
+      assert.equal(e.evidence.transportRequestId, 'req_envelope');
+      assert.deepEqual(e.evidence.usage, {
+        input_tokens: 10,
+        output_tokens: 20,
+        total_tokens: 30,
+        output_tokens_details: { reasoning_tokens: 12 },
+      });
+      return true;
+    },
+  );
+  assert.equal(calls, 1);
+});
+test('assistant adapter rejects tools, ambiguous messages and malformed content despite legal reasoning', async (t) => {
+  const s = setup(t, async () => assistantResponse());
+  const request = s.queue('assistant', null).payload.state.request;
+  const negatives = [
+    [reasoning(), { type: 'function_call', name: 'accept' }, proposalMessage()],
+    [reasoning(), { type: 'web_search_call' }, refusalMessage()],
+    [reasoning(), { type: 'unknown' }, proposalMessage()],
+    [reasoning(), proposalMessage(), proposalMessage()],
+    [reasoning(), proposalMessage(), refusalMessage()],
+    [proposalMessage(), reasoning()],
+    [reasoning()],
+    [reasoning(), { ...proposalMessage(), role: 'user' }],
+    [reasoning(), { ...proposalMessage(), status: 'in_progress' }],
+    [reasoning(), { ...proposalMessage(), phase: 'commentary' }],
+    [reasoning(), finalMessage([{ type: 'output_text', text: '{broken' }])],
+    [
+      reasoning(),
+      finalMessage([
+        {
+          type: 'output_text',
+          text: JSON.stringify({ ...fixtureProposal, reviewed: true }),
+        },
+      ]),
+    ],
+    [
+      reasoning(),
+      finalMessage([
+        { type: 'output_text', text: '{}' },
+        { type: 'refusal', refusal: 'No' },
+      ]),
+    ],
+    [reasoning(), finalMessage([{ type: 'refusal', refusal: 5 }])],
+    [
+      reasoning(),
+      finalMessage([{ type: 'output_text', text: 'x'.repeat(32001) }]),
+    ],
+    [
+      { ...reasoning(), summary: [{ type: 'function_call', name: 'accept' }] },
+      proposalMessage(),
+    ],
+    [null, proposalMessage()],
+  ];
+  let calls = 0;
+  for (const output of negatives) {
+    await assert.rejects(
+      executeOpenAI(
+        request,
+        key,
+        {},
+        [],
+        new AbortController().signal,
+        async () => {
+          calls++;
+          return envelopeResponse(output);
+        },
+      ),
+      (e: unknown) =>
+        e instanceof ProviderFailure &&
+        e.kind === 'invalid-output' &&
+        e.evidence.resultId === 'resp_envelope',
+    );
+  }
+  assert.equal(calls, negatives.length);
+});
+test('reasoning-plus-proposal persists exact source and evidence through reopen with separate human review', async (t) => {
+  let calls = 0;
+  const s = setup(t, async () => {
+    calls++;
+    return envelopeResponse([reasoning(), proposalMessage()]);
+  });
+  await s.w.addReference(
+    s.pid,
+    reference(s.w.project(s.pid)),
+    await image(),
+    'Synthetic vision reference',
+    'composition',
+    'hero',
+  );
+  const source = s.w.state(s.pid).references![0]!.artifact;
+  const before = invariant(s.w, s.pid);
+  const done = await submit(s, s.queue('assistant', null, [source]));
+  assert.equal(done.payload.state.status, 'returned');
+  assert.equal(done.payload.state.outputs.length, 1);
+  const out = done.payload.state.outputs[0]!;
+  const proposal = s.w.read(s.pid, out).payload.state as AssistantProposal;
+  assert.equal(proposal.reviewed, false);
+  assert.deepEqual(proposal.sourceReferences, [source]);
+  assert.equal(
+    done.payload.state.observations.at(-1)!.resultId,
+    'resp_envelope',
+  );
+  const persisted = canonical(s.w.state(s.pid));
+  assert.ok(!persisted.includes('synthetic-opaque-metadata'));
+  s.reopen();
+  assert.equal(canonical(s.w.state(s.pid)), persisted);
+  assert.equal(calls, 1);
+  s.api.review(s.pid, {
+    expectedProject: reference(s.w.project(s.pid)),
+    proposal: out,
+    edited: {
+      ...fixtureProposal,
+      rationale: 'Explicit edited human rationale',
+    },
+    reason: 'Human reviewed fixture',
+  });
+  assert.equal(
+    (s.w.read(s.pid, out).payload.state as AssistantProposal).reviewed,
+    false,
+  );
+  assert.equal(
+    s.w
+      .state(s.pid)
+      .artifacts!.filter((a) => a.payload.kind === 'website-assistant-review')
+      .length,
+    1,
+  );
+  assert.equal(s.w.state(s.pid).visualOS.length, 0);
+  assert.equal(invariant(s.w, s.pid), before);
+});
+test('reasoning-plus-refusal and unsupported envelope persist distinct failures without proposal or acceptance changes', async (t) => {
+  for (const [output, kind] of [
+    [[reasoning(), refusalMessage()], 'refusal'],
+    [
+      [
+        reasoning(),
+        { type: 'function_call', name: 'accept' },
+        proposalMessage(),
+      ],
+      'invalid-output',
+    ],
+  ] as const) {
+    let calls = 0;
+    const s = setup(t, async () => {
+      calls++;
+      return envelopeResponse([...output]);
+    });
+    const before = invariant(s.w, s.pid);
+    const done = await submit(s, s.queue('assistant', null));
+    assert.equal(done.payload.state.status, 'failed');
+    assert.deepEqual(done.payload.state.outputs, []);
+    const observation = done.payload.state.observations.at(-1)!;
+    assert.equal(observation.kind, kind);
+    assert.equal(observation.resultId, 'resp_envelope');
+    assert.equal(observation.transportRequestId, 'req_envelope');
+    assert.deepEqual(observation.usage, {
+      input_tokens: 10,
+      output_tokens: 20,
+      total_tokens: 30,
+      output_tokens_details: { reasoning_tokens: 12 },
+    });
+    const persisted = canonical(done);
+    s.reopen();
+    assert.equal(canonical(job(s.w, s.pid)), persisted);
+    assert.equal(s.api.status().budget!.reservedUSD, 1);
+    assert.equal(invariant(s.w, s.pid), before);
+    assert.equal(s.w.state(s.pid).visualOS.length, 0);
+    assert.throws(() =>
+      s.api.submit(s.pid, { job: reference(job(s.w, s.pid)) }),
+    );
+    assert.equal(calls, 1);
+  }
+});
 
 test('API generation serializes one bounded call and stores exact original bytes with honest metadata', async (t) => {
   const bytes = await image();
