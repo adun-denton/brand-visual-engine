@@ -51,6 +51,7 @@ async function setup(
   const w = new Workspace(root);
   let calls = 0,
     closed = false;
+  const additionalConnections: Workspace[] = [];
   const providers = new Providers(w, {
     apiKey: 'synthetic-only-key',
     imageModel: IMAGE_MODELS[0],
@@ -82,6 +83,7 @@ async function setup(
   const regions = new Regions(w, providers);
   t.after(async () => {
     await providers.close();
+    for (const connection of additionalConnections) connection.close();
     if (!closed) w.close();
     rmSync(root, { recursive: true, force: true });
   });
@@ -196,6 +198,7 @@ async function setup(
       w.close();
       closed = true;
     },
+    track: (connection: Workspace) => additionalConnections.push(connection),
     calls: () => calls,
   };
 }
@@ -555,7 +558,7 @@ test('acceptance revalidates module inputs inside the kernel transaction after a
     op = s.prepare('native', { preservation: 'review-raw' }),
     raw = await s.nativeReturn(op, await pixels());
   const other = new Workspace(s.root);
-  t.after(() => other.close());
+  s.track(other);
   const accept = s.w.kernel.accept.bind(s.w.kernel);
   s.w.kernel.accept = (...args: Parameters<typeof accept>) => {
     other.reviseProject(s.p.id, {
