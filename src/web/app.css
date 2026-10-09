@@ -1293,3 +1293,78 @@ pre {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+.composition-preview {
+  width: 100%;
+  height: 800px;
+  border: 1px solid var(--line);
+  background: white;
+  display: block;
+  margin: 24px 0;
+}
+.composition-preview.narrow {
+  width: 390px;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+.composition-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+.composition-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+}
+.composition-section {
+  padding: 24px 0;
+  border-top: 1px solid var(--line);
+}
+.composition-block {
+  border: 1px solid var(--line);
+  padding: 20px;
+  margin: 20px 0;
+  min-width: 0;
+}
+#composition-editor fieldset {
+  min-width: 0;
+}
+#composition-editor textarea {
+  width: 100%;
+}
+#composition-comparisons {
+  margin-top: 32px;
+}
+.composition-comparison {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 16px;
+}
+.composition-comparison iframe {
+  width: 100%;
+  height: 480px;
+  border: 1px solid var(--line);
+}
+#composition-editor,
+#composition-status,
+#composition-comparisons {
+  overflow-wrap: anywhere;
+}
+.composition-controls > * {
+  min-width: 0;
+  max-width: 100%;
+}
+#composition-start select,
+#composition-editor select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+#composition-editor legend {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}

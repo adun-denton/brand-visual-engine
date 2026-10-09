@@ -196,3 +196,68 @@ immediately after save, across tab navigation/reload, in a fresh browser and aft
 recovery, with two independently compared operations and a candidate appended after comparison.
 Assertions check actual checkbox/select/input values and selection/acceptance indicators as well
 as stored state; comparison saves and candidate appends leave acceptance unchanged.
+
+## Structured composition checks
+
+The retained 120 tests are joined by 18 composition groups (138 top-level tests) in `tests/compositions.test.ts`: immutable local
+edits/assets, section isolation, effective global/override review dependencies, context rebase, stale
+conflicts, exact accepted-image independence, foreign/wrong-scope/corrupt/missing assets, safe text/link/
+style/accessibility input, review forgery consumption checks, bounded deterministic export privacy and
+closed-copy package recovery, all-section-overridden global contrast rejection with no writes, and two
+distinct owned hero images preserved through export. These are technical assertions, not designer fidelity approval.
+
+```sh
+npm run build
+npm run typecheck
+npm test
+npm run smoke
+npm run smoke:design-os
+node scripts/serialize-design-fixtures.ts
+git diff --exit-code -- fixtures/design-os.json
+git diff --check
+npm run test:browser
+npm run test:browser:providers
+npm run test:browser:regions
+npm run test:browser:composition
+```
+
+Use the existing documented Playwright setup and Node 24.19.x. The new synthetic browser workflow seeds
+manually authored raster outputs, then uses actual controls to choose a direction, add/reorder blocks and
+sections, place exact images, edit at both widths, save/navigate/reload, review, accept, locally replace
+the hero, compare/open historical versions and download a handoff. Separate renderer pages exercise
+1440/390px order, overflow, image decoding, skip-link/focus and action hierarchy. Graceful fixture closure,
+closed-copy reopen, fresh browser/session token and visible controls establish recovery independently of
+store equality. Restored downloads must match bytes. Test-only fixture IPC receipts require zero offline
+transport and zero real provider calls for this workflow. Existing provider/regional fixtures remain intact.
+Evidence contains the package, focused screenshots, asset hashes and `composition-browser-check.json`.
+CI uploads the new evidence alongside all three retained workflows on Windows/Linux.
+
+The composition browser workflow also runs `scripts/composition-repair-check.ts` in a fresh isolated
+fixture. It saves/reviews/accepts two distinct hero images and readable overrides on every section,
+then rejects cream-on-cream global text before any version, acceptance or ledger changes. Live preview
+and pinned standalone export at both widths require non-overlapping image rectangles, decoded original
+bytes and center hit-tests (element count alone cannot detect stacking). Actual computed header, nav,
+footer and focused skip-link contrast must be >=4.5:1, with visible keyboard focus and no overflow.
+Its `repair-check.json`, five-asset package and screenshots are included in the existing CI artifact.
+For historical reproduction only, `BVE_REPAIR_BASELINE=1` runs the same probe against the pre-repair
+renderer/validator and expects the defects; do not use baseline mode as a passing repair check.
+
+Handoff manifest version 1 now carries additive `rendererDefaults` schema/version 2 and expanded
+reconstruction instructions. Fixed defaults include list/paragraph margins, tracking, weights, header
+bounds/gaps, band border, footer and image row bands. Multiple split images occupy separate five-row
+bands; at <=760px images reset to normal source-order flow. No store migration or history rewrite is
+required. Invalid historical global color pairs fail validation clearly; their stored bytes are retained.
+
+
+The receipt labels direction comparison as AI technical assessment and records exceptions (authored
+raster versus synthetic CSS shapes, navigation/structured blocks, explicit spacing override, unresolved
+motion and booking). Another separately approved implementing model must reconstruct a fresh page from
+only the immutable package; copying index.html is not reconstruction. A separate AI reviewer compares
+1440/390px text/order/links/styles/assets/layout/interactions and exceptions, with discrepancies and repairs
+retained. If no separately approved executor is supplied, prepare the package and mark that acceptance
+criterion pending for coordinator execution. Task006 designer evaluation and Task003 live API remain
+separate. Never substitute these browser/unit checks for either assessment.
+
+Rollback: leave the dependent draft unmerged, or scope-revert S4 to `847b292`. Preserve all runtime assets,
+versions and ledger records. Older module validators cannot read the additive composition kinds; adopt
+from a gracefully closed pre-S4 backup rather than deleting new history. This is not a schema migration.

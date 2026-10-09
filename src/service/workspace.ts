@@ -1,3 +1,4 @@
+import { validateCompositionLinks } from './compositions.ts';
 import type {
   ProviderJob,
   ApiImage,
@@ -122,6 +123,7 @@ export class Workspace {
   }
   private validateLinks(p: NodePacket<DesignArtifact<unknown>>) {
     validateRegionLinks(p, this.kernel, this.assets);
+    validateCompositionLinks(p, this.kernel, this.assets);
     const known = (pointer: VersionRef, type: string, kind?: string) => {
       const a = this.kernel.get<DesignArtifact<unknown>>(pointer);
       if (
@@ -438,6 +440,7 @@ export class Workspace {
       ),
       ledger: this.kernel.ledger(projectId),
       accepted: {
+        composition: this.kernel.selected(projectId, 'composition'),
         design: this.kernel.selected(projectId, 'design'),
         hero: this.kernel.selected(projectId, 'hero'),
         services: this.kernel.selected(projectId, 'services'),

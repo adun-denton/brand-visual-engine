@@ -1,3 +1,4 @@
+import { compositionView, bindCompositions } from './compositions.ts';
 import { regionView, bindRegions } from './regions.ts';
 import type {
   ProviderJob,
@@ -161,6 +162,7 @@ function workspace() {
     ['history', '04', 'History'],
     ['providers', '05', 'Images & assistant'],
     ['regions', '06', 'Regional edit'],
+    ['composition', '07', 'Compose page'],
   ]
     .map(([key, n, label]) =>
       button(
@@ -172,7 +174,7 @@ function workspace() {
     )
     .join(
       '',
-    )}</nav>${view === 'brief' ? brief() : view === 'explore' ? explore() : view === 'native' ? native() : view === 'providers' ? providerView() : view === 'regions' ? regionView(regionContext()) : history()}</div>`;
+    )}</nav>${view === 'brief' ? brief() : view === 'explore' ? explore() : view === 'native' ? native() : view === 'providers' ? providerView() : view === 'regions' ? regionView(regionContext()) : view === 'composition' ? compositionView(compositionContext()) : history()}</div>`;
 }
 function brief() {
   const p = state.project!;
@@ -460,7 +462,22 @@ function regionContext() {
     fileBase64,
   };
 }
+function compositionContext() {
+  const project = state.project!;
+  return {
+    project,
+    artifacts: all(),
+    accepted: state.accepted ?? {},
+    mutate,
+    act,
+    render: () => {
+      if (view === 'composition' && state.project?.id === project.id) render();
+    },
+  };
+}
 function bind() {
+  if (view === 'composition' && state.project)
+    bindCompositions(compositionContext());
   if (view === 'regions' && state.project) bindRegions(regionContext());
   for (const tab of document.querySelectorAll<HTMLButtonElement>('.tab'))
     tab.addEventListener('focus', () =>

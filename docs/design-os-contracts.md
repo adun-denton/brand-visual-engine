@@ -157,3 +157,14 @@ inputs inside the kernel's acceptance transaction without adding Website-specifi
 Production RGB/RGBA buffers and masks use the S0 binary/no-blend semantics with a separate 4 MP
 bound; the original JSON RGB fixture limit and outputs remain unchanged. See [regions.md](regions.md)
 for ownership, decoding, native bundle, provider capability and preservation contracts.
+
+## Website composition artifacts
+
+The additive Website kinds `website-composition` and `website-composition-comparison` remain ordinary
+kernel design artifacts. Composition contract version 1 binds a project, WebsiteDesignState, resolved
+context and locks to structured content, owned image descriptors and section review signatures.
+Dependencies/assets are exact inventories validated again at consumption. Edits and technical reviews
+append versions; the existing kernel acceptance transaction uses a dedicated `composition` slot and
+current-family/current-context guard. Comparison and explicit acceptance remain different records.
+No shared packet/schema or VisualOS approval semantics change. See [workspace.md](workspace.md) for
+review dependency rules, recipes, links/style bounds and export contents.

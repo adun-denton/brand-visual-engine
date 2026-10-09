@@ -15,7 +15,8 @@
     "dev": "npm run build && node scripts/dev.ts",
     "test:browser": "node scripts/browser-check.ts",
     "test:browser:providers": "node scripts/provider-browser-check.ts",
-    "test:browser:regions": "node scripts/region-browser-check.ts"
+    "test:browser:regions": "node scripts/region-browser-check.ts",
+    "test:browser:composition": "node scripts/composition-browser-check.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.58.2",
