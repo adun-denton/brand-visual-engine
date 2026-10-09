@@ -69,9 +69,9 @@ export class KernelStore {
     return this.transaction(() => this.insert(input, port));
   }
   /** One local workflow write; every packet still crosses its declared gate. */
-  putMany(packets: NodePacket<unknown>[]): void {
+  putMany(packets: NodePacket<unknown>[], writeGuard?: () => void): void {
     if (!packets.length) throw new Error('empty write');
-    this.transaction(() => { for (const input of packets) this.insert(input, writePort(input.type)); });
+    this.transaction(() => { writeGuard?.(); for (const input of packets) this.insert(input, writePort(input.type)); });
   }
   /** Bounded app discovery. Reads retain the same identity/integrity checks as lookup. */
   latestPackets(): NodePacket<unknown>[] {
@@ -105,7 +105,7 @@ export class KernelStore {
     });
   }
   accept(projectId: string, slot: string, artifactRef: VersionRef, expected: VersionRef | null,
-      actor: string, reason: string, bundleRef: VersionRef | null = null): LedgerEvent {
+      actor: string, reason: string, bundleRef: VersionRef | null = null, acceptanceGuard?: () => void): LedgerEvent {
     return this.transaction(() => {
       if (!this.services.grantedPermissions.includes('accept')) throw new Error('acceptance permission denied');
       const artifact = this.get(artifactRef);
@@ -122,6 +122,7 @@ export class KernelStore {
           || bundle.payload.selection?.id !== artifactRef.id || bundle.payload.selection.version !== artifactRef.version) throw new Error('bundle selection mismatch');
         revalidatePacket(bundle, writePort('iteration-bundle'), this.environment());
       }
+      acceptanceGuard?.(); // Module-specific current-input checks run inside the same acceptance transaction.
       const event = this.event(projectId, artifactRef, 'acceptance', actor, reason, bundleRef ? [bundleRef] : []);
       this.db.prepare('INSERT INTO kernel_selections VALUES(?,?,?) ON CONFLICT(project_id,slot) DO UPDATE SET body=excluded.body')
         .run(projectId, slot, JSON.stringify(artifactRef));

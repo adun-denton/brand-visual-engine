@@ -147,3 +147,13 @@ is retained and extended with 48 single-pixel masks and 6,912 channel assertions
 new invariant coverage and independent-review requirements are in [verification.md](verification.md).
 A CI workflow reproduces only offline Linux checks; passing implementer commands or CI cannot replace
 independent review against the canonical assignment or human design acceptance.
+
+## Additive regional artifacts
+
+Website region selections, operations, raw/strict images and comparisons remain ordinary v1
+`design-artifact` packets. The shared kernel retains identity, atomic groups, immutable history and
+acceptance ownership. An optional synchronous acceptance guard lets the module recheck its current
+inputs inside the kernel's acceptance transaction without adding Website-specific kernel types.
+Production RGB/RGBA buffers and masks use the S0 binary/no-blend semantics with a separate 4 MP
+bound; the original JSON RGB fixture limit and outputs remain unchanged. See [regions.md](regions.md)
+for ownership, decoding, native bundle, provider capability and preservation contracts.

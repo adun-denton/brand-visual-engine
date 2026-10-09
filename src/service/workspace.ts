@@ -44,6 +44,7 @@ import type {
 } from '../modules/website/workspace-contracts.ts';
 import { LegacyAssets } from './legacy-assets.ts';
 import { Assets, decode } from './assets.ts';
+import { validateRegionLinks } from './regions.ts';
 import {
   InputError,
   record,
@@ -120,6 +121,7 @@ export class Workspace {
     return p;
   }
   private validateLinks(p: NodePacket<DesignArtifact<unknown>>) {
+    validateRegionLinks(p, this.kernel, this.assets);
     const known = (pointer: VersionRef, type: string, kind?: string) => {
       const a = this.kernel.get<DesignArtifact<unknown>>(pointer);
       if (
@@ -192,9 +194,11 @@ export class Workspace {
         if (
           m.operation === 'generate'
             ? a.payload.kind !== 'website-design'
-            : !['website-image', 'website-api-image'].includes(
-                a.payload.kind,
-              ) || a.payload.scope !== m.scope
+            : ![
+                'website-image',
+                'website-api-image',
+                'website-region-image',
+              ].includes(a.payload.kind) || a.payload.scope !== m.scope
         )
           throw new InputError('API input type/scope mismatch');
         if (
@@ -276,7 +280,11 @@ export class Workspace {
       for (const r of s.compared) {
         const a = known(r, 'design-artifact');
         if (
-          !['website-image', 'website-api-image'].includes(a.payload.kind) ||
+          ![
+            'website-image',
+            'website-api-image',
+            'website-region-image',
+          ].includes(a.payload.kind) ||
           a.payload.scope !== p.payload.scope
         )
           throw new InputError('Image comparison scope/type mismatch');
@@ -289,14 +297,19 @@ export class Workspace {
       known(m.project, 'module-project');
       const a = known(m.artifact, 'design-artifact');
       if (
-        !['website-design', 'website-image', 'website-api-image'].includes(
-          a.payload.kind,
-        )
+        ![
+          'website-design',
+          'website-image',
+          'website-api-image',
+          'website-region-image',
+        ].includes(a.payload.kind)
       )
         throw new InputError('Wrong native input type');
-      const input = ['website-image', 'website-api-image'].includes(
-        a.payload.kind,
-      )
+      const input = [
+        'website-image',
+        'website-api-image',
+        'website-region-image',
+      ].includes(a.payload.kind)
         ? (a.payload.state as ImageState).image
         : null;
       if (canonical(input) !== canonical(m.inputAsset))
@@ -756,6 +769,25 @@ export class Workspace {
       ref(r['artifact']),
       projectId,
     );
+    const resultJob = (a.payload.state as ImageState).job;
+    if (
+      ['website-image', 'website-api-image'].includes(a.payload.kind) &&
+      resultJob &&
+      this.kernel
+        .latestPackets()
+        .some(
+          (p) =>
+            p.projectId === projectId &&
+            p.type === 'design-artifact' &&
+            (p.payload as DesignArtifact<{ execution?: VersionRef }>).kind ===
+              'website-region-operation' &&
+            (p.payload as DesignArtifact<{ execution?: VersionRef }>).state
+              .execution?.id === resultJob.id,
+        )
+    )
+      throw new InputError(
+        'Use regional acceptance to review its bound mask and preservation policy',
+      );
     const slot = choice(r['slot'], [
       'design',
       'hero',
@@ -934,13 +966,20 @@ export class Workspace {
       },
     });
   }
-  native(projectId: string, input: unknown) {
+  native(
+    projectId: string,
+    input: unknown,
+    companions?: (
+      job: NodePacket<DesignArtifact<NativeJob>>,
+    ) => NodePacket<unknown>[],
+  ) {
     const r = record(input, [
       'expectedProject',
       'artifact',
       'scope',
       'instructions',
       'preservation',
+      'references',
     ]);
     const p = this.project(projectId, r['expectedProject']);
     const a = this.owned<DesignArtifact<WebsiteDesignState | ImageState>>(
@@ -948,9 +987,12 @@ export class Workspace {
       projectId,
     );
     if (
-      !['website-design', 'website-image', 'website-api-image'].includes(
-        a.payload.kind,
-      )
+      ![
+        'website-design',
+        'website-image',
+        'website-api-image',
+        'website-region-image',
+      ].includes(a.payload.kind)
     )
       throw new InputError('Choose a design or image as the native input');
     const scope = choice(r['scope'], scopes);
@@ -963,6 +1005,17 @@ export class Workspace {
         image: this.owned<DesignArtifact<ImageState>>(x.artifact, projectId)
           .payload.state.image,
       }));
+    const chosen =
+      r['references'] === undefined
+        ? refs
+        : list(r['references'], ref, 4).map((pointer) => {
+            const entry = refs.find((x) => same(x.artifact, pointer));
+            if (!entry)
+              throw new InputError('Choose a selected reference in this scope');
+            return entry;
+          });
+    if (new Set(chosen.map((x) => x.artifact.id)).size !== chosen.length)
+      throw new InputError('Duplicate reference');
     const jobId = 'native-job-' + randomUUID();
     const manifest: NativeManifest = {
       contractVersion: 1,
@@ -971,13 +1024,15 @@ export class Workspace {
       moduleId: 'website',
       scope,
       artifact: reference(a),
-      inputAsset: ['website-image', 'website-api-image'].includes(
-        a.payload.kind,
-      )
+      inputAsset: [
+        'website-image',
+        'website-api-image',
+        'website-region-image',
+      ].includes(a.payload.kind)
         ? (a.payload.state as ImageState).image
         : null,
       instructions: string(r['instructions']),
-      references: refs,
+      references: chosen,
       selection: this.kernel.selected(
         projectId,
         scope === 'landing-page' ? 'design' : scope,
@@ -995,11 +1050,12 @@ export class Workspace {
       'website-native-job',
       scope,
       { manifest, status: 'awaiting', outcomes: [], outputs: [] } as NativeJob,
-      [reference(p), reference(a), ...refs.map((x) => x.artifact)],
-      refs.map((x) => x.image),
+      [reference(p), reference(a), ...chosen.map((x) => x.artifact)],
+      chosen.map((x) => x.image),
     );
     const { integrity: _, ...body } = job;
-    this.kernel.put(packet({ ...body, id: jobId }));
+    const prepared = packet<DesignArtifact<NativeJob>>({ ...body, id: jobId });
+    this.kernel.putMany([prepared, ...(companions?.(prepared) ?? [])]);
     return this.state(projectId);
   }
   manifest(projectId: string, pointer: VersionRef) {
@@ -1192,9 +1248,12 @@ export class Workspace {
   async originalImage(projectId: string, pointer: VersionRef) {
     const p = this.owned<DesignArtifact<ImageState>>(pointer, projectId);
     if (
-      !['website-image', 'website-api-image', 'website-reference'].includes(
-        p.payload.kind,
-      )
+      ![
+        'website-image',
+        'website-api-image',
+        'website-region-image',
+        'website-reference',
+      ].includes(p.payload.kind)
     )
       throw new InputError('Not an image');
     const bytes = this.assets.read(p.payload.state.image.id);

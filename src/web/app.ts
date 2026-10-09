@@ -1,3 +1,4 @@
+import { regionView, bindRegions } from './regions.ts';
 import type {
   ProviderJob,
   ApiImage,
@@ -159,6 +160,7 @@ function workspace() {
     ['native', '03', 'Native handoff'],
     ['history', '04', 'History'],
     ['providers', '05', 'Images & assistant'],
+    ['regions', '06', 'Regional edit'],
   ]
     .map(([key, n, label]) =>
       button(
@@ -170,7 +172,7 @@ function workspace() {
     )
     .join(
       '',
-    )}</nav>${view === 'brief' ? brief() : view === 'explore' ? explore() : view === 'native' ? native() : view === 'providers' ? providerView() : history()}</div>`;
+    )}</nav>${view === 'brief' ? brief() : view === 'explore' ? explore() : view === 'native' ? native() : view === 'providers' ? providerView() : view === 'regions' ? regionView(regionContext()) : history()}</div>`;
 }
 function brief() {
   const p = state.project!;
@@ -196,12 +198,25 @@ const imageUrl = (r: VersionRef) =>
   encodeURIComponent(r.id) +
   '&version=' +
   r.version;
+const imageLabel = (a: NodePacket<DesignArtifact<unknown>>) =>
+  a.payload.kind === 'website-region-image'
+    ? 'Regional ' + (a.payload.state as { variant: string }).variant
+    : a.payload.kind === 'website-api-image'
+      ? 'API'
+      : 'Native';
+const regionalJob = (id: string) =>
+  all().some(
+    (a) =>
+      a.payload.kind === 'website-region-operation' &&
+      (a.payload.state as { execution: VersionRef }).execution.id === id,
+  );
 function preview(p: NodePacket<DesignArtifact<unknown>>) {
   if (
     ![
       'website-design',
       'website-image',
       'website-api-image',
+      'website-region-image',
       'website-reference',
       'website-direction',
     ].includes(p.payload.kind)
@@ -210,6 +225,7 @@ function preview(p: NodePacket<DesignArtifact<unknown>>) {
   if (
     p.payload.kind === 'website-image' ||
     p.payload.kind === 'website-api-image' ||
+    p.payload.kind === 'website-region-image' ||
     p.payload.kind === 'website-reference'
   )
     return `<div class="image-preview"><img alt="Returned image candidate" src="${imageUrl(ptr(p))}"></div>`;
@@ -267,9 +283,12 @@ function native() {
     (p) => p.payload.kind === 'website-native-job',
   ) as NodePacket<DesignArtifact<NativeJob>>[];
   const inputs = all().filter((p) =>
-    ['website-design', 'website-image', 'website-api-image'].includes(
-      p.payload.kind,
-    ),
+    [
+      'website-design',
+      'website-image',
+      'website-api-image',
+      'website-region-image',
+    ].includes(p.payload.kind),
   );
   return `<section class="panel native-intro"><p class="eyebrow">MANUAL NATIVE HANDOFF</p><h2>Take the request. Bring back the result.</h2><p>Export a job-bound manifest, use your authorized ChatGPT or Codex host, then return an image to that original job. The native path is a manual handoff; this app does not call your host tool.</p><form id="native"><div class="two-col"><label>Original design or image<select name="artifact" required>${inputs.map((p) => option(JSON.stringify(ptr(p)), p.payload.kind === 'website-design' ? (p.payload.state as WebsiteDesignState).thesis : 'Image ' + p.id.slice(-8))).join('')}</select></label><label>Section scope<select name="scope">${['hero', 'services', 'proof', 'contact'].map((x) => option(x, x)).join('')}</select></label></div><label>Instructions<textarea name="instructions" required rows="3" placeholder="Describe the image to generate or the change to make."></textarea></label><label>Preserve <small>One requirement per line</small><textarea name="preservation" rows="2" placeholder="Keep the reference palette\nLeave space for the hero heading"></textarea></label><button class="primary" type="submit" ${!inputs.length ? 'disabled' : ''}>Create native request</button></form>${!inputs.length ? '<p class="hint">Explore a design first to give this request an original input.</p>' : ''}</section><div class="job-list">${
     jobs.length
@@ -281,7 +300,7 @@ function native() {
               .filter((x): x is NodePacket<DesignArtifact<unknown>> => !!x)
               .map((a) => {
                 const s = a.payload.state as ImageState;
-                return `<article class="image-result">${preview(a)}<p>${s.image.width} × ${s.image.height} · ${e(s.outcome)}</p><small>SHA-256 ${e(s.image.checksum)}</small><a class="text-link" href="${imageUrl(ptr(a)).replace('/image?', '/asset?')}">Download original result</a><form class="accept-image" data-artifact="${encoded(ptr(a))}" data-scope="${e(a.payload.scope)}"><label>Acceptance reason<input name="reason" required></label><label class="check"><input type="checkbox" name="historical"> I reviewed the original, possibly historical inputs</label><button type="submit" ${['cancelled', 'abandoned'].includes(j.status) ? 'disabled' : ''}>Accept section image</button></form></article>`;
+                return `<article class="image-result">${preview(a)}<p>${s.image.width} × ${s.image.height} · ${e(s.outcome)}</p><small>SHA-256 ${e(s.image.checksum)}</small><a class="text-link" href="${imageUrl(ptr(a)).replace('/image?', '/asset?')}">Download original result</a><form class="accept-image" data-artifact="${encoded(ptr(a))}" data-scope="${e(a.payload.scope)}"><label>Acceptance reason<input name="reason" required></label><label class="check"><input type="checkbox" name="historical"> I reviewed the original, possibly historical inputs</label><button type="submit" ${['cancelled', 'abandoned'].includes(j.status) || regionalJob(p.id) ? 'disabled' : ''}>${regionalJob(p.id) ? 'Review in Regional edit' : 'Accept section image'}</button></form></article>`;
               })
               .join('')}</div></section>`;
           })
@@ -292,9 +311,12 @@ function native() {
 function providerView() {
   const config = state.providers;
   const inputs = all().filter((a) =>
-    ['website-design', 'website-image', 'website-api-image'].includes(
-      a.payload.kind,
-    ),
+    [
+      'website-design',
+      'website-image',
+      'website-api-image',
+      'website-region-image',
+    ].includes(a.payload.kind),
   );
   const images = inputs.filter((a) => a.payload.kind !== 'website-design');
   const jobs = all().filter(
@@ -319,7 +341,7 @@ function providerView() {
         .map((a) => {
           if (a.payload.kind === 'website-api-image') {
             const i = a.payload.state as ApiImage;
-            return `<article class="image-result">${preview(a)}<p>API candidate · ${e(i.outcome)} · ${i.image.width} × ${i.image.height}</p><small>SHA-256 ${e(i.image.checksum)}</small><a class="text-link" href="${imageUrl(ptr(a)).replace('/image?', '/asset?')}">Download API original</a><form class="accept-image" data-artifact="${encoded(ptr(a))}" data-scope="${e(a.payload.scope)}"><label>Acceptance reason<input name="reason" required></label><label class="check"><input type="checkbox" name="historical"> I reviewed the original, possibly historical inputs</label><button type="submit" ${j.status !== 'returned' ? 'disabled' : ''}>Accept API section image</button></form></article>`;
+            return `<article class="image-result">${preview(a)}<p>API candidate · ${e(i.outcome)} · ${i.image.width} × ${i.image.height}</p><small>SHA-256 ${e(i.image.checksum)}</small><a class="text-link" href="${imageUrl(ptr(a)).replace('/image?', '/asset?')}">Download API original</a><form class="accept-image" data-artifact="${encoded(ptr(a))}" data-scope="${e(a.payload.scope)}"><label>Acceptance reason<input name="reason" required></label><label class="check"><input type="checkbox" name="historical"> I reviewed the original, possibly historical inputs</label><button type="submit" ${j.status !== 'returned' || regionalJob(i.job.id) ? 'disabled' : ''}>${regionalJob(i.job.id) ? 'Review in Regional edit' : 'Accept API section image'}</button></form></article>`;
           }
           const raw = a.payload.state as AssistantProposal,
             p = raw.proposal;
@@ -330,14 +352,14 @@ function providerView() {
         )}<form class="provider-reconcile" data-job="${encoded(ptr(a))}"><label>Reconciliation evidence <small>Remote retrieval is unavailable here; check provider records independently</small><input name="reason" required placeholder="Evidence reference, time and conclusion"></label><label>Reservation decision<select name="disposition">${option('retain', 'Keep reservation; acknowledge reviewed outcome')}${option('release', 'Release only with verified no-charge evidence')}</select></label><label class="check"><input type="checkbox" name="verified"> I verified that this attempt incurred no charge</label><button type="submit" ${!['outcome-uncertain', 'cancelled-locally', 'failed', 'returned'].includes(j.status) ? 'disabled' : ''}>Record reconciliation</button></form></section>`;
     })
     .join('')}</div>
-  <section class="panel comparison"><h2>Compare section images</h2><p>Choose native and API alternatives for the same section. Save a selection with a reason; acceptance stays separate.</p><form id="image-comparison"><div class="two-col">${['first', 'second'].map((k) => `<label>${k === 'first' ? 'First image' : 'Second image'}<select name="${k}" required>${images.map((a) => option(JSON.stringify(ptr(a)), (a.payload.kind === 'website-api-image' ? 'API' : 'Native') + ' · ' + a.payload.scope + ' · ' + a.id.slice(-8), match(c?.compared[k === 'first' ? 0 : 1], ptr(a)) || (!c && images[k === 'first' ? 0 : 1]?.id === a.id))).join('')}</select></label>`).join('')}</div><label>Selection<select name="selected">${option('none', 'Keep selection unresolved', !c?.selected)}${option('first', 'Select first image', !!c?.selected && match(c.selected, c.compared[0]!))}${option('second', 'Select second image', !!c?.selected && match(c.selected, c.compared[1]!))}</select></label><label>Comparison reason<input name="reason" required value="${e(c?.reason ?? '')}"></label><button type="submit" ${images.length < 2 ? 'disabled' : ''}>Save image comparison / selection</button></form>${
+  <section class="panel comparison"><h2>Compare section images</h2><p>Choose native and API alternatives for the same section. Save a selection with a reason; acceptance stays separate.</p><form id="image-comparison"><div class="two-col">${['first', 'second'].map((k) => `<label>${k === 'first' ? 'First image' : 'Second image'}<select name="${k}" required>${images.map((a) => option(JSON.stringify(ptr(a)), imageLabel(a) + ' · ' + a.payload.scope + ' · ' + a.id.slice(-8), match(c?.compared[k === 'first' ? 0 : 1], ptr(a)) || (!c && images[k === 'first' ? 0 : 1]?.id === a.id))).join('')}</select></label>`).join('')}</div><label>Selection<select name="selected">${option('none', 'Keep selection unresolved', !c?.selected)}${option('first', 'Select first image', !!c?.selected && match(c.selected, c.compared[0]!))}${option('second', 'Select second image', !!c?.selected && match(c.selected, c.compared[1]!))}</select></label><label>Comparison reason<input name="reason" required value="${e(c?.reason ?? '')}"></label><button type="submit" ${images.length < 2 ? 'disabled' : ''}>Save image comparison / selection</button></form>${
     c
       ? `<p>${e(c.reason)}</p><div class="comparison-grid">${c.compared
           .map(find)
           .filter((a): a is NodePacket<DesignArtifact<unknown>> => !!a)
           .map(
             (a) =>
-              `<article><h3>${a.payload.kind === 'website-api-image' ? 'API' : 'Native'} · ${e(a.payload.scope)}</h3>${preview(a)}<span class="badge">${match(c.selected, ptr(a)) ? 'Selected · acceptance separate' : 'Alternative'}</span></article>`,
+              `<article><h3>${e(imageLabel(a))} · ${e(a.payload.scope)}</h3>${preview(a)}<span class="badge">${match(c.selected, ptr(a)) ? 'Selected · acceptance separate' : 'Alternative'}</span></article>`,
           )
           .join('')}</div>`
       : ''
@@ -420,7 +442,26 @@ function onForm(
       void act(() => action(f));
     });
 }
+function regionContext() {
+  const project = state.project!;
+  return {
+    project: state.project!,
+    artifacts: all(),
+    references: state.references ?? [],
+    accepted: state.accepted ?? {},
+    apiAvailable: !!state.providers?.available,
+    offline: state.providers?.verificationMode === 'offline-transport-fixture',
+    imageUrl,
+    mutate,
+    act,
+    render: () => {
+      if (view === 'regions' && state.project?.id === project.id) render();
+    },
+    fileBase64,
+  };
+}
 function bind() {
+  if (view === 'regions' && state.project) bindRegions(regionContext());
   for (const tab of document.querySelectorAll<HTMLButtonElement>('.tab'))
     tab.addEventListener('focus', () =>
       tab.scrollIntoView({ block: 'nearest', inline: 'nearest' }),

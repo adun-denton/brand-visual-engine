@@ -169,3 +169,30 @@ The retained Windows/Linux Node 24.19.0 CI runs all unit/smoke/build/fixture che
 workflows, uploading public-safe receipts/screenshots for each platform. Record actual run results before
 claiming success. Windows directory durability
 and real provider/account verification remain unproven by these checks.
+
+## Regional workflow checks
+
+The 100 retained tests are joined by 20 regional groups (120 top-level tests). Coverage includes
+1254-square production RGBA masks/composites, PNG/JPEG/WebP and orientation, non-square geometry,
+source/version/dimension/mask rejection without writes, source/overlay separation, byte-exact native
+bundle/reference/null metadata, immutable raw/strict lineage, outside RGB/alpha, closed-copy reopen,
+geometry rejection, late/cancelled results, concurrent selection/composite/acceptance conflicts,
+unsupported recipes, type/owner/scope bindings, strict-policy bypass rejection, replacement-source active selection/competing initial save conflicts, second-connection
+freshness revalidation inside acceptance, injected atomic-write failure/retry, Branded context
+preservation and one-call regional execution through the existing offline API adapter.
+The comparison renderer regression restores the latest saved operation decision after outputs
+append, keeps unresolved distinct from selection/acceptance, and ignores foreign project/scope,
+source/selection mismatch and future-operation bindings without persistence changes.
+
+`npm run test:browser:regions` adds the actual regional form workflow at 1440×1000 and 390×844.
+Receipts require one intended injected API submission, private IPC counts `[1,0]`, zero real calls,
+exact source bytes, native bundle files, outside-mask RGB/alpha, explicit comparison/acceptance,
+correct historical crops after a selection revision and closed-root/fresh-session equality. The
+retained provider receipt still requires exactly four offline calls and `[0,4,0]`; neither assertion
+is weakened. Screenshots and receipts are uploaded by both CI platforms. These are AI technical
+fixtures; the regional designer rubric above requires separate operator/designer judgment.
+The regional receipt also records visible saved subset/selected/unresolved/reason restoration
+immediately after save, across tab navigation/reload, in a fresh browser and after closed-root
+recovery, with two independently compared operations and a candidate appended after comparison.
+Assertions check actual checkbox/select/input values and selection/acceptance indicators as well
+as stored state; comparison saves and candidate appends leave acceptance unchanged.
