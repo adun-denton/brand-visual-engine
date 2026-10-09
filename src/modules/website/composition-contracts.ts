@@ -174,6 +174,8 @@ export function parseContent(x: unknown): CompositionContent {
       'Exactly one hero, services, proof and contact section is required',
     );
   const ids = new Set<string>(['main', ...sectionIds]);
+  if (contrast(content.style.background, content.style.foreground) < 4.5)
+    throw new InputError('Global page text contrast must be at least 4.5:1');
   for (const s of content.sections) {
     if (s.blocks.filter((b) => b.kind === 'heading').length !== 1)
       throw new InputError('Each section needs exactly one heading');

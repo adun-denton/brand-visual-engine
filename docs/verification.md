@@ -199,11 +199,12 @@ as stored state; comparison saves and candidate appends leave acceptance unchang
 
 ## Structured composition checks
 
-The retained 120 tests are joined by 16 composition groups (136 top-level tests) in `tests/compositions.test.ts`: immutable local
+The retained 120 tests are joined by 18 composition groups (138 top-level tests) in `tests/compositions.test.ts`: immutable local
 edits/assets, section isolation, effective global/override review dependencies, context rebase, stale
 conflicts, exact accepted-image independence, foreign/wrong-scope/corrupt/missing assets, safe text/link/
 style/accessibility input, review forgery consumption checks, bounded deterministic export privacy and
-closed-copy package recovery. These are technical assertions, not designer fidelity approval.
+closed-copy package recovery, all-section-overridden global contrast rejection with no writes, and two
+distinct owned hero images preserved through export. These are technical assertions, not designer fidelity approval.
 
 ```sh
 npm run build
@@ -230,6 +231,23 @@ store equality. Restored downloads must match bytes. Test-only fixture IPC recei
 transport and zero real provider calls for this workflow. Existing provider/regional fixtures remain intact.
 Evidence contains the package, focused screenshots, asset hashes and `composition-browser-check.json`.
 CI uploads the new evidence alongside all three retained workflows on Windows/Linux.
+
+The composition browser workflow also runs `scripts/composition-repair-check.ts` in a fresh isolated
+fixture. It saves/reviews/accepts two distinct hero images and readable overrides on every section,
+then rejects cream-on-cream global text before any version, acceptance or ledger changes. Live preview
+and pinned standalone export at both widths require non-overlapping image rectangles, decoded original
+bytes and center hit-tests (element count alone cannot detect stacking). Actual computed header, nav,
+footer and focused skip-link contrast must be >=4.5:1, with visible keyboard focus and no overflow.
+Its `repair-check.json`, five-asset package and screenshots are included in the existing CI artifact.
+For historical reproduction only, `BVE_REPAIR_BASELINE=1` runs the same probe against the pre-repair
+renderer/validator and expects the defects; do not use baseline mode as a passing repair check.
+
+Handoff manifest version 1 now carries additive `rendererDefaults` schema/version 2 and expanded
+reconstruction instructions. Fixed defaults include list/paragraph margins, tracking, weights, header
+bounds/gaps, band border, footer and image row bands. Multiple split images occupy separate five-row
+bands; at <=760px images reset to normal source-order flow. No store migration or history rewrite is
+required. Invalid historical global color pairs fail validation clearly; their stored bytes are retained.
+
 
 The receipt labels direction comparison as AI technical assessment and records exceptions (authored
 raster versus synthetic CSS shapes, navigation/structured blocks, explicit spacing override, unresolved

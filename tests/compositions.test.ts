@@ -588,3 +588,73 @@ test('literal script-looking text is escaped in preview and handoff and cannot a
       .includes('<script>'),
   );
 });
+
+test('global page contrast remains required when every section has readable overrides; invalid save preserves draft, acceptance and ledger', async (t) => {
+  const { w, pid, save, review, accept } = await setup(t);
+  let content = structuredClone(
+    latestComposition(w, pid).payload.state.content,
+  );
+  for (const section of content.sections)
+    section.overrides = {
+      ...section.overrides,
+      foreground: section.overrides.foreground ?? content.style.foreground,
+      background: section.overrides.background ?? content.style.background,
+    };
+  await save(content);
+  const accepted = await review();
+  await accept();
+  const events = w.kernel.ledger(pid).events.length;
+  content = structuredClone(accepted.payload.state.content);
+  content.style.foreground = content.style.background;
+  await assert.rejects(() => save(content), /Global page text contrast/);
+  assert.equal(latestComposition(w, pid).version, accepted.version);
+  assert.equal(w.kernel.ledger(pid).events.length, events);
+  assert.deepEqual(w.kernel.selected(pid, 'composition'), reference(accepted));
+  assert.equal(
+    canonical(w.read(pid, reference(accepted)).payload.state),
+    canonical(accepted.payload.state),
+  );
+});
+test('two distinct owned hero images survive immutable save, review, acceptance and pinned export', async (t) => {
+  const { w, c, pid, fixture, a, save, review, accept } = await setup(t);
+  const previous = canonical(a.payload.state),
+    content = structuredClone(a.payload.state.content);
+  const hero = content.sections.find((s) => s.id === 'hero')!,
+    original = hero.blocks.find((b) => b.kind === 'image')!;
+  const second = {
+    ...original,
+    id: 'hero-second-owned-image',
+    asset: fixture.assets.replacement,
+    image: (
+      w.read(pid, fixture.assets.replacement).payload.state as {
+        image: typeof original.image;
+      }
+    ).image,
+    alt: 'Distinct second synthetic hero',
+  };
+  hero.blocks.push(second);
+  await save(content);
+  const accepted = await review();
+  await accept();
+  const handoff = await c.export(pid, reference(accepted)),
+    manifest = JSON.parse(
+      files(handoff.bytes).get('manifest.json')!.toString(),
+    );
+  const images = manifest.content.sections
+    .find((s: { id: string }) => s.id === 'hero')
+    .blocks.filter((b: { kind: string }) => b.kind === 'image');
+  assert.equal(images.length, 2);
+  assert.deepEqual(
+    images.map((b: { asset: unknown }) => b.asset),
+    [original.asset, second.asset],
+  );
+  assert.notEqual(images[0].image.checksum, images[1].image.checksum);
+  assert.equal(manifest.assets.length, 5);
+  for (const b of images)
+    assert.ok(
+      manifest.assets.some(
+        (i: { checksum: string }) => i.checksum === b.image.checksum,
+      ),
+    );
+  assert.equal(canonical(w.read(pid, reference(a)).payload.state), previous);
+});

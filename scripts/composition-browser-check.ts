@@ -1,3 +1,4 @@
+import { checkCompositionRepairs } from './composition-repair-check.ts';
 import { chromium, expect } from '@playwright/test';
 import {
   mkdtempSync,
@@ -374,7 +375,9 @@ try {
     ),
   ).toBe(true);
   expect(errors).toEqual([]);
+  const repairChecks = await checkCompositionRepairs(browser, evidence);
   const receipt = {
+    repairChecks,
     check: 'composition-browser',
     node: process.version,
     platform: process.platform,
@@ -417,9 +420,9 @@ try {
       'System typography follows the pinned context; the direction mini-preview uses a decorative serif heading.',
     ],
     reconstruction: {
-      status: 'pending coordinator execution',
+      status: 'separate evidence required',
       reason:
-        'No separately approved model/executor supplied; package prepared under Task005 fallback.',
+        'This browser receipt does not establish separate-model reconstruction or independent comparison.',
     },
   };
   writeFileSync(

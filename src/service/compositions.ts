@@ -33,6 +33,10 @@ import type { Assets } from './assets.ts';
 import type { Workspace } from './workspace.ts';
 import { record, ref, string, list, InputError } from './validation.ts';
 import { tar } from './handoff.ts';
+import {
+  rendererDefaults,
+  reconstructionInstructions,
+} from '../modules/website/composition-layout.ts';
 const same = (a: VersionRef | null, b: VersionRef | null) =>
   a?.id === b?.id && a?.version === b?.version;
 export function reviewSignature(s: CompositionState, id: SectionId): string {
@@ -638,6 +642,7 @@ export class Compositions {
     const manifest = {
       schema: 'bve.website-handoff',
       version: 1,
+      rendererDefaults,
       composition: r,
       compositionIntegrity: a.integrity,
       project: s.project,
@@ -677,12 +682,7 @@ export class Compositions {
       'index.html',
       Buffer.from(renderComposition(s, (b) => imagePath(b.image!))),
     );
-    files.set(
-      'RECONSTRUCT.md',
-      Buffer.from(
-        'Reconstruct a fresh static landing page using manifest.json and assets/. Do not copy index.html: it is the comparison reference. The manifest contains ordered sections and blocks, global style plus explicit section overrides, links and original asset descriptors. Use effective style = global style overlaid by section overrides. CSS pixels: maxWidth centers content, spacing is vertical section padding, horizontal padding 24 desktop / 20 narrow, block gap 24, heading line-height 1.12, body 1.6, h2 = headingSize × 0.65. Split uses 1.2fr/1fr with image in second column; cards list uses 3 equal columns and 16px gaps, 24px card padding. At <=760px all columns become one, section vertical padding ×0.65, h1 clamp(32px,9vw,headingSize), h2 clamp(26px,7vw,headingSize×0.65), image max-height 360 vs 480 desktop. Use system-ui/sans-serif, Georgia/serif or Trebuchet MS/sans-serif for the named font. Buttons pad 12px 24px; heading margin-bottom 24px. Header padding 24px with wrapping section-anchor navigation. Include skip-to-content, visible keyboard focus and heading/action hierarchy. Use original bytes at safe relative paths; verify SHA-256, dimensions and byte counts in assets inventory. No scripts, external services, hidden BVE runtime or source are needed. Review text/order/links/overrides/images/spacing at 1440 and 390px. Preserve all unresolved exceptions; synthetic content and composition acceptance do not grant brand approval. Record model identity, package SHA-256, files, missing details and discrepancies. Serve extracted directory through a local static HTTP server to view index.html; opening the file directly may restrict images due to CSP.\n',
-      ),
-    );
+    files.set('RECONSTRUCT.md', Buffer.from(reconstructionInstructions));
     const bytes = tar(files);
     return {
       bytes,
