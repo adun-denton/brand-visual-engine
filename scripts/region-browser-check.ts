@@ -28,6 +28,7 @@ import type {
   RegionOperation,
   RegionSelection,
   RegionImage,
+  RegionComparison,
 } from '../src/modules/website/region-contracts.ts';
 import { canonicalPixels } from '../src/service/regions.ts';
 import { outsidePixelDifference } from '../src/kernel/raster.ts';
@@ -151,6 +152,60 @@ async function action(path: string, click: () => Promise<void>) {
   return response.json();
 }
 const operation = (index = 0) => page.locator('.region-operation').nth(index);
+const comparisonRecovery: { phase: string; operation: VersionRef }[] = [];
+async function restoredComparison(
+  op: VersionRef,
+  expected: Pick<RegionComparison, 'compared' | 'selected' | 'reason'>,
+  accepted: VersionRef | null,
+  phase: string,
+) {
+  const panel = page.locator(`.region-operation[data-operation*="${op.id}"]`),
+    form = panel.locator('.region-comparison');
+  await expect(form).toBeVisible();
+  const fields = form.locator('[name=compared]');
+  const checked: VersionRef[] = [];
+  for (const field of await fields.all()) {
+    const pointer = JSON.parse(await field.inputValue()) as VersionRef;
+    const included = expected.compared.some(
+      (r) => r.id === pointer.id && r.version === pointer.version,
+    );
+    if (included) await expect(field).toBeChecked();
+    else await expect(field).not.toBeChecked();
+    if (await field.isChecked()) checked.push(pointer);
+  }
+  expect(checked).toEqual(expected.compared);
+  await expect(form.locator('[name=selected]')).toHaveValue(
+    JSON.stringify(expected.selected),
+  );
+  await expect(form.locator('[name=reason]')).toHaveValue(expected.reason);
+  await expect(form).toContainText(
+    'Comparison selection does not accept an image; acceptance is a separate action.',
+  );
+  const selectedIndicator = panel.getByText('Selected in saved comparison', {
+    exact: true,
+  });
+  await expect(selectedIndicator).toHaveCount(expected.selected ? 1 : 0);
+  if (expected.selected)
+    await expect(
+      panel
+        .locator(`.region-candidate[data-candidate*="${expected.selected.id}"]`)
+        .getByText('Selected in saved comparison', { exact: true }),
+    ).toBeVisible();
+  else await expect(form).toContainText('Saved comparison is unresolved.');
+  const snapshot = await state(),
+    saved = snapshot
+      .artifacts!.filter(
+        (a) =>
+          a.payload.kind === 'website-region-comparison' &&
+          (a.payload.state as RegionComparison).operation.id === op.id,
+      )
+      .at(-1)!.payload.state as RegionComparison;
+  expect(saved.compared).toEqual(expected.compared);
+  expect(saved.selected).toEqual(expected.selected);
+  expect(saved.reason).toBe(expected.reason);
+  expect(snapshot.accepted!.hero).toEqual(accepted);
+  comparisonRecovery.push({ phase, operation: op });
+}
 const noOverflow = async () =>
   expect(
     await page.evaluate(
@@ -288,16 +343,43 @@ try {
   writeFileSync(join(evidence, 'region-raw.png'), rawBytes);
   writeFileSync(join(evidence, 'region-composite.png'), outputBytes);
   const comparison = operation().locator('.region-comparison');
+  // A non-default subset must survive rendering; raw stays available but unchecked.
+  await comparison.locator('[name=compared]').first().uncheck();
+  const nativeDecision = {
+    compared: [reference(composite)],
+    selected: reference(composite),
+    reason:
+      'AI technical fixture review: inspect finish, protected corner and hard-edge seam.',
+  };
   await comparison
     .locator('[name=selected]')
     .selectOption(JSON.stringify(reference(composite)));
-  await comparison
-    .locator('[name=reason]')
-    .fill(
-      'AI technical fixture review: inspect finish, protected corner and hard-edge seam.',
-    );
+  await comparison.locator('[name=reason]').fill(nativeDecision.reason);
   await action('region/compare', () => comparison.getByRole('button').click());
   expect((await state()).accepted!.hero).toBeNull();
+  await restoredComparison(
+    reference(nativeOperation),
+    nativeDecision,
+    null,
+    'immediate selected save',
+  );
+  await page.getByRole('button', { name: '04 History', exact: true }).click();
+  await region();
+  await restoredComparison(
+    reference(nativeOperation),
+    nativeDecision,
+    null,
+    'tab navigation',
+  );
+  await page.reload();
+  await page.locator(`[data-action=open][data-id="${pid}"]`).click();
+  await region();
+  await restoredComparison(
+    reference(nativeOperation),
+    nativeDecision,
+    null,
+    'page reload',
+  );
   await operation().locator('.region-compare-grid').scrollIntoViewIfNeeded();
   await noOverflow();
   await expect(operation().locator('[data-region-crop]')).toHaveCount(3);
@@ -319,6 +401,12 @@ try {
       path: join(evidence, 'region-comparison-detail-desktop.png'),
     });
   await page.setViewportSize({ width: 390, height: 844 });
+  await restoredComparison(
+    reference(nativeOperation),
+    nativeDecision,
+    null,
+    'mobile selected form',
+  );
   await noOverflow();
   await screen('region-comparison-mobile');
   await operation()
@@ -327,6 +415,16 @@ try {
     .scrollIntoViewIfNeeded();
   await page.screenshot({
     path: join(evidence, 'region-comparison-mobile-viewport.png'),
+  });
+  await comparison.scrollIntoViewIfNeeded();
+  await comparison.locator('[name=selected]').focus();
+  await comparison.locator('[name=selected]').press('Tab');
+  await expect(comparison.locator('[name=reason]')).toBeFocused();
+  await page.screenshot({
+    path: join(evidence, 'region-saved-decision-mobile.png'),
+  });
+  await comparison.screenshot({
+    path: join(evidence, 'region-saved-form-mobile.png'),
   });
   const accept = operation()
     .locator('.region-candidate')
@@ -381,11 +479,115 @@ try {
       .getByRole('button', { name: 'Retain result in regional comparison' })
       .click(),
   );
+  const apiRaw = (await state()).artifacts!.find(
+    (a) =>
+      a.payload.kind === 'website-region-image' &&
+      (a.payload.state as RegionImage).operation.id === apiOperation.id,
+  )!;
+  const apiComparison = operation().locator('.region-comparison');
+  await apiComparison
+    .locator('[name=selected]')
+    .selectOption(JSON.stringify(reference(apiRaw)));
+  await apiComparison
+    .locator('[name=reason]')
+    .fill('Earlier API candidate selection; still not accepted.');
+  await action('region/compare', () =>
+    apiComparison.getByRole('button').click(),
+  );
+  await restoredComparison(
+    reference(apiOperation),
+    {
+      compared: [reference(apiRaw)],
+      selected: reference(apiRaw),
+      reason: 'Earlier API candidate selection; still not accepted.',
+    },
+    reference(composite),
+    'second operation selected save',
+  );
+  const apiDecision = {
+    compared: [reference(apiRaw)],
+    selected: null,
+    reason:
+      'Keep this API review unresolved: inspect "finish" & seam before accepting.',
+  };
+  await apiComparison.locator('[name=selected]').selectOption('null');
+  await apiComparison.locator('[name=reason]').fill(apiDecision.reason);
+  await action('region/compare', () =>
+    apiComparison.getByRole('button').click(),
+  );
+  await restoredComparison(
+    reference(apiOperation),
+    apiDecision,
+    reference(composite),
+    'latest unresolved save',
+  );
   await action('region/compose', () =>
     operation()
       .getByRole('button', { name: 'Create strict local composite' })
       .click(),
   );
+  await expect(operation().locator('[name=compared]')).toHaveCount(2);
+  await restoredComparison(
+    reference(apiOperation),
+    apiDecision,
+    reference(composite),
+    'candidate appended after comparison',
+  );
+  await restoredComparison(
+    reference(nativeOperation),
+    nativeDecision,
+    reference(composite),
+    'other operation remains selected',
+  );
+  await expect(
+    page
+      .locator(`.region-operation[data-operation*="${nativeOperation.id}"]`)
+      .getByText('Accepted section image', { exact: true }),
+  ).toHaveCount(1);
+  await page.getByRole('button', { name: '04 History', exact: true }).click();
+  await region();
+  await restoredComparison(
+    reference(apiOperation),
+    apiDecision,
+    reference(composite),
+    'two-operation tab navigation',
+  );
+  await restoredComparison(
+    reference(nativeOperation),
+    nativeDecision,
+    reference(composite),
+    'two-operation tab navigation',
+  );
+  await apiComparison.scrollIntoViewIfNeeded();
+  await screen('region-saved-decisions-desktop');
+  await apiComparison.screenshot({
+    path: join(evidence, 'region-unresolved-form-desktop.png'),
+  });
+  // A fresh browser context must read persisted decisions, without renderer-local state.
+  await context.close();
+  context = await browser.newContext({
+    viewport: { width: 1440, height: 1000 },
+  });
+  page = await context.newPage();
+  listen();
+  await page.goto(origin);
+  await page.locator(`[data-action=open][data-id="${pid}"]`).click();
+  await region();
+  await restoredComparison(
+    reference(apiOperation),
+    apiDecision,
+    reference(composite),
+    'fresh browser session',
+  );
+  await restoredComparison(
+    reference(nativeOperation),
+    nativeDecision,
+    reference(composite),
+    'fresh browser session',
+  );
+  await page
+    .locator('#region-source')
+    .selectOption(JSON.stringify(reference(source)));
   expect(submissions).toHaveLength(1);
   expect(submissions[0]!.id).toBe(apiOperation.payload.state.execution.id);
   await page.locator('#region-select [name=shape]').selectOption('rectangle');
@@ -420,6 +622,18 @@ try {
   await page.locator(`[data-action=open][data-id="${pid}"]`).click();
   await region();
   expect(await state()).toEqual(final);
+  await restoredComparison(
+    reference(apiOperation),
+    apiDecision,
+    reference(composite),
+    'closed-root mobile recovery',
+  );
+  await restoredComparison(
+    reference(nativeOperation),
+    nativeDecision,
+    reference(composite),
+    'closed-root mobile recovery',
+  );
   await noOverflow();
   await expect(
     operation().locator('[data-region-crop]').first(),
@@ -431,6 +645,20 @@ try {
     operation().locator('[data-region-crop]').first(),
   ).toHaveAttribute('data-loaded', 'true');
   await screen('region-reopened-mobile');
+  await page
+    .locator(
+      `.region-operation[data-operation*="${nativeOperation.id}"] .region-comparison`,
+    )
+    .screenshot({
+      path: join(evidence, 'region-restored-selected-form-mobile.png'),
+    });
+  await page
+    .locator(
+      `.region-operation[data-operation*="${apiOperation.id}"] .region-comparison`,
+    )
+    .screenshot({
+      path: join(evidence, 'region-restored-unresolved-form-mobile.png'),
+    });
   expect(errors).toEqual([]);
   await context.close();
   receipts.push(await stopFixture(fixture));
@@ -455,6 +683,8 @@ try {
     nativeOperation: reference(nativeOperation),
     apiOperation: reference(apiOperation),
     outsideDifference: { rgb: 0, alpha: 0 },
+    comparisonRecovery,
+    pageErrors: errors,
     checks: [
       'display-coordinate mapping',
       'keyboard selection',
@@ -463,6 +693,10 @@ try {
       'raw/composite separate',
       'outside RGB and alpha',
       'comparison does not accept',
+      'saved compared subset, selection, unresolved reason and indicators restored',
+      'latest comparison isolated per operation',
+      'appended candidate leaves saved decision unchanged',
+      'immediate, tab, reload, fresh browser and closed-root form recovery',
       'explicit acceptance',
       'API exact once',
       'source checksum unchanged',

@@ -15,6 +15,7 @@ import {
 } from '../src/service/regions.ts';
 import { IMAGE_MODELS, ASSISTANT_MODELS } from '../src/service/openai.ts';
 import { reference } from '../src/kernel/packets.ts';
+import { regionView } from '../src/web/regions.ts';
 import {
   compositePixels,
   outsidePixelDifference,
@@ -24,6 +25,7 @@ import type {
   RegionOperation,
   RegionSelection,
   RegionImage,
+  RegionComparison,
 } from '../src/modules/website/region-contracts.ts';
 import type { NativeJob } from '../src/modules/website/workspace-contracts.ts';
 import type {
@@ -801,4 +803,120 @@ test('a replacement-source selection invalidates older mask streams; competing i
     3,
   );
   assert.equal(s.w.kernel.selected(s.p.id, 'hero'), null);
+});
+
+test('regional renderer restores the latest operation-bound comparison after outputs append and ignores foreign or mismatched bindings', async (t) => {
+  const s = await setup(t),
+    first = s.prepare(),
+    second = s.prepare();
+  const firstRaw = await s.nativeReturn(first, await pixels()),
+    secondRaw = await s.nativeReturn(second, await pixels(120, 80, '#173f45'));
+  const current = (id: string) =>
+    s.w.state(s.p.id).artifacts!.find((a) => a.id === id)!;
+  s.regions.compare(s.p.id, {
+    operation: reference(current(first.id)),
+    compared: [reference(firstRaw)],
+    selected: reference(firstRaw),
+    reason: 'First saved choice',
+  });
+  s.regions.compare(s.p.id, {
+    operation: reference(current(second.id)),
+    compared: [reference(secondRaw)],
+    selected: reference(secondRaw),
+    reason: 'Superseded second choice',
+  });
+  s.regions.compare(s.p.id, {
+    operation: reference(current(second.id)),
+    compared: [reference(secondRaw)],
+    selected: null,
+    reason: 'Latest "unresolved" & review',
+  });
+  const saved = last<RegionComparison>(
+    s.w,
+    s.p.id,
+    'website-region-comparison',
+  );
+  await s.regions.compose(s.p.id, { candidate: reference(secondRaw) });
+  assert.ok(current(second.id).version > saved.payload.state.operation.version);
+  const snapshot = s.w.state(s.p.id);
+  const render = (artifacts = snapshot.artifacts!) =>
+    regionView({
+      project: snapshot.project!,
+      artifacts,
+      references: snapshot.references!,
+      accepted: snapshot.accepted!,
+      apiAvailable: false,
+      offline: true,
+      imageUrl: (r) => `/image?id=${r.id}&version=${r.version}`,
+      mutate: async () => {},
+      act: async () => {},
+      render: () => {},
+      fileBase64: async () => '',
+    });
+  const form = (html: string, id: string) =>
+    [
+      ...html.matchAll(
+        /<form class="region-comparison" data-operation="([^"]*)">([\s\S]*?)<\/form>/g,
+      ),
+    ].find((m) => m[1]!.includes(id))![2]!;
+  const check = (html: string) => {
+    const a = form(html, first.id),
+      b = form(html, second.id);
+    assert.ok(a.includes('value="First saved choice"'));
+    assert.match(a, /<option value="[^"\n]*" selected>raw/);
+    assert.ok(b.includes('value="Latest &quot;unresolved&quot; &amp; review"'));
+    assert.ok(b.includes('<option value="null" selected>'));
+    assert.equal(
+      [...b.matchAll(/<input name="compared"[^>]* checked/g)].length,
+      1,
+    );
+    const checked = [
+      ...b.matchAll(/<input name="compared"[^>]* checked/g),
+    ][0]![0];
+    assert.ok(checked.includes(secondRaw.id));
+    assert.ok(!html.includes('Decoy reason'));
+  };
+  check(render());
+  const state = { ...saved.payload.state, reason: 'Decoy reason' };
+  const decoys: NodePacket<DesignArtifact<RegionComparison>>[] = [
+    { ...saved, projectId: 'foreign-project' },
+    { ...saved, payload: { ...saved.payload, scope: 'contact' } },
+    {
+      ...saved,
+      payload: {
+        ...saved.payload,
+        state: { ...state, source: { ...state.source, version: 99 } },
+      },
+    },
+    {
+      ...saved,
+      payload: {
+        ...saved.payload,
+        state: { ...state, selection: { ...state.selection, version: 99 } },
+      },
+    },
+    {
+      ...saved,
+      payload: {
+        ...saved.payload,
+        state: { ...state, operation: { ...state.operation, version: 99 } },
+      },
+    },
+  ];
+  for (const decoy of decoys)
+    check(
+      render([
+        ...snapshot.artifacts!,
+        {
+          ...decoy,
+          payload: {
+            ...decoy.payload,
+            state: { ...decoy.payload.state, reason: 'Decoy reason' },
+          },
+        },
+      ]),
+    );
+  assert.deepEqual(s.w.state(s.p.id), snapshot);
+  assert.equal(s.w.kernel.selected(s.p.id, 'hero'), null);
+  assert.equal(s.calls(), 0);
 });

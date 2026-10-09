@@ -11,6 +11,10 @@ choose a preset/path, and save the request before executing it. Importing/collec
 compositing, comparing/selecting and accepting are separate actions. The original source, underlying
 native/API result, regional raw candidate and local composite retain distinct identities and history.
 The raw and composite are separately downloadable. A comparison does not accept an image.
+Each operation restores its latest saved compared versions, selection (including unresolved)
+and reason. New candidates remain available without changing that saved subset or decision.
+Comparison selection and the accepted section image have separate indicators; use the explicit
+acceptance action to change the accepted image. Historical comparisons remain in the ledger.
 
 ## Recipes and execution
 
@@ -94,6 +98,9 @@ controls, reference-backed native import, actual bundle/download byte checks, so
 comparison, outside RGB/alpha checks, explicit acceptance, exactly one injected API submission,
 historical crop recovery after mask revision, and equality after a gracefully closed root is copied
 and reopened with a fresh browser session. It uses private test-only IPC for acknowledged counts.
+Visible comparison fields are checked immediately after saving, across tab navigation/reload,
+in a fresh browser context and after closed-root recovery. Two operations retain independent
+selected/unresolved decisions, non-default subsets and reasons when a later candidate is appended.
 CI runs all three browser workflows on Windows and Linux and uploads receipts/screenshots.
 
 Rollback code with a scoped revert or leave the dependent draft unmerged. Preserve `kernel.sqlite`,

@@ -13,6 +13,7 @@ import type {
   RegionSelection,
   RegionOperation,
   RegionImage,
+  RegionComparison,
   Bounds,
 } from '../modules/website/region-contracts.ts';
 type Artifact = NodePacket<DesignArtifact<unknown>>;
@@ -130,6 +131,26 @@ function operationView(c: Context, p: Artifact): string {
   const collected = o.outputs
     .map((r) => get(r))
     .filter((a): a is Artifact => !!a);
+  // Operation revisions append outputs; comparisons keep their original snapshot binding.
+  // Workspace artifacts are ordered by ledger sequence, so the last matching record wins.
+  const comparison = c.artifacts
+    .filter((a) => {
+      if (
+        a.payload.kind !== 'website-region-comparison' ||
+        a.projectId !== c.project.id ||
+        a.projectId !== p.projectId ||
+        a.payload.scope !== p.payload.scope
+      )
+        return false;
+      const saved = a.payload.state as RegionComparison;
+      return (
+        saved.operation.id === p.id &&
+        saved.operation.version <= p.version &&
+        same(saved.source, o.source) &&
+        same(saved.selection, o.selection)
+      );
+    })
+    .at(-1)?.payload.state as RegionComparison | undefined;
   const pending = job.outputs.filter(
     (r) =>
       !collected.some((a) => same((a.payload.state as RegionImage).raw, r)),
@@ -155,11 +176,11 @@ function operationView(c: Context, p: Artifact): string {
       ? `<div class="region-compare-grid"><article><h3>Original source</h3>${imagePanels(c, o.source, s)}</article>${collected
           .map((a) => {
             const i = a.payload.state as RegionImage;
-            return `<article class="region-candidate" data-candidate="${encoded(a)}"><h3>${i.variant === 'raw' ? 'Raw result' : 'Strict local composite'}</h3>${imagePanels(c, ptr(a), s)}<p class="hint">${i.image.width} × ${i.image.height} · ${i.variant === 'strict-composite' ? 'Outside RGB 0 / alpha 0 · hard edge' : 'Outside preservation unverified'}</p><small>SHA-256 ${i.image.checksum}</small><a class="text-link" href="${c.imageUrl(ptr(a)).replace('/image?', '/asset?')}">Download ${i.variant}</a>${i.variant === 'raw' && o.preservation === 'strict-composite' && !collected.some((b) => (b.payload.state as RegionImage).variant === 'strict-composite' && same((b.payload.state as RegionImage).raw, i.raw)) ? `<button type="button" data-region-action="compose" data-candidate="${encoded(a)}">Create strict local composite</button>` : ''}<form class="region-accept" data-candidate="${encoded(a)}" data-scope="${e(p.payload.scope)}"><label>Acceptance reason<input name="reason" required></label><button type="submit" ${stale || job.status !== 'returned' || (o.preservation === 'strict-composite' && i.variant !== 'strict-composite') ? 'disabled' : ''}>Accept this exact regional candidate</button></form></article>`;
+            return `<article class="region-candidate" data-candidate="${encoded(a)}"><h3>${i.variant === 'raw' ? 'Raw result' : 'Strict local composite'}</h3>${imagePanels(c, ptr(a), s)}${same(comparison?.selected, ptr(a)) ? '<p class="badge">Selected in saved comparison</p>' : ''}${same(c.accepted[p.payload.scope], ptr(a)) ? '<p class="badge">Accepted section image</p>' : ''}<p class="hint">${i.image.width} × ${i.image.height} · ${i.variant === 'strict-composite' ? 'Outside RGB 0 / alpha 0 · hard edge' : 'Outside preservation unverified'}</p><small>SHA-256 ${i.image.checksum}</small><a class="text-link" href="${c.imageUrl(ptr(a)).replace('/image?', '/asset?')}">Download ${i.variant}</a>${i.variant === 'raw' && o.preservation === 'strict-composite' && !collected.some((b) => (b.payload.state as RegionImage).variant === 'strict-composite' && same((b.payload.state as RegionImage).raw, i.raw)) ? `<button type="button" data-region-action="compose" data-candidate="${encoded(a)}">Create strict local composite</button>` : ''}<form class="region-accept" data-candidate="${encoded(a)}" data-scope="${e(p.payload.scope)}"><label>Acceptance reason<input name="reason" required></label><button type="submit" ${stale || job.status !== 'returned' || (o.preservation === 'strict-composite' && i.variant !== 'strict-composite') ? 'disabled' : ''}>Accept this exact regional candidate</button></form></article>`;
           })
           .join(
             '',
-          )}</div><form class="region-comparison" data-operation="${encoded(p)}"><fieldset><legend>Compare one to three candidates</legend>${collected.map((a, index) => `<label class="check"><input name="compared" type="checkbox" value="${encoded(a)}" ${index >= collected.length - 3 ? 'checked' : ''}>${e((a.payload.state as RegionImage).variant)} · ${e(a.id.slice(-8))}</label>`).join('')}</fieldset><label>Comparison selection<select name="selected"><option value="null">Keep unresolved</option>${collected.map((a) => option(a, (a.payload.state as RegionImage).variant + ' · ' + a.id.slice(-8))).join('')}</select></label><label>Comparison reason<input name="reason" required></label><button type="submit">Save regional comparison / selection</button></form>`
+          )}</div><form class="region-comparison" data-operation="${encoded(p)}"><p class="hint">${comparison ? (comparison.selected ? 'Saved comparison selection restored.' : 'Saved comparison is unresolved.') : 'No saved comparison yet.'} Comparison selection does not accept an image; acceptance is a separate action.</p><fieldset><legend>Compare one to three candidates</legend>${collected.map((a, index) => `<label class="check"><input name="compared" type="checkbox" value="${encoded(a)}" ${(comparison ? comparison.compared.some((r) => same(r, ptr(a))) : index >= collected.length - 3) ? 'checked' : ''}>${e((a.payload.state as RegionImage).variant)} · ${e(a.id.slice(-8))}</label>`).join('')}</fieldset><label>Comparison selection<select name="selected"><option value="null" ${!comparison?.selected ? 'selected' : ''}>Keep unresolved</option>${collected.map((a) => option(a, (a.payload.state as RegionImage).variant + ' · ' + a.id.slice(-8), same(comparison?.selected, ptr(a)))).join('')}</select></label><label>Comparison reason<input name="reason" required value="${e(comparison?.reason ?? '')}"></label><button type="submit">Save regional comparison / selection</button></form>`
       : ''
   }${stale ? '<p class="hint">Historical attempt retained. Prepare a new attempt against current inputs before acceptance.</p>' : ''}</section>`;
 }
