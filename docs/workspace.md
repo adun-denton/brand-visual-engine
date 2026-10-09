@@ -163,3 +163,51 @@ scoped revert of the workspace commits, preserving both databases and asset hist
 cannot interpret new Website artifact kinds: keep the complete task-002 root untouched and use its
 verified matching-code backup for later restoration. Do not open that root in older code, force-push,
 delete live state or test restore on the only copy.
+
+## Structured composition (S4)
+
+`Compose page` starts an immutable `website-composition` family from a deliberate WebsiteDesignState
+choice and the current pinned brief. Four ordered sections (hero/services/proof/contact) support
+stack/split/cards/band recipes and ordered heading/paragraph/button/list/image blocks. Add/remove
+and order controls, text/actions, page metadata, layout/alignment/image fit, global style and blank-to-inherit
+section overrides are editable. This initial recipe set has no canvas, CMS, publishing or live booking.
+The iframe shows the saved revision, and the original image bytes are used by both preview and export.
+
+Save creates a candidate version. Review creates another version with section dependency signatures;
+comparison stores exact revisions and an optional selection. Neither changes acceptance. Whole-page
+acceptance requires reviewed sections, current pinned context/direction and an explicit reason that
+acknowledges unresolved exceptions. Accepted history remains available even after a later draft.
+Unsaved visible edits must be saved before review/acceptance. Historical revisions open through the
+revision control; edits require the latest family version. Stale edits and acceptance return conflicts.
+
+The review signature covers section content/layout/overrides and effective styles, pinned context and
+direction, page title/description/unresolved content and section order. A local image replacement affects
+only its section; global changes affect sections whose effective style changes. Overrides preserve their
+explicit values. Context/direction or order changes invalidate all section reviews. A context revision
+requires an explicit new current-brief direction and a draft save/rebase. Composition geometry never
+carries a region selection/mask into a different image: it can place only a completed exact image artifact.
+
+Placed images must be owned PNG/JPEG/WebP result artifacts in the section or landing-page scope, with
+pinned version, matching checksum/dimensions and alt text or an explicit accessibility exception. Private
+reference originals cannot be placed/exported. No later job or accepted-image pointer is consulted.
+Locked direction palettes remain enforced across effective global and override colors; changing a lock
+requires an explicit context/direction decision. Other direction locks remain pinned and inspectable.
+Local editable text does not rewrite the direction or grant brand approval.
+
+`Download accepted handoff` returns a deterministic bounded ustar archive (40 MiB maximum) containing
+manifest.json, index.html, RECONSTRUCT.md and only the deliberately placed original assets. The manifest
+pins accepted revision, project/direction/style/content/layout/overrides, review and acceptance provenance,
+asset inventory and unresolved exceptions. Design context origins are retained; reference/comparison
+bookkeeping, full stores, credentials, provider records and source transcripts are excluded. Generated
+relative checksum-based paths are the only archive asset paths. Text is escaped, links and style values
+validated, and preview/export have no scripts. The same pure renderer generates both previews. Export
+can target an explicitly accepted historical revision without consulting newer mutable selections.
+Reopen/restore preserves the package bytes; an archive is a handoff, not a deployment.
+
+HTTP: POST `composition/start`, `save`, `review`, `compare`, `accept` under `/api/v1/` use the existing
+token/origin/project envelope. GET `composition/preview` and `composition/export` require project/id/version.
+No new database schema, public task queue, provider, permissions integration or external write is added.
+
+Locked intent remains an explicit text block and all locked required-content strings must remain
+visible in text/list blocks. Palette colors must come from the pinned palette. Local text can be
+extended and reordered, but removing these required decisions is rejected before a version is saved.

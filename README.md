@@ -78,3 +78,11 @@ browser checks and limitations. No provider call or production deployment is sta
 For documentation changes, check local links, read the changed files, and run `git diff --check`.
 Runtime data, credentials, model weights, and generated/client assets are excluded by `.gitignore`.
 Only deliberately selected, public-safe fixtures belong in source control.
+
+S4 adds an editable structured landing-page composition with immutable drafts, per-section technical
+review, separate whole-page acceptance and a bounded developer handoff archive. Start from the selected
+synthetic Website direction in **Compose page**; no image generation or production deployment is needed.
+See [workspace.md](docs/workspace.md#structured-composition-s4) and
+[verification.md](docs/verification.md#structured-composition-checks) for limitations and reconstruction
+requirements. Separate reconstruction/independent review and later designer acceptance are not implied
+by a successful local export.

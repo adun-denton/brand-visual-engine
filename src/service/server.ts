@@ -1,3 +1,4 @@
+import { Compositions } from './compositions.ts';
 import { Providers } from './providers.ts';
 import { Regions } from './regions.ts';
 import type { ProviderConfig } from './providers.ts';
@@ -14,6 +15,7 @@ export interface RunningApp {
   workspace: Workspace;
   providers: Providers;
   regions: Regions;
+  compositions: Compositions;
   origin: string;
   close: () => Promise<void>;
 }
@@ -27,6 +29,7 @@ export async function startApp(
     token = randomBytes(32).toString('hex');
   const providers = new Providers(workspace, providerConfig);
   const regions = new Regions(workspace, providers);
+  const compositions = new Compositions(workspace);
   let origin = '';
   const server = createServer(async (req, res) => {
     const json = (status: number, body: unknown) => {
@@ -74,6 +77,8 @@ export async function startApp(
           return;
         }
         if (
+          path === '/api/v1/composition/preview' ||
+          path === '/api/v1/composition/export' ||
           path === '/api/v1/manifest' ||
           path === '/api/v1/artifact' ||
           path === '/api/v1/image' ||
@@ -86,6 +91,26 @@ export async function startApp(
             freshness: 'pinned',
           });
           const pid = id(projectId);
+          if (path === '/api/v1/composition/preview') {
+            const html = await compositions.preview(pid, pointer);
+            res.setHeader(
+              'Content-Security-Policy',
+              "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'",
+            );
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+            res.end(html);
+            return;
+          }
+          if (path === '/api/v1/composition/export') {
+            const result = await compositions.export(pid, pointer);
+            res.writeHead(200, {
+              'Content-Type': 'application/x-tar',
+              'Content-Disposition': `attachment; filename="handoff-${pointer.id}-v${pointer.version}.tar"`,
+              'X-BVE-Package-SHA256': result.checksum,
+            });
+            res.end(result.bytes);
+            return;
+          }
           if (path === '/api/v1/region/bundle') {
             json(200, await regions.bundle(pid, pointer));
             return;
@@ -163,6 +188,21 @@ export async function startApp(
         const pid = id(outer['projectId']);
         const v = outer['input'];
         switch (path) {
+          case '/api/v1/composition/start':
+            result = compositions.start(pid, v);
+            break;
+          case '/api/v1/composition/save':
+            result = await compositions.save(pid, v);
+            break;
+          case '/api/v1/composition/review':
+            result = await compositions.review(pid, v);
+            break;
+          case '/api/v1/composition/compare':
+            result = compositions.compare(pid, v);
+            break;
+          case '/api/v1/composition/accept':
+            result = await compositions.accept(pid, v);
+            break;
           case '/api/v1/region/select':
             result = await regions.select(pid, v);
             break;
@@ -310,6 +350,7 @@ export async function startApp(
     workspace,
     providers,
     regions,
+    compositions,
     origin,
     close: async () => {
       await providers.close();
