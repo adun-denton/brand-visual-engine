@@ -110,7 +110,7 @@ async function globalVisibility(page: Page) {
       }),
     );
   await page.keyboard.press('Enter');
-  expect(new URL(page.url()).hash).toBe('#main');
+  await expect.poll(() => new URL(page.url()).hash).toBe('#main');
   return { contrast, skipVisible };
 }
 export async function checkCompositionRepairs(

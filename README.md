@@ -8,11 +8,16 @@ This repository contains a local browser workspace, shared kernel, Website explo
 manual native-image export/import, bound regional selections and strict composites, server-side
 OpenAI image/assistant adapters, legacy asset compatibility
 and synthetic fixtures. Provider wiring is tested offline; live account/usage/quality verification remains
-pending. Production website composition is not implemented. Broader intended behavior remains below.
+pending. A bounded editable landing-page composer and developer export are implemented;
+production hosting/publishing and real booking are not. Designer usefulness and release disposition remain pending.
 
 The application is standalone and is developed/tested with synthetic website briefs, sample assets,
 and mock providers. No existing website or client pilot is required to start development. Real
 provider checks validate integrations; a later website/designer pilot evaluates usefulness and quality.
+
+Start with the [operator guide](docs/operator-guide.md) for installation, visible controls, accepted
+handoff and full-root recovery. The [candidate readiness matrix](docs/candidate-readiness.md) separates
+synthetic technical evidence from the blank [designer trial](docs/designer-trial-template.md).
 
 ## Intended experience
 
@@ -23,7 +28,7 @@ Image-provider paths:
 
 - native ChatGPT/Codex generation through an explicit export/import handoff;
 - OpenAI image generation and editing through an in-app, server-side API integration;
-- optional local ComfyUI generation through compatible, versioned workflows.
+- optional local ComfyUI is planned and unimplemented.
 
 The native path does not assume this application can call a host's internal tools or inherit its
 subscription. Provider capabilities and available metadata are represented honestly.
@@ -53,7 +58,7 @@ public-safe technical changes and verification evidence.
 
 ## Setup and validation
 
-With Node 24.19.0 (tested on Linux x64):
+With Node 24.19.0 (locked install/build checked on Windows and Linux):
 
 ```sh
 npm ci --ignore-scripts

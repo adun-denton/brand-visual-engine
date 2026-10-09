@@ -376,6 +376,13 @@ function providerView() {
 }
 function history() {
   const events = state.ledger?.events ?? [];
+  const comparisons = all()
+    .filter((a) => a.payload.kind === 'website-comparison')
+    .map((a) => {
+      const c = a.payload.state as { compared: VersionRef[]; reason: string };
+      return `<article><p>${e(c.reason)}</p><small>${e(a.id)} · v${a.version} · compared ${c.compared.map((r) => `${e(r.id)} v${r.version}`).join(', ')}</small></article>`;
+    })
+    .join('');
   return `<section class="panel"><p class="eyebrow">APPEND-ORIENTED HISTORY</p><h2>Every choice has a trail.</h2><p>Accepted pointers are separate from proposals and selections. Editing never erases an earlier decision.</p><div class="accepted-grid">${Object.entries(
     state.accepted ?? {},
   )
@@ -383,7 +390,9 @@ function history() {
       ([slot, r]) =>
         `<article><span class="eyebrow">${e(slot)}</span><strong>${r ? 'Accepted v' + r.version : 'No accepted work'}</strong>${r ? button('Inspect accepted version', 'inspect', `data-artifact="${encoded(r)}"`) : ''}</article>`,
     )
-    .join('')}</div><div id="inspected"></div><ol class="timeline">${events
+    .join(
+      '',
+    )}</div><div id="inspected"></div>${comparisons ? `<section class="saved-direction-comparisons"><h3>Saved direction comparison reasons</h3>${comparisons}</section>` : ''}<ol class="timeline">${events
     .slice()
     .reverse()
     .map(

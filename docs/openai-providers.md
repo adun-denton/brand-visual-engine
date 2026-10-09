@@ -14,7 +14,7 @@ Official sources rechecked **2026-10-08**:
 | Image endpoints | [Image guide](https://developers.openai.com/api/docs/guides/image-generation), [generation reference](https://developers.openai.com/api/reference/resources/images/methods/generate), [edit reference](https://developers.openai.com/api/reference/resources/images/methods/edit): direct `/v1/images/generations` JSON and `/v1/images/edits` multipart, one base64 result; no remote conversation store |
 | Image model | [Sunburst](https://developers.openai.com/api/docs/models/gpt-image-2.5-sunburst); the endpoint references list `gpt-image-2.5-sunburst-2026-09-08` and `gpt-image-2.5-flare-2026-09-08`. Default Sunburst; both explicit dated IDs supported by this bounded recipe |
 | Assistant | [GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna), [Responses reference](https://developers.openai.com/api/reference/typescript/resources/responses/methods/create), [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs): requested `gpt-6-luna`, documented alias rather than an invented dated snapshot; strict JSON Schema plus application validation, no tools, `store: false`, 2,000 output tokens maximum |
-| Pricing | [Pricing](https://developers.openai.com/api/docs/pricing): standard image text input $5 / image input $8 / image output $30 per million tokens. Luna standard short-context input $0.05 / output $0.25 per million tokens. These rates and output-only estimates are **not a total-request dollar upper bound**; inputs, account and pricing must be checked again before live approval |
+| Pricing | [Official pricing](https://developers.openai.com/api/docs/pricing) must be checked for the actual service tier and run before live work. Earlier Luna estimates are not current verified billing evidence and have been removed. Rates, output-only estimates and reservation fields are **not a total-request dollar upper bound**; actual usage/billing remains unknown without provider evidence |
 | SDK | [Official Node SDK release](https://github.com/openai/openai-node/releases/tag/v7.30.0) checked. No SDK or new dependency introduced: Node 24 native fetch/FormData, one transport call with redirects rejected and no automatic retry |
 
 Recipe `website-api-v1-2026-10-08` deliberately supports three explicit sizes (1024 square, 1536×1024,
@@ -123,8 +123,8 @@ providers preserves briefs, references, accepted work and append-only history.
 
 ## Offline verification and recovery
 
-Run retained locked-install/types/100-test/build/smoke/fixture checks documented in [verification](verification.md),
-then both browser scripts. The provider script launches a **test-only injected transport** in a separate
+Run retained locked-install/types/138-test/build/smoke/fixture checks documented in [verification](verification.md),
+then the four retained browser scripts and the Phase A rehearsal. The provider script launches a **test-only injected transport** in a separate
 process, with authored labeled images; it records four simulated calls and **zero real provider calls**.
 It is not a provider account/quality/usage/cost test. Test-only execution provenance is
 `api-transport-fixture`; production requests record `openai-api`. Screenshots identify fixture mode.
@@ -135,7 +135,7 @@ parent awaits child and stdio completion before copying the root or writing its 
 acknowledged counts must be exactly `[0, 4, 0]`, with zero real calls. Forced termination is bounded failure
 cleanup and cannot yield passing evidence. This avoids the documented Windows behavior of
 [child-process signals](https://nodejs.org/api/child_process.html#subprocesskillsignal). There are no
-fixture transport/control routes in the production service. Windows and Linux CI run both browser scripts
+fixture transport/control routes in the production service. Windows and Linux CI run all four retained browser scripts
 and retain their final JSON receipts and screenshots as workflow artifacts.
 The browser test identifies each new attempt from its preparation response, waits for that exact row
 and the completed action, and submits its immutable pointer once. An assertion-controlled delayed-response
