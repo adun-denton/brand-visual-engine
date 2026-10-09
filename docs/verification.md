@@ -71,10 +71,11 @@ state; the Design OS smoke uses two processes.
 
 Inspect [design-os.json](../fixtures/design-os.json) as data, not a visual deliverable. Regenerate it
 with `node scripts/serialize-design-fixtures.ts` and confirm `git diff --exit-code -- fixtures/design-os.json`.
-The Linux CI workflow uses Node 24.19.0 and immutable action references. It has no secret or provider
+The Windows/Linux CI workflow uses Node 24.19.0 and immutable action references. It has no secret or provider
 steps. Record whether a workflow actually ran and its result, rather than assuming a committed
-workflow establishes CI success. Windows/macOS, graphical previews, live providers, designer review,
-full storage unification and production auth remain unverified/out of scope.
+workflow establishes CI success. This paragraph describes the original foundation boundary. Current S4 evidence includes
+Windows/Linux browser previews; macOS, live direct API behavior, designer review, full storage
+unification and production auth remain unverified/out of scope.
 
 ## Designer rubric
 
@@ -165,8 +166,8 @@ git diff --check
 Both browser scripts use temporary synthetic roots. The provider script uses a test-only injected
 transport and records zero real provider calls. Sources, supported controls, secret/budget boundaries,
 proposed opt-in live review and limitations are in [local capability providers](openai-providers.md).
-The retained Windows/Linux Node 24.19.0 CI runs all unit/smoke/build/fixture checks and both browser
-workflows, uploading public-safe receipts/screenshots for each platform. Record actual run results before
+The retained Windows/Linux Node 24.19.0 CI runs all unit/smoke/build/fixture checks and all four retained browser
+workflows, plus the Phase A rehearsal, uploading public-safe receipts/screenshots for each platform. Record actual run results before
 claiming success. Windows directory durability
 and real provider/account verification remain unproven by these checks.
 
@@ -261,3 +262,22 @@ separate. Never substitute these browser/unit checks for either assessment.
 Rollback: leave the dependent draft unmerged, or scope-revert S4 to `847b292`. Preserve all runtime assets,
 versions and ledger records. Older module validators cannot read the additive composition kinds; adopt
 from a gracefully closed pre-S4 backup rather than deleting new history. This is not a schema migration.
+
+
+## Phase A guide rehearsal
+
+The [operator guide](operator-guide.md), blank [designer trial](designer-trial-template.md) and
+[candidate evidence matrix](candidate-readiness.md) keep technical preparation separate from human
+judgments and owner decisions. `npm run test:browser:readiness` creates a fresh synthetic workspace,
+uses actual guide controls through brief/reference, rejection reason/comparison, native fixture imports,
+section replacement, regional raw/strict comparison, page acceptance/export and visible closed-copy
+recovery. All images are authored fixtures; no host tool or real API submission occurs. Its private
+receipt records actual platform/browser/Node, decisions, original/export/backup hashes, elapsed rehearsal
+steps, calls, errors and screenshots at1440/390. Windows/Linux CI executes it after the four retained
+browser workflows. It tests CLI startup separately from the acknowledged fixture closure used for backup;
+Windows signal termination of the startup-only probe is not claimed as graceful backup evidence.
+
+Use the documented Playwright install; select a private `BVE_EVIDENCE_DIR`. Human rubric values,
+license, real brief/designer selection and release disposition remain pending in the private return.
+No source-level claim or successful rehearsal substitutes for independent review or actual designer
+trial. Matching-code rollback and live-provider uncertainty boundaries remain in the guide/matrix.

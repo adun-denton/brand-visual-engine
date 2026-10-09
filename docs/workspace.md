@@ -8,6 +8,8 @@ See [in-app provider boundaries and spending](openai-providers.md) for the addit
 
 ## Run and storage
 
+Follow the [operator guide](operator-guide.md) for Windows/Linux commands and actual controls.
+
 Use Node **24.19.0** (the declared range remains `>=24.19.0 <25`):
 
 ```sh
@@ -146,9 +148,11 @@ is synthetic. Regenerating evidence changes IDs/screenshots; review it before co
 retains the synthetic root for failure inspection and copied backup, never deletes operator data.
 
 The published screenshots/report under [evidence](evidence/) show implementer technical inspection
-at 1440×1000 and 390×844. This is not independent review or designer usefulness/approval. Actual native
-host generation is pending an operator-authorized host round trip; a synthetic attachment does not
-prove it. Windows/macOS UI and Windows directory crash durability remain unverified.
+at 1440×1000 and 390×844. This is not independent review or designer usefulness/approval. A separately recorded real native host round trip exists in coordinator evidence; its
+unknown model/settings/usage remain unknown and it does not close live direct API verification.
+These shipped screenshots/fixtures do not prove it. Windows/Linux automated browser checks and
+independent Windows reviewer checks are recorded at accepted S4; macOS UI and Windows directory
+crash durability remain unverified. See [readiness evidence](candidate-readiness.md).
 
 ## Recovery and rollback
 

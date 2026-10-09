@@ -4,7 +4,8 @@ Original S0 documentation review: 2026-10-06. The table preserves historical S0 
 Current implementation/configuration and sources rechecked on 2026-10-08 are in
 [local API providers](openai-providers.md); offline tests do not prove live account compatibility. The [local workspace](workspace.md) adds manual native
 export/import with decoded files and immutable original-job bindings. It does not call a host tool.
-Only deterministic fixtures execute; the table below retains the original S0 evidence boundary.
+Current in-repository checks use deterministic/injected fixtures; separately recorded native host
+evidence does not establish direct API acceptance. The table below retains the original S0 boundary.
 
 | Path | Intended operation | S0 evidence | Limits to preserve |
 |---|---|---|---|

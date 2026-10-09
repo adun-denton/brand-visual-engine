@@ -43,6 +43,10 @@ jobs:
       - run: npm run test:browser:composition
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-composition-browser-evidence
+      - run: npm run test:browser:readiness
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-readiness-browser-evidence
+          BVE_CANDIDATE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: offline-browser-evidence-${{ matrix.os }}
@@ -51,4 +55,5 @@ jobs:
             ${{ runner.temp }}/bve-provider-browser-evidence
             ${{ runner.temp }}/bve-region-browser-evidence
             ${{ runner.temp }}/bve-composition-browser-evidence
+            ${{ runner.temp }}/bve-readiness-browser-evidence
           if-no-files-found: error

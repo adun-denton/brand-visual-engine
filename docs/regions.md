@@ -101,7 +101,7 @@ and reopened with a fresh browser session. It uses private test-only IPC for ack
 Visible comparison fields are checked immediately after saving, across tab navigation/reload,
 in a fresh browser context and after closed-root recovery. Two operations retain independent
 selected/unresolved decisions, non-default subsets and reasons when a later candidate is appended.
-CI runs all three browser workflows on Windows and Linux and uploads receipts/screenshots.
+CI retains all four browser workflows and the Phase A guide rehearsal on Windows and Linux and uploads receipts/screenshots.
 
 Rollback code with a scoped revert or leave the dependent draft unmerged. Preserve `kernel.sqlite`,
 `workspace.sqlite` if present, provider budget history, all asset folders and immutable versions.
