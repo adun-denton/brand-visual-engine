@@ -1338,3 +1338,19 @@ test('two independent service instances cannot claim the same queued attempt twi
   assert.equal(a2.status().budget!.callsUsed, 1);
   assert.equal(w2.kernel.selected(p.id, 'hero'), null);
 });
+test('paid submission stays disabled despite an old configured key/policy, before reservation or transport', t => {
+  let calls = 0;
+  const transport: Transport = async () => { calls++; throw Error('Unexpected test transport'); };
+  const s = setup(t, transport), queued = s.queue();
+  const {transport: _, ...retainedConfig} = config(transport);
+  const production = new Providers(s.w, retainedConfig);
+  assert.equal(production.status().configured, true);
+  assert.equal(production.status().authorized, true);
+  assert.equal(production.status().available, false);
+  assert.equal(production.status().paidExecutionDisabled, true);
+  const before = JSON.stringify(s.w.state(s.pid));
+  assert.throws(() => production.submit(s.pid, {job:reference(queued)}), /Paid API execution is disabled/);
+  assert.equal(JSON.stringify(s.w.state(s.pid)), before);
+  assert.equal(calls, 0);
+  assert.equal(production.status().budget!.callsUsed, 0);
+});

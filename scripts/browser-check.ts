@@ -182,6 +182,7 @@ try {
   await screen('entry-desktop');
   await page.getByLabel('Workspace name').fill('Fictional Home Care');
   await page.getByRole('button', { name: 'Enter Website' }).click();
+  await page.getByRole('button', { name: '01 Brief & references' }).click();
   await expect(
     page.getByRole('heading', { name: 'A useful brief' }),
   ).toBeVisible();
@@ -516,6 +517,7 @@ try {
   await page.getByLabel('Workspace name').fill('Branded Fixture');
   await page.getByRole('radio', { name: 'Branded', exact: false }).check();
   await page.getByRole('button', { name: 'Enter Website' }).click();
+  await page.getByRole('button', { name: '01 Brief & references' }).click();
   await expect(
     page.locator('.context-field').filter({ hasText: 'palette' }),
   ).toContainText('inherited');
@@ -578,6 +580,7 @@ try {
   await page.getByLabel('Workspace name').fill('Freeroam Comparison Fixture');
   await page.getByRole('radio', { name: 'Freeroam', exact: false }).check();
   await page.getByRole('button', { name: 'Enter Website' }).click();
+  await page.getByRole('button', { name: '01 Brief & references' }).click();
   await expect(
     page.locator('.context-field').filter({ hasText: 'palette' }),
   ).toContainText('Placeholder');

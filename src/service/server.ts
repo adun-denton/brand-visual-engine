@@ -1,4 +1,5 @@
 import { Compositions } from './compositions.ts';
+import { Pages } from './pages.ts';
 import { AIDirections } from './ai-directions.ts';
 import { Providers } from './providers.ts';
 import { Regions } from './regions.ts';
@@ -17,6 +18,7 @@ export interface RunningApp {
   providers: Providers;
   regions: Regions;
   compositions: Compositions;
+  pages: Pages;
   origin: string;
   close: () => Promise<void>;
 }
@@ -35,6 +37,7 @@ export async function startApp(
   const providers = new Providers(workspace, providerConfig);
   const regions = new Regions(workspace, providers);
   const compositions = new Compositions(workspace);
+  const pages = new Pages(workspace);
   const directions = new AIDirections(workspace);
   let origin = '';
   const server = createServer(async (req, res) => {
@@ -51,6 +54,7 @@ export async function startApp(
                   ? { capabilities: providers.registry() }
                   : {}),
                 providers: providers.status(),
+                ...('project' in body && body.project ? { inference: pages.state((body.project as {id:string}).id) } : {}),
               }
             : body,
         ),
@@ -78,6 +82,26 @@ export async function startApp(
           return;
         }
         const projectId = url.searchParams.get('project');
+        if (path.startsWith('/api/v1/page/') || path.startsWith('/api/v1/website/')) {
+          const pid = id(projectId), pointer = ref({id:url.searchParams.get('id'),version:Number(url.searchParams.get('version')),freshness:'pinned'});
+          if (path === '/api/v1/page/history') { json(200,{history:pages.history(pid,pointer)}); return; }
+          if (path === '/api/v1/page/request') {
+            res.writeHead(200,{'Content-Type':'application/json; charset=utf-8','Content-Disposition':'attachment; filename="request.json"'});
+            res.end(JSON.stringify(pages.exportRequest(pid,pointer),null,2)+'\n'); return;
+          }
+          if (path === '/api/v1/page/preview') {
+            res.setHeader('Content-Security-Policy',"default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'");
+            res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(await pages.preview(pid,pointer));return;
+          }
+          if (path === '/api/v1/page/media') {
+            const m=await pages.mediaBytes(pid,pointer);res.writeHead(200,{'Content-Type':'image/'+m.info.format});res.end(m.bytes);return;
+          }
+          if (['/api/v1/page/package','/api/v1/page/export','/api/v1/website/export'].includes(path)) {
+            const output=path.endsWith('/package')?await pages.requestPackage(pid,pointer):path.startsWith('/api/v1/website/')?await pages.exportWebsite(pid,pointer):await pages.export(pid,pointer);
+            res.writeHead(200,{'Content-Type':'application/x-tar','Content-Disposition':'attachment; filename="'+(path.endsWith('/package')?'request':'handoff')+'.tar"'});res.end(output.bytes);return;
+          }
+          throw new InputError('Not found',404);
+        }
         if (path === '/api/v1/workspace') {
           json(200, workspace.state(id(projectId)));
           return;
@@ -215,6 +239,17 @@ export async function startApp(
         const pid = id(outer['projectId']);
         const v = outer['input'];
         switch (path) {
+          case '/api/v1/page/prepare': result=pages.prepare(pid,v);break;
+          case '/api/v1/page/apply': result=await pages.apply(pid,v);break;
+          case '/api/v1/page/cancel': result=pages.cancel(pid,v);break;
+          case '/api/v1/page/add-media': result=await pages.addMedia(pid,v);break;
+          case '/api/v1/page/place': result=await pages.place(pid,v);break;
+          case '/api/v1/page/save': result=pages.save(pid,v);break;
+          case '/api/v1/page/accept': result=pages.accept(pid,v);break;
+          case '/api/v1/page/import': result=await pages.importPortable(pid,v);break;
+          case '/api/v1/page/convert': result=await pages.convert(pid,v);break;
+          case '/api/v1/website/assemble': result=pages.assemble(pid,v);break;
+          case '/api/v1/website/accept': result=pages.acceptWebsite(pid,v);break;
           case '/api/v1/direction/apply':
             result = directions.apply(pid, v);
             break;
@@ -410,6 +445,7 @@ export async function startApp(
     providers,
     regions,
     compositions,
+    pages,
     origin,
     close: async () => {
       await providers.close();

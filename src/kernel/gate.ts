@@ -8,6 +8,7 @@ export interface GateEnvironment {
   assetExists(id: string, checksum: string): boolean;
   moduleExists(id: string): boolean;
   validateArtifact(moduleId: string, payload: Record<string, unknown>): void;
+  accepted?(projectId: string, ref: VersionRef): boolean;
   grantedPermissions: string[];
 }
 export const writePort = (type: PacketType): PortContract => ({ packetType: type, schemaVersion: 1,
@@ -95,6 +96,9 @@ function payloadSchema(type: PacketType, payload: unknown, env: GateEnvironment)
       if (object(p['resolvedContext'])['mode'] !== mode) throw new Error('mode/context mismatch');
       for (const r of list(p['artifactRefs'])) ref(r); break;
     }
+    case 'media-asset':
+    case 'work-record':
+    case 'website-assembly':
     case 'design-artifact':
       if (!env.moduleExists(text(p['moduleId']))) throw new Error('module is not implemented');
       text(p['kind']); text(p['scope']); object(p['lockedValues']); canonical(p['state']);
@@ -151,7 +155,7 @@ function payloadSchema(type: PacketType, payload: unknown, env: GateEnvironment)
 }
 
 export function contractGate(input: unknown, port: PortContract, env: GateEnvironment, previous: NodePacket<unknown> | null = null): NodePacket<unknown> {
-  const p = object(input); const types: PacketType[] = ['visual-os', 'module-project', 'design-artifact', 'iteration-bundle', 'bundle-template', 'capability-registry', 'artifact-metadata', 'execution-record'];
+  const p = object(input); const types: PacketType[] = ['visual-os', 'module-project', 'design-artifact', 'iteration-bundle', 'bundle-template', 'capability-registry', 'artifact-metadata', 'execution-record', 'media-asset', 'work-record', 'website-assembly'];
   const type = member(p['type'], types) as PacketType;
   if (type !== port.packetType || p['schemaVersion'] !== port.schemaVersion) throw new Error('port type/schema mismatch');
   text(p['id']); positive(p['version']); if (p['projectId'] !== null) text(p['projectId']);
@@ -181,10 +185,64 @@ export function contractGate(input: unknown, port: PortContract, env: GateEnviro
   const payload = object(p['payload']);
   if (type === 'artifact-metadata' && p['projectId'] !== null && p['projectId'] !== object(payload['project'])['id']) throw new Error('metadata envelope project mismatch');
   if (type === 'module-project' && p['projectId'] !== p['id']) throw new Error('project identity mismatch');
-  if (type === 'design-artifact') {
+  if (['design-artifact', 'media-asset', 'work-record', 'website-assembly'].includes(type)) {
     const ownerVersion = env.currentVersion(text(p['projectId']));
     const owner = ownerVersion === null ? null : env.lookup({ id: p['projectId'] as string, version: ownerVersion, freshness: 'pinned' });
     if (owner?.type !== 'module-project' || object(owner.payload)['moduleId'] !== payload['moduleId']) throw new Error('artifact owner mismatch');
+  }
+  const expectedRole: Record<string, PacketType> = { 'website-page': 'design-artifact', 'page-media': 'media-asset', 'inference-request': 'work-record', 'inference-result': 'work-record', 'page-migration': 'work-record', 'page-media-origin': 'work-record', 'page-import':'work-record', 'website-assembly': 'website-assembly' };
+  if (expectedRole[String(payload['kind'])] && expectedRole[String(payload['kind'])] !== type) throw new Error('semantic record role mismatch');
+  if (['media-asset', 'work-record', 'website-assembly'].includes(type) && !expectedRole[String(payload['kind'])]) throw new Error('unsupported semantic record kind');
+  if (payload['kind'] === 'website-page') {
+    if (list(p['contextRefs']).length) throw new Error('independent page uses frozen context, not context references');
+    const state = object(payload['state']), page = object(state['page']);
+    const mediaRefs = Object.values(object(page['media'])).filter(v => v !== null).map(v => versionRef(object(v)['asset']));
+    const declared = list(p['dependencies']).map(versionRef);
+    const unique = (xs: VersionRef[]) => [...new Map(xs.map(r => [r.id + ':' + r.version, r])).values()].sort((a,b) => a.id.localeCompare(b.id));
+    if (canonical(unique(declared)) !== canonical(unique(mediaRefs))) throw new Error('page dependencies must be exactly its media bindings');
+    const required: { id: string; checksum: string }[] = [];
+    for (const binding of Object.values(object(page['media']))) {
+      if (binding === null) continue;
+      const b = object(binding), target = env.lookup(versionRef(b['asset']));
+      if (!target || target.type !== 'media-asset' || object(target.payload)['kind'] !== 'page-media') throw new Error('page cannot depend on another design artifact');
+      const media = object(object(target.payload)['state']);
+      if (media['role'] !== 'placeable' || canonical(media['image']) !== canonical(b['image'])) throw new Error('page media role/descriptor mismatch');
+      const image = object(b['image']); required.push({ id: text(image['id']), checksum: text(image['checksum']) });
+    }
+    const inventory = (xs: unknown[]) => [...new Map(xs.map(v => { const x=object(v);return [String(x['id']),{ id:x['id'],checksum:x['checksum'] }];})).values()].sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+    if (canonical(inventory(list(p['assets']))) !== canonical(inventory(required))) throw new Error('page media inventory mismatch');
+  }
+  if (type === 'media-asset') {
+    const state = object(payload['state']), image = object(state['image']);
+    if (list(p['dependencies']).length || list(p['contextRefs']).length || canonical(p['assets']) !== canonical([{id:image['id'],checksum:image['checksum']}])) throw new Error('media records require independent exact bytes');
+  }
+  if (payload['kind'] === 'inference-request') {
+    const state=object(payload['state']); const projectRef=versionRef(state['project']);
+    if (env.lookup(projectRef)?.type !== 'module-project' || projectRef.id !== p['projectId']) throw new Error('request project mismatch');
+    const expected=[projectRef];
+    if (state['base'] !== null) {
+      const b=versionRef(state['base']), base=env.lookup(b);expected.push(b);
+      if (base?.type!=='design-artifact'||object(base.payload)['kind']!=='website-page'||canonical(object(base.payload)['state'])!==canonical(state['baseState'])||digest(state['baseState'])!==state['baseSignature']) throw new Error('request base snapshot mismatch');
+    }
+    for (const r of list(state['resources'])) { const resource=object(r), mr=versionRef(resource['media']), media=env.lookup(mr);expected.push(mr);
+      if (media?.type!=='media-asset'||canonical(object(media.payload)['state'])!==canonical(resource['state'])) throw new Error('request resource binding mismatch'); }
+    if (canonical(p['dependencies'])!==canonical(expected)) throw new Error('request dependency mismatch');
+  }
+  if (payload['kind'] === 'inference-result') {
+    const state=object(payload['state']), requestRef=versionRef(state['request']), request=env.lookup(requestRef);
+    if (request?.type!=='work-record'||object(request.payload)['kind']!=='inference-request'||request.integrity!==state['requestHash']||digest(state['response'])!==state['responseHash']) throw new Error('result request/response binding mismatch');
+    const proposals=list(state['proposals']).map(versionRef);
+    for (const r of proposals) { const page=env.lookup(r);if(page?.type!=='design-artifact'||object(page.payload)['kind']!=='website-page') throw new Error('result proposal type mismatch'); }
+    if(canonical(p['dependencies'])!==canonical([requestRef,...proposals])) throw new Error('result dependency mismatch');
+  }
+  if (type==='website-assembly') {
+    const state=object(payload['state']); const expected=list(state['pages']).map(v=>versionRef(object(v)['artifact']));
+    for(const v of list(state['pages'])){const x=object(v), r=versionRef(x['artifact']), page=env.lookup(r);if(page?.type!=='design-artifact'||object(page.payload)['kind']!=='website-page'||page.integrity!==x['integrity'])throw new Error('Website page binding mismatch');if(!env.accepted?.(text(p['projectId']),r))throw new Error('Website requires exact accepted page versions');}
+    if(canonical(p['dependencies'])!==canonical(expected))throw new Error('Website dependency mismatch');
+  }
+  if(payload['kind']==='page-import'){
+    const state=object(payload['state']), target=versionRef(state['target']);
+    if(canonical(p['dependencies'])!==canonical([target])||digest(state['sourceEvidence'])!==state['sourceHash']||object(env.lookup(target)?.payload)['kind']!=='website-page')throw new Error('Page import evidence mismatch');
   }
   if (type === 'iteration-bundle') {
     const project = env.lookup(versionRef(payload['projectRef']));

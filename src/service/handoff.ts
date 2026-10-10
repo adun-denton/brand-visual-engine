@@ -1,16 +1,15 @@
 import { InputError } from './validation.ts';
 /** Bounded deterministic ustar: generated names only, no links, timestamps or source paths. */
-export function tar(files: Map<string, Buffer>): Buffer {
+export function tar(files: Map<string, Buffer>, mode: 'legacy' | 'page' | 'website' | 'request' = 'legacy'): Buffer {
   const chunks: Buffer[] = [];
   let size = 1024;
   for (const [name, data] of [...files].sort(([a], [b]) =>
     a.localeCompare(b, 'en'),
   )) {
-    if (
-      !/^(manifest\.json|index\.html|RECONSTRUCT\.md|assets\/[a-f0-9]{64}\.(png|jpg|webp))$/.test(
-        name,
-      )
-    )
+    const safe = /^(manifest\.json|index\.html|RECONSTRUCT\.md|assets\/[a-f0-9]{64}\.(png|jpg|webp))$/.test(name)
+      || (mode === 'website' && /^(?:[A-Za-z0-9_-]+\/)+index\.html$/.test(name))
+      || (mode === 'request' && /^(request\.json|response-schema\.json)$/.test(name));
+    if (!safe || Buffer.byteLength(name) > 100)
       throw new InputError('Unsafe handoff path');
     size += 512 + Math.ceil(data.length / 512) * 512;
     if (size > 40 * 1024 * 1024)

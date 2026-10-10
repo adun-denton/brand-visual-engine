@@ -284,6 +284,7 @@ try {
     page.getByRole('button', { name: 'Enter Website' }).click(),
   );
   pid = created.project!.id;
+  await page.getByRole('button', { name: '01 Brief & references' }).click();
   await expect(page.locator('.mode-badge')).toContainText('freeroam');
   await page.getByLabel('Design intent').fill('Small tasks. A calmer home.');
   await page
@@ -785,6 +786,7 @@ try {
   listen();
   await page.goto(origin);
   await page.locator(`[data-action=open][data-id="${pid}"]`).click();
+  await view('01 Brief & references');
   await expect(page.getByLabel('Design intent')).toHaveValue(
     'Small tasks. A calmer home.',
   );
@@ -916,19 +918,20 @@ try {
   );
   console.log(JSON.stringify(receipt));
 } catch (e) {
+  // The rehearsal closes its context before some backup/receipt assertions. Diagnostics
+  // must preserve the original error rather than replace it with a closed-page exception.
+  const failure = {
+    error: String(e),
+    stack: e instanceof Error ? e.stack : null,
+    errors,
+    submissions,
+    steps,
+    notice: page.isClosed() ? null : await page.locator('#notice').textContent().catch(() => null),
+  };
+  console.error('Readiness failure:', JSON.stringify(failure));
   writeFileSync(
     join(evidence, 'readiness-failure.json'),
-    JSON.stringify(
-      {
-        error: String(e),
-        errors,
-        submissions,
-        steps,
-        notice: await page.locator('#notice').textContent(),
-      },
-      null,
-      2,
-    ) + '\n',
+    JSON.stringify(failure, null, 2) + '\n',
   );
   throw e;
 } finally {

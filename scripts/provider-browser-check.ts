@@ -271,6 +271,7 @@ try {
   await page.goto(origin);
   await page.locator('#create [name=title]').fill('Synthetic provider studio');
   await page.getByRole('button', { name: 'Enter Website' }).click();
+  await page.getByRole('button', { name: '01 Brief & references' }).click();
   await expect(
     page.getByRole('heading', { name: 'A useful brief' }),
   ).toBeVisible();

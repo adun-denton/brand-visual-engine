@@ -15,6 +15,17 @@ The application is standalone and is developed/tested with synthetic website bri
 and mock providers. No existing website or client pilot is required to start development. Real
 provider checks validate integrations; a later website/designer pilot evaluates usefulness and quality.
 
+The inference workspace adds independent full-snapshot pages with arbitrary internal sections,
+responsive flow/flex/grid styling, separate exact media resources, scoped AI request/result exchange,
+and independently accepted Website route assemblies. Opening or creating a workspace starts with
+paired page preview and instructions. Existing tools and historical records remain available.
+
+**Paid API execution is disabled in this build**, including when an old private policy or key is present.
+Injected offline transports remain test-only. Use the session handoff for reasoning and permitted native
+image files. Local reasoning is not configured or benchmarked; no hardware or model choice is implied.
+See the [inference workspace guide](docs/inference-workspace.md) and
+[implementation evidence](docs/inference-workspace-result.md) for scope and limitations.
+
 Start with the [operator guide](docs/operator-guide.md) for installation, visible controls, accepted
 handoff and full-root recovery. The [candidate readiness matrix](docs/candidate-readiness.md) separates
 synthetic technical evidence from the blank [designer trial](docs/designer-trial-template.md).
@@ -27,7 +38,7 @@ section imagery, refine selected image regions, and hand over an approved design
 Image-provider paths:
 
 - native ChatGPT/Codex generation through an explicit export/import handoff;
-- OpenAI image generation and editing through an in-app, server-side API integration;
+- retained OpenAI image/assistant adapters, disabled for paid execution in this candidate;
 - optional local ComfyUI is planned and unimplemented.
 
 The native path does not assume this application can call a host's internal tools or inherit its
