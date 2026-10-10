@@ -56,6 +56,9 @@ jobs:
       - run: npm run test:browser:review-repairs
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-review-repairs-browser-evidence
+      - run: npm run test:browser:chat
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-chat-browser-evidence
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
@@ -69,4 +72,5 @@ jobs:
             ${{ runner.temp }}/bve-ai-assets-browser-evidence
             ${{ runner.temp }}/bve-pages-browser-evidence
             ${{ runner.temp }}/bve-review-repairs-browser-evidence
+            ${{ runner.temp }}/bve-chat-browser-evidence
           if-no-files-found: error

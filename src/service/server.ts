@@ -1,3 +1,7 @@
+import { Chat } from './chat.ts';
+import { ChatAuth } from './chat-auth.ts';
+import { AccountChatDriver } from './chat-process.ts';
+import type { ChatDriver,ChatImageDriver } from './chat-contracts.ts';
 import { Compositions } from './compositions.ts';
 import { Pages } from './pages.ts';
 import { AIDirections } from './ai-directions.ts';
@@ -19,6 +23,7 @@ export interface RunningApp {
   regions: Regions;
   compositions: Compositions;
   pages: Pages;
+  chat: Chat;
   origin: string;
   close: () => Promise<void>;
 }
@@ -30,6 +35,8 @@ export async function startApp(
   workspaceOptions?: {
     directionFixture?: boolean;
     aiResponseFixture?: boolean;
+    chatDriver?: ChatDriver;
+    chatImageDriver?: ChatImageDriver;
   },
 ): Promise<RunningApp> {
   const workspace = new Workspace(root, workspaceOptions),
@@ -40,7 +47,18 @@ export async function startApp(
   const pages = new Pages(workspace);
   const directions = new AIDirections(workspace);
   let origin = '';
+  let closing = false;
+  let closePromise: Promise<void> | undefined;
+  const auth = new ChatAuth(root);
+  const grants = new Map<string,{pid:string;tid:string}>();
+  const account = new AccountChatDriver(root,auth,()=>origin,(pid,tid)=>{const token=randomBytes(32).toString('hex');grants.set(token,{pid,tid});return {token,release:()=>{grants.delete(token);}};},async(pid,refs)=>Promise.all(refs.map(async r=>{const m=await pages.mediaBytes(pid,r);return {type:'image' as const,url:'data:image/'+m.info.format+';base64,'+m.bytes.toString('base64')};})));
+  const chat = new Chat(root,workspace,pages,workspaceOptions?.chatDriver ?? (process.env['BVE_CHAT_POLICY_FILE'] ? account : undefined),workspaceOptions?.chatImageDriver);
   const server = createServer(async (req, res) => {
+    if (closing) {
+      res.writeHead(503, { 'Content-Type': 'text/plain; charset=utf-8', Connection: 'close' });
+      res.end('Local workspace is stopping. Saved work is retained.');
+      return;
+    }
     const json = (status: number, body: unknown, augment = true) => {
       // Projection and serialization can fail. Commit success only after both finish.
       const output = JSON.stringify(
@@ -67,15 +85,27 @@ export async function startApp(
       "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
     );
     try {
-      if (
-        req.headers.host !== new URL(origin).host ||
-        (req.headers.origin !== undefined && req.headers.origin !== origin) ||
-        req.headers['sec-fetch-site'] === 'cross-site'
-      )
-        throw new InputError('Local host/origin required', 403);
       const url = new URL(req.url ?? '/', origin);
       const path = url.pathname;
+      // OAuth returns are foreign-site top-level GET navigations. Only this exact
+      // route delegates origin validation to the one-time state/PKCE validator.
+      const callbackNavigation = req.method === 'GET' && path === '/auth/callback'
+        && (req.headers['sec-fetch-mode'] === undefined || req.headers['sec-fetch-mode'] === 'navigate')
+        && (req.headers['sec-fetch-dest'] === undefined || req.headers['sec-fetch-dest'] === 'document');
+      if (
+        req.headers.host !== new URL(origin).host ||
+        (!callbackNavigation && (
+          (req.headers.origin !== undefined && req.headers.origin !== origin) ||
+          req.headers['sec-fetch-site'] === 'cross-site'
+        ))
+      )
+        throw new InputError('Local host/origin required', 403);
       if (req.method === 'GET') {
+        if (path === '/auth/callback') {
+          try { await auth.callback(url.searchParams); res.writeHead(200,{'Content-Type':'text/plain; charset=utf-8'});res.end('ChatGPT connected. Return to the BVE tab.'); }
+          catch {res.writeHead(400,{'Content-Type':'text/plain; charset=utf-8'});res.end('Sign-in could not complete. Return to BVE; saved drafts are retained.');} return;
+        }
+        if(path==='/api/v1/chat/state'){json(200,chat.state(id(url.searchParams.get('project'))),false);return;}
         if (path === '/api/v1/session') {
           json(200, { token, ...workspace.state() });
           return;
@@ -207,7 +237,7 @@ export async function startApp(
       if (req.method !== 'POST') throw new InputError('Use GET or POST', 405);
       if (
         req.headers.origin !== origin ||
-        req.headers['x-bve-token'] !== token ||
+        (req.headers['x-bve-token'] !== token && !(path==='/api/v1/chat/tool' && grants.has(String(req.headers['x-bve-chat-grant']??'')))) ||
         req.headers['content-type'] !== 'application/json'
       )
         throw new InputError(
@@ -233,7 +263,10 @@ export async function startApp(
         throw new InputError('Invalid JSON');
       }
       let result: unknown;
-      if (path === '/api/v1/projects') result = workspace.create(input);
+      if(path==='/api/v1/chat/send')result=chat.send(input);
+      else if(path==='/api/v1/chat/connect')result=auth.begin(origin);
+      else if(path==='/api/v1/chat/tool'){const grant=grants.get(String(req.headers['x-bve-chat-grant']));if(!grant)throw new InputError('Expired scoped tool binding',403);const r=record(input,['name','actionId','input']);result=await chat.dispatch(grant.pid,grant.tid,string(r['name']),id(r['actionId']),r['input']);}
+      else if (path === '/api/v1/projects') result = workspace.create(input);
       else if (path === '/api/v1/metadata')
         result = workspace.inspectMetadata(input);
       else {
@@ -241,6 +274,13 @@ export async function startApp(
         const pid = id(outer['projectId']);
         const v = outer['input'];
         switch (path) {
+          case '/api/v1/chat/cancel':result=chat.cancel(pid,v);break;
+          case '/api/v1/chat/select':result=chat.select(pid,v);break;
+          case '/api/v1/chat/accept':result=chat.accept(pid,v);break;
+          case '/api/v1/chat/attach':result=await chat.attach(pid,v);break;
+          case '/api/v1/chat/image-run':result=await chat.executeImage(pid,v);break;
+          case '/api/v1/chat/permit':result=await chat.permit(pid,v);break;
+          case '/api/v1/chat/place':result=await chat.place(pid,v);break;
           case '/api/v1/page/prepare': result=pages.prepare(pid,v);break;
           case '/api/v1/page/apply': result=await pages.apply(pid,v);break;
           case '/api/v1/page/cancel': result=pages.cancel(pid,v);break;
@@ -452,13 +492,23 @@ export async function startApp(
     regions,
     compositions,
     pages,
+    chat,
     origin,
-    close: async () => {
-      await providers.close();
-      await new Promise<void>((resolve, reject) =>
+    close: () => {
+      if (closePromise) return closePromise;
+      closing = true;
+      // Stop HTTP admission/drain readers before closing private chat persistence.
+      const drained = new Promise<void>((resolve, reject) =>
         server.close((e) => (e ? reject(e) : resolve())),
       );
-      workspace.close();
+      server.closeIdleConnections();
+      closePromise = (async () => {
+        await providers.close();
+        await drained;
+        await chat.close();
+        workspace.close();
+      })();
+      return closePromise;
     },
   };
 }

@@ -20,7 +20,9 @@
     "test:browser:readiness": "node scripts/readiness-browser-check.ts",
     "test:browser:ai-assets": "node scripts/ai-assets-browser-check.ts",
     "test:browser:pages": "node scripts/pages-browser-check.ts",
-    "test:browser:review-repairs": "node scripts/review-repairs-browser-check.ts"
+    "test:browser:review-repairs": "node scripts/review-repairs-browser-check.ts",
+    "test:browser:chat": "node scripts/chat-browser-check.ts",
+    "test:chat:protocol": "node scripts/chat-protocol-preflight.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.58.2",
@@ -29,6 +31,7 @@
     "typescript": "7.0.2"
   },
   "dependencies": {
+    "jose": "6.1.3",
     "sharp": "0.35.5"
   }
 }

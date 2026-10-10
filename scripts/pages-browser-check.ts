@@ -64,6 +64,7 @@ const screenshot = async (name: string) => {
   });
 };
 try {
+  await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
   await page.goto(app.origin);
   await page.locator("#create [name=title]").fill("Synthetic inference UI");
   await page.locator("#create button[type=submit]").click();
@@ -211,7 +212,7 @@ try {
   const accepted =
     app.pages.state(pid).accepted[app.pages.state(pid).pages[0]!.id]!;
   expect(accepted.version).toBe(2);
-  const tar = await download('a[href*="/page/export"]', "accepted-page.tar");
+  const tar = await download('#chat-advanced a[href*="/page/export"]', "accepted-page.tar");
   await screenshot("paired-desktop");
   await page.locator("#studio-prepare [name=operation]").selectOption("revise");
   await page
@@ -275,6 +276,7 @@ try {
   expect(
     (await app.pages.exportWebsite(pid, reference(website))).bytes,
   ).toEqual(websiteTar);
+  await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
   await page.goto(app.origin);
   await page
     .getByRole("button", { name: "Synthetic inference UI", exact: true })
@@ -286,6 +288,7 @@ try {
   // Hold the real image response, navigate away, then exercise the detached load callback.
   // This is a mechanical lifecycle regression, not a provider/generation claim.
   const legacy = await seedComposition(app.workspace);
+  await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
   await page.goto(app.origin);
   await page.getByRole("button", {name:"Fieldwork composition fixture",exact:true}).click();
   let observed!: () => void, release!: () => void;
@@ -310,7 +313,8 @@ try {
     app = await startApp(
       join(resolve(process.env["BVE_SESSION_TRIAL_DIR"]), "runtime"),
     );
-    await page.goto(app.origin);
+    await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
+  await page.goto(app.origin);
     await page
       .getByRole("button", { name: "Fictional Fieldwork Repair", exact: true })
       .click();

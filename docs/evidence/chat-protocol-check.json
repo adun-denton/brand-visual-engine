@@ -1,0 +1,31 @@
+{
+  "version": "codex-cli 0.162.1",
+  "transport": "owned stdio; project MCP",
+  "experimentalFields": [
+    "environments"
+  ],
+  "environments": [],
+  "effectiveNames": [
+    "functions",
+    "list_mcp_resources",
+    "list_mcp_resource_templates",
+    "read_mcp_resource",
+    "mcp__bve",
+    "focus_candidate",
+    "prepare_design",
+    "prepare_image",
+    "read_context",
+    "submit_candidates",
+    "update_draft"
+  ],
+  "schemaSHA256": {
+    "ThreadResumeParams.json": "c69d0d08d046e48b2f9e631761e1127c347fac2f8c2776df458559eb3aa4bd83",
+    "TurnStartParams.json": "062373a7dfc290b506e591bc5c2a35005211df27b3c60358cee3efed12859062",
+    "ThreadStartParams.json": "80a40a7fac15b4bf70efb7f893fb353acc0a0d30c68f54aee4f01923deca85de"
+  },
+  "probe": "actual pinned binary; synthetic loopback receiver rejects request with HTTP 400",
+  "completedAccountTurn": false,
+  "remoteAccountCalls": 0,
+  "paidCalls": 0,
+  "passedCapabilityCatalogueCheck": true
+}

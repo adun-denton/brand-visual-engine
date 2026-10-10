@@ -72,6 +72,7 @@ const previewUrl = (p: { id: string; version: number }) =>
   origin +
   `/api/v1/composition/preview?project=${pid}&id=${p.id}&version=${p.version}`;
 const open = async () => {
+  await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
   await page.goto(origin);
   await page
     .getByRole('button', { name: 'Fieldwork composition fixture', exact: true })
