@@ -4,6 +4,8 @@ import { object, text } from '../../kernel/gate.ts';
 import { validateWorkspaceArtifact } from './workspace-contracts.ts';
 import { canonical, packet, reference } from '../../kernel/packets.ts';
 import { parseSpec, validateAILocks } from './ai-contracts.ts';
+import { validatePageRecord } from './page.ts';
+import { validateInferenceRecord } from './inference-contracts.ts';
 export interface WebsiteDesignState {
   scope: 'site' | 'page' | 'landing-page' | 'section' | 'component' | 'media';
   intent: string; thesis: string; sectionOrder: string[];
@@ -18,6 +20,7 @@ export const explorationTemplate: BundleTemplate = { name: 'Landing page broad e
     { family: 'Styling', key: 'edge-expression', relative: 0.5 }, { family: 'Dynamics', key: 'motion-intent', relative: 0.5 }],
   capabilityIds: ['design.explore'], variationStrategy: 'coherent-grid' };
 export function validateWebsiteArtifact(payload: Record<string, unknown>): void {
+  if (validatePageRecord(payload) || validateInferenceRecord(payload)) return;
   if (validateWorkspaceArtifact(payload)) return;
   if (payload['kind'] === 'legacy-snapshot') { object(payload['state']); return; }
   if (payload['kind'] !== 'website-design') throw new Error('unsupported Website artifact');

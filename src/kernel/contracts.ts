@@ -6,7 +6,8 @@ export interface Placeholder {
   mayProceed: string[]; blocks: string[]; prohibitedAssumptions: string[]; resolutionRoutes: string[];
 }
 export type PacketType = 'visual-os' | 'module-project' | 'design-artifact' | 'iteration-bundle'
-  | 'bundle-template' | 'capability-registry' | 'artifact-metadata' | 'execution-record';
+  | 'bundle-template' | 'capability-registry' | 'artifact-metadata' | 'execution-record'
+  | 'media-asset' | 'work-record' | 'website-assembly';
 export interface NodePacket<T> {
   schemaVersion: 1; type: PacketType; id: string; version: number; projectId: string | null;
   contextRefs: VersionRef[]; dependencies: VersionRef[]; assets: { id: string; checksum: string }[];

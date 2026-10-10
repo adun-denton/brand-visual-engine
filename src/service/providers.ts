@@ -183,7 +183,8 @@ export class Providers {
       ),
       authorized: !!p,
       directionGenerationApproved: p?.directionGenerationApproved === true,
-      available: !!this.config.apiKey && !!p && !this.persistenceFailed,
+      available: !!this.config.transport && !!this.config.apiKey && !!p && !this.persistenceFailed,
+      paidExecutionDisabled: !this.config.transport,
       accountAccess: 'unverified',
       recipe: RECIPE,
       budget: p
@@ -478,6 +479,7 @@ export class Providers {
       m.recipe !== RECIPE
     )
       throw new InputError('Model/recipe changed or not approved');
+    if (!this.config.transport) throw new InputError('Paid API execution is disabled in this build. Use the scoped session handoff.');
     const capability: CapabilityRequest = {
       capabilityId: ['assistant', 'directions'].includes(m.operation)
         ? 'design.reasoning'

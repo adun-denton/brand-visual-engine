@@ -46,7 +46,8 @@ export class KernelStore {
     return value as NodePacket<T>; // Consumers still validate their port before crossing a boundary.
   }
   environment(): GateEnvironment {
-    return { ...this.services, lookup: ref => this.lookup(ref), currentVersion: id => this.currentVersion(id) };
+    return { ...this.services, lookup: ref => this.lookup(ref), currentVersion: id => this.currentVersion(id),
+      accepted: (pid, ref) => this.ledger(pid).events.some(e => e.kind === 'acceptance' && e.subject.id === ref.id && e.subject.version === ref.version) };
   }
   private event(projectId: string, subject: VersionRef, kind: LedgerEvent['kind'], actor: string,
       reason: string, related: VersionRef[] = []): LedgerEvent {
@@ -109,9 +110,9 @@ export class KernelStore {
     return this.transaction(() => {
       if (!this.services.grantedPermissions.includes('accept')) throw new Error('acceptance permission denied');
       const artifact = this.get(artifactRef);
-      if (artifact.type !== 'design-artifact' || artifact.projectId !== projectId) throw new Error('artifact acceptance scope mismatch');
+      if (!['design-artifact', 'website-assembly'].includes(artifact.type) || artifact.projectId !== projectId) throw new Error('artifact acceptance scope mismatch');
       if (!slot.trim()) throw new Error('acceptance slot required');
-      revalidatePacket(artifact, writePort('design-artifact'), this.environment());
+      revalidatePacket(artifact, writePort(artifact.type), this.environment());
       if (artifactRef.freshness === 'current' && this.currentVersion(artifact.id) !== artifact.version) throw new Error('stale acceptance artifact');
       const current = this.selected(projectId, slot);
       if ((current?.id ?? null) !== (expected?.id ?? null) || (current?.version ?? null) !== (expected?.version ?? null)) throw new Error('stale acceptance');
