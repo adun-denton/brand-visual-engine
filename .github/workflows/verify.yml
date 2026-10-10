@@ -50,6 +50,9 @@ jobs:
       - run: npm run test:browser:ai-assets
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-ai-assets-browser-evidence
+      - run: npm run test:browser:pages
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-pages-browser-evidence
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: offline-browser-evidence-${{ matrix.os }}
@@ -60,4 +63,5 @@ jobs:
             ${{ runner.temp }}/bve-composition-browser-evidence
             ${{ runner.temp }}/bve-readiness-browser-evidence
             ${{ runner.temp }}/bve-ai-assets-browser-evidence
+            ${{ runner.temp }}/bve-pages-browser-evidence
           if-no-files-found: error

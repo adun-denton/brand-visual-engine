@@ -284,6 +284,7 @@ try {
     page.getByRole('button', { name: 'Enter Website' }).click(),
   );
   pid = created.project!.id;
+  await page.getByRole('button', { name: '01 Brief & references' }).click();
   await expect(page.locator('.mode-badge')).toContainText('freeroam');
   await page.getByLabel('Design intent').fill('Small tasks. A calmer home.');
   await page
@@ -785,6 +786,7 @@ try {
   listen();
   await page.goto(origin);
   await page.locator(`[data-action=open][data-id="${pid}"]`).click();
+  await view('01 Brief & references');
   await expect(page.getByLabel('Design intent')).toHaveValue(
     'Small tasks. A calmer home.',
   );

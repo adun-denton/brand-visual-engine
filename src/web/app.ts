@@ -1,3 +1,5 @@
+import { studioView, bindStudio } from './pages.ts';
+import type { Pages } from '../service/pages.ts';
 import {
   requestView,
   assetsView,
@@ -34,6 +36,7 @@ import type {
   DirectionProposal,
 } from '../modules/website/workspace-contracts.ts';
 interface State {
+  inference?: ReturnType<Pages["state"]>;
   directionFixture?: boolean;
   providers?: ReturnType<Providers['status']>;
   projects: NodePacket<ModuleProject>[];
@@ -50,7 +53,7 @@ const root = document.querySelector<HTMLDivElement>('#app')!,
   notice = document.querySelector<HTMLDivElement>('#notice')!;
 let state: State,
   token = '',
-  view = 'brief',
+  view = 'studio',
   round = '',
   compared: VersionRef[] = [],
   busy = false;
@@ -154,18 +157,21 @@ function activate(next: State) {
     : [];
 }
 async function open(id: string) {
+  const switched = state.project?.id !== id;
   activate(await request('workspace?project=' + encodeURIComponent(id)));
+  if (switched) view = 'studio';
   render();
 }
 function shell() {
-  return `<div class="shell"><aside class="sidebar"><a class="brand" href="/" aria-label="AI Design OS home"><span class="mark">◈</span><span>Design OS<small>LOCAL STUDIO</small></span></a><p class="eyebrow">WORKSPACES</p><nav aria-label="Projects">${state.projects.map((p) => button(String(p.payload.localContext['title']?.override ?? 'Website'), 'open', `data-id="${e(p.id)}"`, state.project?.id === p.id ? 'project active' : 'project')).join('')}</nav>${button('+ New workspace', 'home', '', 'new-project')}<div class="sidebar-bottom"><span class="dot"></span> Local & private<br><small>Manual image handoff<br>API configuration shown in Images & assistant</small></div></aside><main id="main" tabindex="-1">${state.project ? workspace() : entry()}</main></div>`;
+  return `<div class="shell"><aside class="sidebar"><a class="brand" href="/" aria-label="AI Design OS home"><span class="mark">◈</span><span>Design OS<small>LOCAL STUDIO</small></span></a><p class="eyebrow">WORKSPACES</p><nav aria-label="Projects">${state.projects.map((p) => button(String(p.payload.localContext['title']?.override ?? 'Website'), 'open', `data-id="${e(p.id)}"`, state.project?.id === p.id ? 'project active' : 'project')).join('')}</nav>${button('+ New workspace', 'home', '', 'new-project')}<div class="sidebar-bottom"><span class="dot"></span> Local & private<br><small>Manual image handoff<br>Session reasoning · paid API disabled</small></div></aside><main id="main" tabindex="-1">${state.project ? workspace() : entry()}</main></div>`;
 }
 function entry() {
   return `<section class="entry"><p class="eyebrow">ONE MODULE. TWO STARTING POINTS.</p><h1>Make intent<br><em>inspectable.</em></h1><p class="intro">A place to explore a website, compare directions and keep the reasons behind your choices.</p><form id="create" class="panel"><h2>Open Website</h2><label>Workspace name<input name="title" required maxlength="100" value="Fictional Home Care"></label><div class="mode-choices"><label><input type="radio" name="mode" value="freeroam" checked> <strong>Freeroam</strong><small>Start with your brief. Brand inputs can stay unresolved.</small></label><label><input type="radio" name="mode" value="branded"> <strong>Branded</strong><small>Explicitly create or mount a minimal VisualOS.</small></label></div><label>VisualOS for Branded<select name="visualOS">${option('new', 'Create and approve this manual palette')}${state.visualOS.map((p) => option(JSON.stringify(ptr(p)), 'Saved VisualOS · ' + p.id.slice(-8))).join('')}</select></label><div class="palette-inputs"><label>Primary<input type="color" name="primary" value="#173f45"></label><label>Background<input type="color" name="background" value="#f3ede0"></label><label>Accent<input type="color" name="accent" value="#de8159"></label></div><p class="hint">Branded creation approves only these explicit palette values and system typography. Motion remains unresolved.</p><button class="primary" type="submit">Enter Website <span aria-hidden="true">↗</span></button></form><p class="hint">Website is the only available module. ${state.directionFixture ? 'TEST FIXTURE: synthetic directions, no AI call or quality claim.' : 'Direction generation requires AI-authored output. Unavailable execution leaves a pending handoff.'}</p></section>`;
 }
 function workspace() {
   const p = state.project!;
-  return `<header class="topbar"><span>Website <span class="separator">/</span> ${e(field('title'))}</span><span class="mode-badge">${e(p.payload.mode)} · revision ${p.version}</span></header><div class="workspace"><div class="workspace-title"><div><p class="eyebrow">WEBSITE WORKSPACE</p><h1>${e(field('title'))}</h1><p>Brief → alternatives → a reasoned choice.</p></div><span class="save-state">● Saved locally</span></div><nav class="tabs" aria-label="Workspace views">${[
+  return `<header class="topbar"><span>Website <span class="separator">/</span> ${e(field('title'))}</span><span class="mode-badge">${e(p.payload.mode)} · revision ${p.version}</span></header><div class="workspace"><div class="workspace-title"><div><p class="eyebrow">WEBSITE WORKSPACE</p><h1>${e(field('title'))}</h1><p>Instruction, page preview, and explicit decisions.</p></div><span class="save-state">● Saved locally</span></div><nav class="tabs" aria-label="Workspace views">${[
+    ['studio', '', 'Design workspace'],
     ['brief', '01', 'Brief & references'],
     ['explore', '02', 'Explore & compare'],
     ['native', '03', 'Native handoff'],
@@ -185,7 +191,7 @@ function workspace() {
     )
     .join(
       '',
-    )}</nav>${view === 'brief' ? brief() : view === 'explore' ? explore() : view === 'native' ? native() : view === 'providers' ? providerView() : view === 'regions' ? regionView(regionContext()) : view === 'composition' ? compositionView(compositionContext()) : view === 'assets' ? assetsView(aiContext()) : history()}</div>`;
+    )}</nav>${view === 'studio' ? studioView(studioContext()) : view === 'brief' ? brief() : view === 'explore' ? explore() : view === 'native' ? native() : view === 'providers' ? providerView() : view === 'regions' ? regionView(regionContext()) : view === 'composition' ? compositionView(compositionContext()) : view === 'assets' ? assetsView(aiContext()) : history()}</div>`;
 }
 function brief() {
   const p = state.project!;
@@ -582,7 +588,9 @@ function bindDirectionDefaults() {
     update();
   }
 }
+function studioContext() { return {project:state.project!, studio:state.inference!, legacy:all(), onForm, mutate, render}; }
 function bind() {
+  if (view === 'studio' && state.project && state.inference) bindStudio(studioContext());
   if (state.project) {
     bindAI({ ...aiContext(), onForm, mutate });
     bindDirectionDefaults();
@@ -737,7 +745,7 @@ function bind() {
             : null,
       }),
     );
-    view = 'brief';
+    view = 'studio';
     render();
     notify('Website workspace opened.');
   });
