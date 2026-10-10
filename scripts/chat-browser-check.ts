@@ -1,4 +1,5 @@
 // Form-free normal path with injected mechanical model/tool responses; zero GPT/image calls.
+import { chatAdverseBrowser } from "./chat-adverse-browser.ts";
 import { chromium, expect } from "@playwright/test";
 import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -45,6 +46,7 @@ const send = async (text: string) => {
   await expect(page.locator("#chat-message")).toHaveValue("");
 };
 const screen = async (name: string) => {
+  await expect(page.locator("#chat-message")).toHaveValue("");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -243,6 +245,7 @@ try {
   expect(app.chat.state(pid).session.threadId).toContain("fixture-thread-");
   expect(errors).toEqual([]);
   expect(await page.locator("#chat-advanced").getAttribute("open")).toBe(null);
+  await chatAdverseBrowser(browser, evidence);
   writeFileSync(
     join(evidence, "receipt.json"),
     JSON.stringify(

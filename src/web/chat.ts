@@ -50,6 +50,16 @@ let state: State | undefined,
   refreshing = false;
 let regionShape: "rectangle" | "ellipse" = "rectangle";
 let imagePreset: ImageTarget["preset"];
+let contextRevision = 0;
+function actionContext() {
+  const revision = contextRevision,
+    pid = owner,
+    context = ctx;
+  return {
+    pid, context,
+    current: () => revision === contextRevision && pid === owner,
+  };
+}
 const drafts = new Map<string | undefined, string>();
 let included: VersionRef[] = [],
   target: ImageTarget | null = null,
@@ -127,6 +137,7 @@ export function mountChat(c: Context) {
         draft,
     );
     draft = drafts.get(pid) ?? "";
+    contextRevision++;
     owner = pid;
     state = undefined;
     included = [];
@@ -141,15 +152,16 @@ export function mountChat(c: Context) {
 }
 async function poll() {
   if (refreshing || !owner) return;
+  const { pid, context, current } = actionContext();
+  if (!pid) return;
   refreshing = true;
-  const pid = owner;
   try {
     const response = await fetch(
       "/api/v1/chat/state?project=" + encodeURIComponent(pid),
     );
     if (!response.ok) throw Error("Conversation read unavailable");
     const next = (await response.json()) as State;
-    if (owner !== pid) return;
+    if (!current()) return;
     const changed = JSON.stringify(next) !== JSON.stringify(state);
     const canvasChanged =
       next.activePage?.integrity !== state?.activePage?.integrity;
@@ -158,10 +170,10 @@ async function poll() {
       next.session.turns.at(-1)?.status !== "running";
     state = next;
     if (changed) draw();
-    if (ended || canvasChanged) await ctx.refresh();
+    if (ended || canvasChanged) await context.refresh();
   } catch {
-    if (owner === pid)
-      ctx.notice(
+    if (current())
+      context.notice(
         "Conversation connection interrupted; saved drafts and receipts retained.",
         true,
       );
@@ -198,6 +210,7 @@ function draw(preserveDraft = true) {
   root.querySelector("#chat-send")!.addEventListener("submit", (ev) => {
     ev.preventDefault();
     void run(async () => {
+      const { pid, context, current } = actionContext();
       const text =
         root.querySelector<HTMLTextAreaElement>("#chat-message")!.value;
       const p = active();
@@ -207,30 +220,35 @@ function draw(preserveDraft = true) {
         resources: included,
         target,
       };
-      const result = (await ctx.post("chat/send", {
-        projectId: ctx.project?.id ?? null,
+      const result = (await context.post("chat/send", {
+        projectId: pid ?? null,
         text,
         focus,
         clientId: "turn-" + crypto.randomUUID(),
       })) as { projectId: string };
+      drafts.set(pid, "");
+      if (!current()) return;
       draft = "";
       root.querySelector<HTMLTextAreaElement>("#chat-message")!.value = "";
-      if (!ctx.project)
+      if (!context.project)
         sessionStorage.setItem("bve.chat-created", result.projectId);
-      await ctx.refresh();
-      await poll();
+      await context.refresh();
+      if (current()) await poll();
     });
   });
   root.querySelector("#chat-stop")!.addEventListener(
     "click",
     () =>
       void run(async () => {
-        await ctx.post("chat/cancel", {
-          projectId: owner,
+        const { pid, context, current } = actionContext();
+        await context.post("chat/cancel", {
+          projectId: pid,
           input: { turn: state!.session.turns.at(-1)!.id },
         });
+        if (!current()) return;
         await poll();
-        await ctx.refresh();
+        if (!current()) return;
+        await context.refresh();
       }),
   );
   root.querySelector("#chat-connect")!.addEventListener(
@@ -253,8 +271,10 @@ function draw(preserveDraft = true) {
     "change",
     (ev) =>
       void run(async () => {
+        const { pid, context, current } = actionContext();
+        const job = returnedJob;
         const file = (ev.target as HTMLInputElement).files?.[0];
-        if (!file || !owner)
+        if (!file || !pid)
           throw Error(
             "Start a project conversation before attaching a reference",
           );
@@ -266,15 +286,24 @@ function draw(preserveDraft = true) {
           f.onerror = () => reject(Error("File read failed"));
           f.readAsDataURL(file);
         });
-        const v = (await ctx.post("chat/attach", {
-          projectId: owner,
-          input: { file: b64, job: returnedJob },
+        if (!current()) {
+          context.notice("Attachment cancelled because the project changed. Choose the file again in its intended project.", true);
+          return;
+        }
+        const v = (await context.post("chat/attach", {
+          projectId: pid,
+          input: { file: b64, job },
         })) as { media: VersionRef };
+        if (!current()) {
+          context.notice("Attachment saved only in the original project; it was not included in this conversation.");
+          return;
+        }
         included.push(v.media);
-        returnedJob = null;
-        await ctx.refresh();
+        if (returnedJob === job) returnedJob = null;
+        await context.refresh();
+        if (!current()) return;
         await poll();
-        draw();
+        if (current()) draw();
       }),
   );
   root.querySelectorAll<HTMLElement>("[data-chat-remove]").forEach((b) =>
@@ -294,13 +323,17 @@ function draw(preserveDraft = true) {
       "click",
       () =>
         void run(async () => {
-          await ctx.post("chat/permit", {
-            projectId: owner,
+          const { pid, context, current } = actionContext();
+          await context.post("chat/permit", {
+            projectId: pid,
             input: { job: b.dataset["chatPermit"], confirmed: true },
           });
-          await ctx.refresh();
+          if (!current()) return;
+          await context.refresh();
+          if (!current()) return;
           await poll();
-          ctx.notice(
+          if (!current()) return;
+          context.notice(
             "Usage permission confirmed for the exact returned original.",
           );
         }),
@@ -311,14 +344,17 @@ function draw(preserveDraft = true) {
       "click",
       () =>
         void run(async () => {
-          await ctx.post("chat/place", {
-            projectId: owner,
+          const { pid, context, current } = actionContext();
+          await context.post("chat/place", {
+            projectId: pid,
             input: { job: b.dataset["chatPlace"] },
           });
+          if (!current()) return;
           target = null;
           selectedImage = null;
-          await ctx.refresh();
-          ctx.notice(
+          await context.refresh();
+          if (!current()) return;
+          context.notice(
             "Image candidate chosen for preview; accepted page stays pinned.",
           );
         }),
@@ -347,16 +383,20 @@ function bindCanvas() {
         void run(async () => {
           target = null;
           selectedImage = null;
-          await ctx.post("chat/select", {
-            projectId: owner,
+          const { pid, context, current } = actionContext();
+          await context.post("chat/select", {
+            projectId: pid,
             input: {
               candidate: JSON.parse(b.dataset["chatCandidate"]!),
               compare: false,
             },
           });
+          if (!current()) return;
           await poll();
-          await ctx.refresh();
-          ctx.notice("Candidate selected for viewing; acceptance is separate.");
+          if (!current()) return;
+          await context.refresh();
+          if (!current()) return;
+          context.notice("Candidate selected for viewing; acceptance is separate.");
         }),
     ),
   );
@@ -365,12 +405,15 @@ function bindCanvas() {
     () =>
       void run(async () => {
         const p = active()!;
-        await ctx.post("chat/select", {
-          projectId: owner,
+        const { pid, context, current } = actionContext();
+        await context.post("chat/select", {
+          projectId: pid,
           input: { candidate: ptr(p), compare: true },
         });
+        if (!current()) return;
         await poll();
-        await ctx.refresh();
+        if (!current()) return;
+        await context.refresh();
       }),
   );
   document.querySelector("[data-chat-accept]")?.addEventListener(
@@ -378,8 +421,9 @@ function bindCanvas() {
     () =>
       void run(async () => {
         const p = active()!;
-        await ctx.post("chat/accept", {
-          projectId: owner,
+        const { pid, context, current } = actionContext();
+        await context.post("chat/accept", {
+          projectId: pid,
           input: {
             candidate: ptr(p),
             reviewedHash: ctx.studio!.signatures[p.id],
@@ -388,8 +432,10 @@ function bindCanvas() {
                 ?.checked ?? false,
           },
         });
-        await ctx.refresh();
-        ctx.notice("Exact page accepted. Website acceptance remains separate.");
+        if (!current()) return;
+        await context.refresh();
+        if (!current()) return;
+        context.notice("Exact page accepted. Website acceptance remains separate.");
       }),
   );
   document.querySelectorAll<HTMLElement>("[data-chat-image]").forEach((b) =>

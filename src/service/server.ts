@@ -85,14 +85,21 @@ export async function startApp(
       "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
     );
     try {
-      if (
-        req.headers.host !== new URL(origin).host ||
-        (req.headers.origin !== undefined && req.headers.origin !== origin) ||
-        req.headers['sec-fetch-site'] === 'cross-site'
-      )
-        throw new InputError('Local host/origin required', 403);
       const url = new URL(req.url ?? '/', origin);
       const path = url.pathname;
+      // OAuth returns are foreign-site top-level GET navigations. Only this exact
+      // route delegates origin validation to the one-time state/PKCE validator.
+      const callbackNavigation = req.method === 'GET' && path === '/auth/callback'
+        && (req.headers['sec-fetch-mode'] === undefined || req.headers['sec-fetch-mode'] === 'navigate')
+        && (req.headers['sec-fetch-dest'] === undefined || req.headers['sec-fetch-dest'] === 'document');
+      if (
+        req.headers.host !== new URL(origin).host ||
+        (!callbackNavigation && (
+          (req.headers.origin !== undefined && req.headers.origin !== origin) ||
+          req.headers['sec-fetch-site'] === 'cross-site'
+        ))
+      )
+        throw new InputError('Local host/origin required', 403);
       if (req.method === 'GET') {
         if (path === '/auth/callback') {
           try { await auth.callback(url.searchParams); res.writeHead(200,{'Content-Type':'text/plain; charset=utf-8'});res.end('ChatGPT connected. Return to the BVE tab.'); }
