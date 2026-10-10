@@ -9,7 +9,7 @@ is synthetic preparation. [Operator guide](operator-guide.md) · [blank trial](d
 | Area | Reproducible current evidence | Boundary / remaining evidence |
 |---|---|---|
 | Windows/Linux setup | Node24.19.0 locked install/build/typecheck in [CI](../.github/workflows/verify.yml); `readiness-browser-check.json` CLI startup/read-only check and actual platform/version | Local/manual console behavior is distinct from test IPC closure; no installer/hosting claim |
-| Brief/reference/decisions | `scripts/readiness-browser-check.ts`: fresh UI creation, permitted authored reference, comparison reason identifying rejected alternative, separate selection/acceptance | Deterministic directions and AI technical reasons; actual designer judgments blank |
+| Brief/reference/decisions | `scripts/readiness-browser-check.ts`: fresh UI creation, permitted authored reference, comparison reason identifying rejected alternative, separate selection/acceptance | Retained deterministic mechanical fixtures; product AI-authored path checked separately; actual designer judgments blank |
 | Native import/replacement | Same rehearsal exports requests/imports authored originals and replaces hero with preserved other sections/history | 0 host calls in rehearsal; separately recorded prior real native round trip has unknown model/settings/billing; does not establish direct API |
 | Regional source/raw/composite | Rehearsal + [regional check](../scripts/region-browser-check.ts): pinned mask, original bundle bytes, raw/composite distinction and outside RGB/alpha preservation | Hard edges/seams need human review; no automatic alignment or general provider mask guarantee |
 | Composition/export | Rehearsal + [composition checks](../tests/compositions.test.ts) + four-width/source focused repair observations in composition workflow | Pinned accepted values/assets and safe paths; no publication, hidden data or automatic newer-asset substitution |
@@ -36,6 +36,15 @@ run/reused/unrun with reasons, guide actions, fixture/seed descriptions, visible
 actual provider/host call counts, original/export/closed-backup hashes, review distinctions and limits.
 Keep human rubric and owner decisions blank. Record exact-head Windows/Linux CI logs and artifact
 receipts when executable checks change. Check links and read back published source.
+
+## AI direction correction and continuation
+
+The product route now uses [AI-authored direction intake and reusable assets](ai-directions-assets.md),
+with `tests/ai-directions.test.ts` and `test:browser:ai-assets` checking its bounded contracts. Existing
+Phase A fixtures remain mechanical evidence. A primary native AI-authored response must be returned
+separately with request/output hashes; neither that output nor passing tests establish independent
+acceptance or designer quality. Full chat import/general section identities are proposals outside this
+change. Live direction generation needs separately approved policy; original approval is not reset.
 
 ## Before Phase B / release disposition
 

@@ -3,6 +3,7 @@ import { effectiveValues } from '../../kernel/context.ts';
 import { object, text } from '../../kernel/gate.ts';
 import { validateWorkspaceArtifact } from './workspace-contracts.ts';
 import { canonical, packet, reference } from '../../kernel/packets.ts';
+import { parseSpec, validateAILocks } from './ai-contracts.ts';
 export interface WebsiteDesignState {
   scope: 'site' | 'page' | 'landing-page' | 'section' | 'component' | 'media';
   intent: string; thesis: string; sectionOrder: string[];
@@ -25,6 +26,7 @@ export function validateWebsiteArtifact(payload: Record<string, unknown>): void 
   if (!Array.isArray(state['sectionOrder']) || !state['sectionOrder'].every(s => typeof s === 'string')) throw new Error('invalid section structure');
   if (!Array.isArray(state['unresolved']) || !state['unresolved'].every(s => typeof s === 'string')) throw new Error('invalid unresolved state');
   const parameters = object(state['parameters']);
+  if (parameters['ai']) { const spec = parseSpec(parameters['ai']); validateAILocks(spec.page, payload['lockedValues'] as Record<string, Value>); }
   for (const [key, value] of Object.entries(object(payload['lockedValues']))) if (canonical(parameters[key]) !== canonical(value)) throw new Error('Website lock changed');
   const metrics = state['metrics'];
   if (!Array.isArray(metrics) || !metrics.length) throw new Error('missing exploration dimensions');

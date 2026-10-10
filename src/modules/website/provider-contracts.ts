@@ -14,7 +14,12 @@ import {
   integer,
   bool,
 } from '../../service/validation.ts';
-export const operations = ['generate', 'edit', 'assistant'] as const;
+export const operations = [
+  'generate',
+  'edit',
+  'assistant',
+  'directions',
+] as const;
 export const statuses = [
   'queued',
   'submitting',
@@ -52,7 +57,8 @@ export interface ProviderRequest {
   attemptId: string;
   project: VersionRef;
   artifact: VersionRef | null;
-  scope: 'hero' | 'services' | 'proof' | 'contact';
+  scope: 'hero' | 'services' | 'proof' | 'contact' | 'landing-page';
+  directionRequest?: VersionRef;
   operation: (typeof operations)[number];
   instructions: string;
   inputAsset: ImageInfo | null;
@@ -127,6 +133,7 @@ export interface RunPolicy {
   reserveUSD: number;
   alternativeCallBoundApproved: true;
   models: string[];
+  directionGenerationApproved?: true;
 }
 export interface BudgetState {
   policy: RunPolicy;
@@ -146,6 +153,7 @@ export function parsePolicy(x: unknown): RunPolicy {
     'reserveUSD',
     'alternativeCallBoundApproved',
     'models',
+    'directionGenerationApproved',
   ]);
   for (const k of ['capUSD', 'reserveUSD'])
     if (
@@ -157,7 +165,15 @@ export function parsePolicy(x: unknown): RunPolicy {
       throw new Error('Invalid bounded budget');
   if (p['alternativeCallBoundApproved'] !== true)
     throw new Error('Explicit alternative call bound approval required');
+  if (
+    p['directionGenerationApproved'] !== undefined &&
+    p['directionGenerationApproved'] !== true
+  )
+    throw new Error('Direction generation requires explicit separate approval');
   return {
+    ...(p['directionGenerationApproved'] === true
+      ? { directionGenerationApproved: true as const }
+      : {}),
     runId: string(p['runId'], 100),
     approval: string(p['approval'], 500),
     maxCalls: integer(p['maxCalls'], 100),
@@ -183,6 +199,7 @@ export function parseRequest(x: unknown): ProviderRequest {
     'model',
     'recipe',
     'settings',
+    'directionRequest',
   ]);
   if (p['contractVersion'] !== 1)
     throw new Error('Unsupported request contract');
@@ -241,16 +258,29 @@ export function parseRequest(x: unknown): ProviderRequest {
     inputAsset =
       p['inputAsset'] === null ? null : parseImageInfo(p['inputAsset']);
   if (
-    (operation === 'assistant') !== (artifact === null) ||
+    ['assistant', 'directions'].includes(operation) !== (artifact === null) ||
     (operation === 'edit') !== (inputAsset !== null)
   )
     throw new Error('Operation input mismatch');
+  if ((operation === 'directions') !== (p['directionRequest'] !== undefined))
+    throw new Error('Direction request required only for AI directions');
+  if ((operation === 'directions') !== (p['scope'] === 'landing-page'))
+    throw new Error('Direction scope mismatch');
   return {
+    ...(operation === 'directions'
+      ? { directionRequest: ref(p['directionRequest']) }
+      : {}),
     contractVersion: 1,
     attemptId: string(p['attemptId'], 160),
     project: ref(p['project']),
     artifact,
-    scope: choice(p['scope'], ['hero', 'services', 'proof', 'contact']),
+    scope: choice(p['scope'], [
+      'hero',
+      'services',
+      'proof',
+      'contact',
+      'landing-page',
+    ]),
     operation,
     instructions: string(p['instructions']),
     inputAsset,
@@ -265,7 +295,10 @@ export function parseRequest(x: unknown): ProviderRequest {
       quality: choice(s['quality'], ['low', 'medium', 'high']),
       outputFormat: 'png',
       background: 'opaque',
-      maxOutputTokens: integer(s['maxOutputTokens'], 2000),
+      maxOutputTokens: integer(
+        s['maxOutputTokens'],
+        operation === 'directions' ? 12000 : 2000,
+      ),
     },
   };
 }
@@ -286,8 +319,8 @@ export function validateProviderArtifact(p: Record<string, unknown>): boolean {
   record(p['lockedValues'], []);
   choice(
     p['scope'],
-    kind === 'website-provider-budget'
-      ? ['landing-page']
+    ['website-provider-budget', 'website-provider-job'].includes(String(kind))
+      ? ['landing-page', 'hero', 'services', 'proof', 'contact']
       : ['hero', 'services', 'proof', 'contact'],
   );
   if (kind === 'website-provider-job') {

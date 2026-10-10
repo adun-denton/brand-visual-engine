@@ -1,4 +1,5 @@
 import { Compositions } from './compositions.ts';
+import { AIDirections } from './ai-directions.ts';
 import { Providers } from './providers.ts';
 import { Regions } from './regions.ts';
 import type { ProviderConfig } from './providers.ts';
@@ -24,12 +25,17 @@ export async function startApp(
   port = 0,
   webRoot = join(import.meta.dirname, '../../dist'),
   providerConfig?: ProviderConfig,
+  workspaceOptions?: {
+    directionFixture?: boolean;
+    aiResponseFixture?: boolean;
+  },
 ): Promise<RunningApp> {
-  const workspace = new Workspace(root),
+  const workspace = new Workspace(root, workspaceOptions),
     token = randomBytes(32).toString('hex');
   const providers = new Providers(workspace, providerConfig);
   const regions = new Regions(workspace, providers);
   const compositions = new Compositions(workspace);
+  const directions = new AIDirections(workspace);
   let origin = '';
   const server = createServer(async (req, res) => {
     const json = (status: number, body: unknown) => {
@@ -78,6 +84,8 @@ export async function startApp(
         }
         if (
           path === '/api/v1/composition/preview' ||
+          path === '/api/v1/direction/preview' ||
+          path === '/api/v1/direction/request' ||
           path === '/api/v1/composition/export' ||
           path === '/api/v1/manifest' ||
           path === '/api/v1/artifact' ||
@@ -91,6 +99,25 @@ export async function startApp(
             freshness: 'pinned',
           });
           const pid = id(projectId);
+          if (path === '/api/v1/direction/request') {
+            const exported = directions.export(pid, pointer);
+            res.writeHead(200, {
+              'Content-Type': 'application/json; charset=utf-8',
+              'Content-Disposition': `attachment; filename="ai-direction-request-${pointer.id}.json"`,
+            });
+            res.end(JSON.stringify(exported, null, 2) + '\n');
+            return;
+          }
+          if (path === '/api/v1/direction/preview') {
+            const html = await directions.preview(pid, pointer);
+            res.setHeader(
+              'Content-Security-Policy',
+              "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'",
+            );
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+            res.end(html);
+            return;
+          }
           if (path === '/api/v1/composition/preview') {
             const html = await compositions.preview(pid, pointer);
             res.setHeader(
@@ -188,6 +215,38 @@ export async function startApp(
         const pid = id(outer['projectId']);
         const v = outer['input'];
         switch (path) {
+          case '/api/v1/direction/apply':
+            result = directions.apply(pid, v);
+            break;
+          case '/api/v1/direction/place':
+            result = await directions.place(pid, v);
+            break;
+          case '/api/v1/assets/revise':
+            result = directions.reviseAsset(pid, v);
+            break;
+          case '/api/v1/assets/add': {
+            const r = record(v, [
+              'expectedProject',
+              'origin',
+              'label',
+              'role',
+              'permission',
+              'file',
+            ]);
+            let bytes: Buffer | undefined;
+            if (r['file'] !== undefined) {
+              const s = string(
+                r['file'],
+                Math.ceil(MAX_IMAGE_BYTES / 3) * 4 + 4,
+              );
+              if (s.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(s))
+                throw new InputError('Invalid encoded image');
+              bytes = Buffer.from(s, 'base64');
+            }
+            const { file: _, ...input } = r;
+            result = await directions.addAsset(pid, input, bytes);
+            break;
+          }
           case '/api/v1/composition/start':
             result = compositions.start(pid, v);
             break;

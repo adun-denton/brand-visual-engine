@@ -21,7 +21,7 @@ test('test-only fixture acknowledges store closure and drains child/stdio before
     assert.equal(fixture.child.stdout!.readableEnded, true);
     assert.equal(fixture.child.stderr!.readableEnded, true);
     cpSync(join(root, 'source'), join(root, 'copy'), { recursive: true });
-    const restored = new Workspace(join(root, 'copy'));
+    const restored = new Workspace(join(root, 'copy'), { directionFixture: true });
     restored.close();
     const badRoot = join(root, 'not-a-directory');
     writeFileSync(badRoot, 'Synthetic invalid fixture root');

@@ -45,7 +45,7 @@ const authored = async (color: string, corner = '#173f45') =>
     .toBuffer();
 const sourceBytes = await authored('#de8159'),
   rawBytes = await authored('#719876', '#de8159');
-const w = new Workspace(runtime),
+const w = new Workspace(runtime, { directionFixture: true }),
   p = w.create({
     title: 'Synthetic regional finish study',
     mode: 'freeroam',

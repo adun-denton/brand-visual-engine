@@ -31,7 +31,7 @@ const close = (w: Workspace) => {
 };
 async function setup(t: test.TestContext) {
   const root = mkdtempSync(join(tmpdir(), 'bve-composition-'));
-  let w = new Workspace(root);
+  let w = new Workspace(root, { directionFixture: true });
   t.after(() => {
     close(w);
     rmSync(root, { recursive: true, force: true });
@@ -98,7 +98,7 @@ async function setup(t: test.TestContext) {
     accept,
     reopen: () => {
       close(w);
-      w = new Workspace(root);
+      w = new Workspace(root, { directionFixture: true });
       c.workspace = w;
       return w;
     },
@@ -458,7 +458,7 @@ test('closed root/copy restores comparison, reviews, accepted provenance and byt
   t.after(() => rmSync(copy, { recursive: true, force: true }));
   close(reopened);
   cpSync(root, copy, { recursive: true });
-  const cloned = new Workspace(copy);
+  const cloned = new Workspace(copy, { directionFixture: true });
   try {
     assert.deepEqual(
       (await new Compositions(cloned).export(pid, reference(current))).bytes,

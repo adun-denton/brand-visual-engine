@@ -1,3 +1,5 @@
+import { AIDirections } from './ai-directions.ts';
+import type { DirectionEvidence } from '../modules/website/ai-contracts.ts';
 import { resolveCapability } from '../kernel/capabilities.ts';
 import { syntheticCapabilities } from '../fixtures-design-os.ts';
 import type {
@@ -180,6 +182,7 @@ export class Providers {
         this.config.assistantModel as (typeof ASSISTANT_MODELS)[number],
       ),
       authorized: !!p,
+      directionGenerationApproved: p?.directionGenerationApproved === true,
       available: !!this.config.apiKey && !!p && !this.persistenceFailed,
       accountAccess: 'unverified',
       recipe: RECIPE,
@@ -243,14 +246,33 @@ export class Providers {
       'size',
       'quality',
       'references',
+      'directionRequest',
     ]);
     const p = this.workspace.project(pid, r['expectedProject']),
       operation = choice(r['operation'], operations),
-      scope = choice(r['scope'], ['hero', 'services', 'proof', 'contact']);
-    const a =
-      operation === 'assistant'
-        ? null
-        : this.workspace.read(pid, ref(r['artifact']));
+      scope = choice(
+        r['scope'],
+        operation === 'directions'
+          ? ['landing-page']
+          : ['hero', 'services', 'proof', 'contact'],
+      );
+    const direction =
+      operation === 'directions'
+        ? new AIDirections(this.workspace).job(pid, ref(r['directionRequest']))
+        : null;
+    if (
+      direction &&
+      (direction.payload.state.status !== 'awaiting' ||
+        direction.payload.state.project.version !== p.version ||
+        direction.version !==
+          this.workspace.kernel.currentVersion(direction.id))
+    )
+      throw new InputError('AI direction request is stale', 409);
+    if (operation !== 'directions' && r['directionRequest'] !== undefined)
+      throw new InputError('Direction request belongs to directions operation');
+    const a = ['assistant', 'directions'].includes(operation)
+      ? null
+      : this.workspace.read(pid, ref(r['artifact']));
     if (operation === 'generate' && a?.payload.kind !== 'website-design')
       throw new InputError('Generation starts from a website design');
     if (
@@ -273,7 +295,9 @@ export class Providers {
         (x) =>
           same(x.artifact, pointer) &&
           x.selected &&
-          (x.scope === scope || x.scope === 'landing-page'),
+          (operation === 'directions' ||
+            x.scope === scope ||
+            x.scope === 'landing-page'),
       );
       if (!entry)
         throw new InputError(
@@ -290,18 +314,28 @@ export class Providers {
       throw new InputError(
         'Generation accepts text only. Use image editing to include image references.',
       );
-    const model =
-      operation === 'assistant'
-        ? this.config.assistantModel
-        : this.config.imageModel;
     if (
-      !(operation === 'assistant' ? ASSISTANT_MODELS : IMAGE_MODELS).includes(
-        model as never,
-      )
+      direction &&
+      canonical(refs.map((x) => x.artifact)) !==
+        canonical(direction.payload.state.references)
+    )
+      throw new InputError(
+        'Use the exact explicitly included direction references',
+      );
+    const model = ['assistant', 'directions'].includes(operation)
+      ? this.config.assistantModel
+      : this.config.imageModel;
+    if (
+      !(
+        ['assistant', 'directions'].includes(operation)
+          ? ASSISTANT_MODELS
+          : IMAGE_MODELS
+      ).includes(model as never)
     )
       throw new InputError('Configured model is unsupported by this recipe');
     const m: ProviderRequest = {
       contractVersion: 1,
+      ...(direction ? { directionRequest: reference(direction) } : {}),
       attemptId: 'api-attempt-' + randomUUID(),
       project: reference(p),
       artifact: a ? reference(a) : null,
@@ -325,7 +359,7 @@ export class Providers {
         quality: choice(r['quality'], ['low', 'medium', 'high']),
         outputFormat: 'png',
         background: 'opaque',
-        maxOutputTokens: 2000,
+        maxOutputTokens: operation === 'directions' ? 12000 : 2000,
       },
     };
     const j = artifact(
@@ -341,6 +375,7 @@ export class Providers {
       [
         reference(p),
         ...(a ? [reference(a)] : []),
+        ...(direction ? [reference(direction)] : []),
         ...refs.map((r) => r.artifact),
       ],
       refs.map((r) => r.image),
@@ -420,23 +455,38 @@ export class Providers {
     if (!policy)
       throw new InputError('No approved run budget. No API request was sent.');
     if (
+      m.operation === 'directions' &&
+      policy.directionGenerationApproved !== true
+    )
+      throw new InputError(
+        'Separate direction-generation approval required; no API request was sent.',
+      );
+    if (m.directionRequest) {
+      const q = new AIDirections(this.workspace).job(pid, m.directionRequest);
+      if (
+        q.version !== this.workspace.kernel.currentVersion(q.id) ||
+        q.payload.state.status !== 'awaiting'
+      )
+        throw new InputError('AI direction request is no longer awaiting', 409);
+    }
+    if (
       !policy.models.includes(m.model) ||
       m.model !==
-        (m.operation === 'assistant'
+        (['assistant', 'directions'].includes(m.operation)
           ? this.config.assistantModel
           : this.config.imageModel) ||
       m.recipe !== RECIPE
     )
       throw new InputError('Model/recipe changed or not approved');
     const capability: CapabilityRequest = {
-      capabilityId:
-        m.operation === 'assistant'
-          ? 'design.reasoning'
-          : m.operation === 'edit'
-            ? 'image.edit'
-            : 'image.generate',
-      inputType:
-        m.operation === 'assistant' ? 'module-project' : 'design-artifact',
+      capabilityId: ['assistant', 'directions'].includes(m.operation)
+        ? 'design.reasoning'
+        : m.operation === 'edit'
+          ? 'image.edit'
+          : 'image.generate',
+      inputType: ['assistant', 'directions'].includes(m.operation)
+        ? 'module-project'
+        : 'design-artifact',
       outputType: 'design-artifact',
     };
     const resolution = resolveCapability(this.registry(), capability, 'cloud');
@@ -599,6 +649,14 @@ export class Providers {
               p.payload.resolvedContext.fields[k]?.effective?.value ?? null,
             ]),
           ),
+          ...(m.directionRequest
+            ? {
+                directionRequest: new AIDirections(this.workspace).export(
+                  pid,
+                  m.directionRequest,
+                ),
+              }
+            : {}),
           originalArtifact: m.artifact
             ? this.workspace.read(pid, m.artifact).payload
             : null,
@@ -612,8 +670,15 @@ export class Providers {
       const cancelled = j.payload.state.status === 'cancelled-locally';
       const late =
         cancelled ||
+        (m.operation === 'directions' &&
+          j.payload.state.status === 'outcome-uncertain') ||
         m.project.version !== this.workspace.project(pid).version ||
-        !same(m.selection, this.workspace.kernel.selected(pid, m.scope));
+        !same(m.selection, this.workspace.kernel.selected(pid, m.scope)) ||
+        !!(
+          m.directionRequest &&
+          this.workspace.kernel.currentVersion(m.directionRequest.id) !==
+            m.directionRequest.version
+        );
       let output: NodePacket<DesignArtifact<unknown>>;
       if (result.bytes) {
         let info;
@@ -677,6 +742,23 @@ export class Providers {
             evidence,
           );
         }
+      } else if (m.operation === 'directions') {
+        const ai: DirectionEvidence = {
+          request: m.directionRequest!,
+          response: result.directions!,
+          executor: this.config.transport ? 'test-fixture' : 'api-ai',
+          source: this.config.transport
+            ? 'Offline transport fixture only; no AI/provider generation claim'
+            : 'Explicit API direction generation; operator review pending',
+          requestedModel: m.model,
+          reportedModel: evidence.reportedModel ?? null,
+          providerJob: reference(j),
+          outcome: cancelled ? 'late-cancelled' : late ? 'late' : 'candidate',
+        };
+        output = artifact(pid, 'website-ai-evidence', 'landing-page', ai, [
+          m.directionRequest!,
+          reference(j),
+        ]);
       } else {
         const proposal: AssistantProposal = {
           job: reference(j),
@@ -697,7 +779,10 @@ export class Providers {
         j,
         j.payload.state.status === 'cancelled-locally'
           ? 'cancelled-locally'
-          : 'returned',
+          : m.operation === 'directions' &&
+              j.payload.state.status === 'outcome-uncertain'
+            ? 'outcome-uncertain'
+            : 'returned',
         late ? 'late-result' : 'result',
         'Returned result retained as a proposal/candidate; acceptance unchanged.',
         evidence,

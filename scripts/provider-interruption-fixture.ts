@@ -6,7 +6,7 @@ import { parsePolicy } from '../src/modules/website/provider-contracts.ts';
 import { reference } from '../src/kernel/packets.ts';
 const root = process.argv[2];
 if (!root) throw new Error('Disposable fixture root required');
-const w = new Workspace(root);
+const w = new Workspace(root, { directionFixture: true });
 const p = w.create({
   title: 'Interrupted synthetic run',
   mode: 'freeroam',

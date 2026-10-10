@@ -1,3 +1,4 @@
+import type { Value } from '../kernel/contracts.ts';
 import { randomUUID, createHash } from 'node:crypto';
 import type {
   NodePacket,
@@ -28,6 +29,8 @@ import {
   imagePath,
 } from '../modules/website/composition.ts';
 import { parseContent } from '../modules/website/composition-contracts.ts';
+import { parseSpec } from '../modules/website/ai-contracts.ts';
+import type { ProjectAsset } from '../modules/website/ai-contracts.ts';
 import type { ImageState } from '../modules/website/workspace-contracts.ts';
 import type { Assets } from './assets.ts';
 import type { Workspace } from './workspace.ts';
@@ -106,10 +109,14 @@ export function validateCompositionLinks(
         const a = known<DesignArtifact<ImageState>>(b.asset, null);
         if (
           ![
+            'website-asset',
             'website-image',
             'website-api-image',
             'website-region-image',
           ].includes(a.payload.kind) ||
+          (a.payload.kind === 'website-asset' &&
+            (a.payload.state as unknown as ProjectAsset).role !==
+              'placeable') ||
           !['landing-page', section.id].includes(a.payload.scope) ||
           canonical(a.payload.state.image) !== canonical(b.image)
         )
@@ -387,7 +394,9 @@ export class Compositions {
       directionState: d.payload.state,
       lockedValues: d.payload.lockedValues,
       context: p.payload.resolvedContext,
-      content: parseContent(content),
+      content: d.payload.state.parameters['ai']
+        ? parseSpec(d.payload.state.parameters['ai']).page
+        : parseContent(content),
       reviews: {},
     };
     this.workspace.kernel.putMany(
@@ -419,10 +428,14 @@ export class Compositions {
           >;
           if (
             ![
+              'website-asset',
               'website-image',
               'website-api-image',
               'website-region-image',
             ].includes(a.payload.kind) ||
+            (a.payload.kind === 'website-asset' &&
+              (a.payload.state as unknown as ProjectAsset).role !==
+                'placeable') ||
             !['landing-page', section.id].includes(a.payload.scope)
           )
             throw new InputError('Choose an owned image in this section scope');
@@ -593,6 +606,11 @@ export class Compositions {
     for (const sec of s.content.sections)
       for (const b of sec.blocks)
         if (b.asset) {
+          const original = this.workspace.read(pid, b.asset);
+          const assetMetadata =
+            original.payload.kind === 'website-asset'
+              ? (original.payload.state as ProjectAsset)
+              : null;
           const { bytes, info } = await this.workspace.originalImage(
             pid,
             b.asset,
@@ -602,6 +620,16 @@ export class Compositions {
             section: sec.id,
             block: b.id,
             artifact: b.asset,
+            ...(assetMetadata
+              ? {
+                  assetProvenance: {
+                    label: assetMetadata.label,
+                    role: assetMetadata.role,
+                    permission: assetMetadata.permission,
+                    origin: assetMetadata.origin,
+                  },
+                }
+              : {}),
             path: imagePath(info),
             ...info,
             alt: b.alt,
@@ -639,6 +667,13 @@ export class Compositions {
         ),
       ),
     };
+    if (direction.parameters['ai']) {
+      const ai = parseSpec(direction.parameters['ai']);
+      direction.parameters['ai'] = {
+        ...ai,
+        imageNeeds: ai.imageNeeds.map((n) => ({ ...n, references: [] })),
+      } as unknown as Value;
+    }
     const manifest = {
       schema: 'bve.website-handoff',
       version: 1,

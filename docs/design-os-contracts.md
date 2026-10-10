@@ -15,7 +15,7 @@ The existing spike is adapted in place rather than discarded.
 | Shared primitives | `src/kernel/primitives.ts` and `raster.ts`: immutable media identity, region, decision and job-state primitives, checksum/comparison/compositing functions |
 | Kernel boundary | `gate.ts`: deterministic validation; `packets.ts`: canonical JSON/checksum/version lineage; `context.ts`: shared resolution |
 | Generic persistence | `store.ts`: append packet versions and ledger events, explicit selections/acceptance, transaction rollback; `metadata.ts`: portable pointers and reconnection |
-| Website module | `src/modules/website/design.ts`: Website design payload, relative exploration dimensions, deterministic candidate rounds; `src/modules/registry.ts`: only Website manifest |
+| Website module | `src/modules/website/design.ts`: Website design payload, relative dimensions, validated AI-authored page state; explicit test-only deterministic rounds; `src/modules/registry.ts`: only Website manifest |
 | Executors | `src/kernel/capabilities.ts`: provider-neutral matching/stub; `src/executors/legacy-contracts.ts`: historical provider-specific job evidence, not a new domain dependency |
 | Compatibility adapter | `src/modules/website/legacy-*`: original Website project/handoff/storage and explicit import; root `contracts.ts`, `raster.ts`, `store.ts` preserve old imports |
 
@@ -168,3 +168,6 @@ append versions; the existing kernel acceptance transaction uses a dedicated `co
 current-family/current-context guard. Comparison and explicit acceptance remain different records.
 No shared packet/schema or VisualOS approval semantics change. See [workspace.md](workspace.md) for
 review dependency rules, recipes, links/style bounds and export contents.
+
+The product direction route now uses [the AI direction/asset contract](ai-directions-assets.md).
+Earlier synthetic generator descriptions above refer to historical/test mechanics, not product generation.

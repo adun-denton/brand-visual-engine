@@ -43,7 +43,7 @@ export interface CapabilityRequest { capabilityId: string; inputType: string; ou
 export interface IterationBundle {
   projectRef: VersionRef; baseState: VersionRef | null; scope: string;
   inherited: Record<string, Value>; locked: Record<string, Value>; exploring: Dimension[];
-  placeholders: Placeholder[]; variationPlan: { strategy: 'coherent-grid'; amplitude: number };
+  placeholders: Placeholder[]; variationPlan: { strategy: 'coherent-grid' | 'ai-authored'; amplitude: number };
   candidateCount: number; candidates: VersionRef[]; selection: VersionRef | null;
   status: 'draft' | 'awaiting-capability' | 'candidates-ready' | 'selected';
   capabilities: CapabilityRequest[]; executionRefs: VersionRef[];

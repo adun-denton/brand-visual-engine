@@ -120,7 +120,7 @@ export async function checkCompositionRepairs(
 ) {
   mkdirSync(evidence, { recursive: true });
   const root = mkdtempSync(join(tmpdir(), 'bve-composition-repair-'));
-  const w = new Workspace(root),
+  const w = new Workspace(root, { directionFixture: true }),
     seed = await seedComposition(w),
     pid = seed.project.id;
   const descriptors = Object.fromEntries(

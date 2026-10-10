@@ -102,7 +102,7 @@ function payloadSchema(type: PacketType, payload: unknown, env: GateEnvironment)
     case 'iteration-bundle': {
       ref(p['projectRef']); if (p['baseState'] !== null) ref(p['baseState']); text(p['scope']);
       object(p['inherited']); const locked = object(p['locked']); dimensions(p['exploring']); placeholders(p['placeholders']);
-      const plan = object(p['variationPlan']); member(plan['strategy'], ['coherent-grid']);
+      const plan = object(p['variationPlan']); member(plan['strategy'], ['coherent-grid', 'ai-authored']);
       if (typeof plan['amplitude'] !== 'number' || plan['amplitude'] < 0 || plan['amplitude'] > 1) throw new Error('invalid variation amplitude');
       const count = positive(p['candidateCount']); if (count > 16) throw new Error('candidate bound exceeded');
       const candidates = list(p['candidates']).map(ref); const status = member(p['status'], ['draft', 'awaiting-capability', 'candidates-ready', 'selected']);
