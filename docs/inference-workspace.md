@@ -28,6 +28,12 @@ manual edits and media placement create immutable operator revisions; prior acce
 pinned. A cancelled or stale request can retain its response as historical proposals without replacing
 newer work. Duplicate exact results register once. Malformed intake commits no packet group.
 
+The active page identity is remembered separately for each project in this browser/origin. Reload
+and same-origin restart preserve that choice; it is not a design or acceptance record. If browser
+storage is absent, automatic fallback excludes cancelled/stale historical proposals. Such proposals
+are labeled historical and can be inspected through deliberate selection. A selected identity follows
+its latest local revision; accepted exports remain pinned independently.
+
 ## Independent pages, media and Websites
 
 - A `website-page` design artifact owns a complete semantic tree, declared local styles, responsive

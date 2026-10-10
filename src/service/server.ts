@@ -41,13 +41,11 @@ export async function startApp(
   const directions = new AIDirections(workspace);
   let origin = '';
   const server = createServer(async (req, res) => {
-    const json = (status: number, body: unknown) => {
-      res.writeHead(status, {
-        'Content-Type': 'application/json; charset=utf-8',
-      });
-      res.end(
-        JSON.stringify(
+    const json = (status: number, body: unknown, augment = true) => {
+      // Projection and serialization can fail. Commit success only after both finish.
+      const output = JSON.stringify(
           body && typeof body === 'object'
+            && augment
             ? {
                 ...body,
                 ...('capabilities' in body
@@ -57,8 +55,9 @@ export async function startApp(
                 ...('project' in body && body.project ? { inference: pages.state((body.project as {id:string}).id) } : {}),
               }
             : body,
-        ),
-      );
+        );
+      res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(output);
     };
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -86,12 +85,14 @@ export async function startApp(
           const pid = id(projectId), pointer = ref({id:url.searchParams.get('id'),version:Number(url.searchParams.get('version')),freshness:'pinned'});
           if (path === '/api/v1/page/history') { json(200,{history:pages.history(pid,pointer)}); return; }
           if (path === '/api/v1/page/request') {
+            const output=JSON.stringify(pages.exportRequest(pid,pointer),null,2)+'\n';
             res.writeHead(200,{'Content-Type':'application/json; charset=utf-8','Content-Disposition':'attachment; filename="request.json"'});
-            res.end(JSON.stringify(pages.exportRequest(pid,pointer),null,2)+'\n'); return;
+            res.end(output); return;
           }
           if (path === '/api/v1/page/preview') {
+            const html=await pages.preview(pid,pointer);
             res.setHeader('Content-Security-Policy',"default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'");
-            res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(await pages.preview(pid,pointer));return;
+            res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(html);return;
           }
           if (path === '/api/v1/page/media') {
             const m=await pages.mediaBytes(pid,pointer);res.writeHead(200,{'Content-Type':'image/'+m.info.format});res.end(m.bytes);return;
@@ -198,8 +199,9 @@ export async function startApp(
         };
         const file = files[path];
         if (!file) throw new InputError('Not found', 404);
+        const output = readFileSync(join(webRoot, file.file));
         res.writeHead(200, { 'Content-Type': file.type });
-        res.end(readFileSync(join(webRoot, file.file)));
+        res.end(output);
         return;
       }
       if (req.method !== 'POST') throw new InputError('Use GET or POST', 405);
@@ -418,6 +420,10 @@ export async function startApp(
       }
       json(200, result);
     } catch (error) {
+      if (res.headersSent || res.writableEnded || res.destroyed) {
+        if (!res.writableEnded && !res.destroyed) res.destroy();
+        return;
+      }
       const status = error instanceof InputError ? error.status : 400;
       json(status, {
         error:
@@ -426,7 +432,7 @@ export async function startApp(
             : error instanceof Error && !('code' in error)
               ? 'Operation rejected: ' + error.message
               : 'Operation rejected: stored data unavailable; inspect the private runtime root',
-      });
+      }, false); // Error responses never repeat fallible workspace/provider projection.
     }
   });
   server.requestTimeout = 15000;

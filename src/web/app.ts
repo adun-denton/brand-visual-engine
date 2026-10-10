@@ -528,14 +528,19 @@ function aiContext() {
   };
 }
 function activeDirection() {
-  const b = (state.bundles ?? [])
-    .filter(
-      (b) =>
-        b.payload.projectRef.version === state.project?.version &&
-        b.payload.selection,
-    )
-    .at(-1);
-  return b?.payload.selection ? find(b.payload.selection) : undefined;
+  // Packet revision order includes media placement. Only explicit selection events
+  // choose a direction; the current bundle resolves that identity's placement version.
+  for (const event of [...(state.ledger?.events ?? [])].reverse()) {
+    if (event.kind !== 'selection') continue;
+    const bundle = state.bundles?.find(b => b.id === event.subject.id
+      && b.payload.projectRef.version === state.project?.version);
+    const selected = bundle?.payload.selection;
+    if (selected && selected.id === event.related[0]?.id) {
+      const artifact = find(selected);
+      if (artifact?.payload.kind === 'website-design') return artifact;
+    }
+  }
+  return undefined;
 }
 function bindDirectionDefaults() {
   const selected = activeDirection();

@@ -19,7 +19,8 @@
     "test:browser:composition": "node scripts/composition-browser-check.ts",
     "test:browser:readiness": "node scripts/readiness-browser-check.ts",
     "test:browser:ai-assets": "node scripts/ai-assets-browser-check.ts",
-    "test:browser:pages": "node scripts/pages-browser-check.ts"
+    "test:browser:pages": "node scripts/pages-browser-check.ts",
+    "test:browser:review-repairs": "node scripts/review-repairs-browser-check.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.58.2",

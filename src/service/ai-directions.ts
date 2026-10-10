@@ -50,6 +50,21 @@ import type { ProviderJob } from '../modules/website/provider-contracts.ts';
 const same = (a: VersionRef, b: VersionRef) =>
   a.id === b.id && a.version === b.version;
 const jsonValue = (x: unknown) => x as Value;
+/** Transport design projection; never exports reference/comparison or operational bookkeeping. */
+function transportBase(state: WebsiteDesignState, included: VersionRef[]): WebsiteDesignState {
+  const keys = ['title','intent','audience','offer','response','content','exclusions','commitments',
+    'unresolved','palette','typeface','motion','density'];
+  const parameters: Record<string, Value> = Object.fromEntries(keys.filter(k => k in state.parameters).map(k => [k, state.parameters[k] as Value]));
+  if (state.parameters['ai']) {
+    const spec = parseSpec(state.parameters['ai']);
+    parameters['ai'] = jsonValue({ version: spec.version, rationale: spec.rationale,
+      constraints: spec.constraints, uncertainty: spec.uncertainty, page: spec.page,
+      imageNeeds: spec.imageNeeds.map(n => ({ ...n,
+        references: n.references.filter(r => included.some(x => same(x,r))) })) });
+  }
+  return structuredClone({ scope: state.scope, intent: state.intent, thesis: state.thesis,
+    sectionOrder: state.sectionOrder, parameters, metrics: state.metrics, unresolved: state.unresolved });
+}
 function make<T>(
   pid: string,
   kind: string,
@@ -329,7 +344,7 @@ export class AIDirections {
           ),
         ),
       },
-      base: s.base ? this.design(pid, s.base).payload.state : null,
+      base: s.base ? transportBase(this.design(pid, s.base).payload.state, s.references) : null,
       count: s.count,
       instructions: s.instructions,
       references: s.references.map((x) => ({

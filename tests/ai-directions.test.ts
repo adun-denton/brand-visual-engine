@@ -17,8 +17,10 @@ import type {
 import type { WebsiteDesignState } from '../src/modules/website/design.ts';
 import { parseSpec } from '../src/modules/website/ai-contracts.ts';
 import type { ProjectAsset } from '../src/modules/website/ai-contracts.ts';
+import type { AISpec } from '../src/modules/website/ai-contracts.ts';
 import { sectionIds } from '../src/modules/website/composition.ts';
 import { Providers } from '../src/service/providers.ts';
+import { exploreWebsite } from '../src/modules/website/design.ts';
 import { ASSISTANT_MODELS, IMAGE_MODELS } from '../src/service/openai.ts';
 import type { ProviderJob } from '../src/modules/website/provider-contracts.ts';
 function setup(t: test.TestContext) {
@@ -38,6 +40,50 @@ function setup(t: test.TestContext) {
   }).project!;
   const ai = new AIDirections(w);
   return { root, w, p, ai };
+}
+for (const kind of ['legacy', 'AI'] as const) {
+  test(`BVE-009-R2: ${kind} refinement projects only deliberately included references into native and offline API inputs`, async t => {
+    const s=setup(t), bytes=await syntheticCompositionImage();
+    await s.w.addReference(s.p.id,reference(s.p),bytes,'Chosen hero marker','imagery','hero');
+    await s.w.addReference(s.p.id,reference(s.w.project(s.p.id)),bytes,'Private unchecked marker','imagery','proof');
+    s.p=s.w.project(s.p.id);
+    const refs=s.w.references(s.p).map(x=>x.artifact);
+    let base: NodePacket<DesignArtifact<WebsiteDesignState>>;
+    if(kind==='legacy') {
+      const round=exploreWebsite(s.p,'legacy-private-fixture',null,1);
+      s.w.kernel.putMany([...round.candidates,round.bundle]); base=round.candidates[0]!;
+    } else {
+      s.ai.request(s.p.id,{expectedProject:reference(s.p),base:null,count:1,instructions:'Mechanical source with selected references',references:refs});
+      const q=s.w.state(s.p.id).artifacts!.filter(a=>a.payload.kind==='website-ai-request').at(-1)!;
+      const out=aiFixture(s.p,1); out.candidates[0]!.imageNeeds[0]!.references=[refs[0]!]; out.candidates[0]!.imageNeeds[2]!.references=[refs[1]!];
+      s.ai.apply(s.p.id,{request:reference(q),response:out,source:'Mechanical fixture',model:null,aiAuthorship:true});
+      base=designs(s)[0]!;
+    }
+    const original=canonical(base), before=s.w.kernel.ledger(s.p.id);
+    let captured='';
+    const providers=new Providers(s.w,{apiKey:'offline-fixture',imageModel:IMAGE_MODELS[0],assistantModel:ASSISTANT_MODELS[0],timeoutMs:5000,
+      policy:{runId:'scoped-base-fixture',approval:'Offline only',maxCalls:2,capUSD:2,reserveUSD:1,alternativeCallBoundApproved:true,directionGenerationApproved:true,models:[ASSISTANT_MODELS[0]]},
+      transport:async(_url,init)=>{captured=String(init?.body);return new Response(JSON.stringify({id:'resp_scoped_fixture',status:'completed',model:ASSISTANT_MODELS[0],output:[{type:'message',role:'assistant',status:'completed',content:[{type:'output_text',text:JSON.stringify(aiFixture(s.p,1))}]}]}),{status:200});}});
+    for(const included of [[],[refs[0]!]]) {
+      s.ai.request(s.p.id,{expectedProject:reference(s.p),base:reference(base),count:1,instructions:'Mechanical scoped refinement',references:included});
+      const q=s.w.state(s.p.id).artifacts!.filter(a=>a.payload.kind==='website-ai-request').at(-1)!;
+      const projected=s.ai.export(s.p.id,reference(q)), native=JSON.stringify(projected);
+      assert(!native.includes('Private unchecked marker')); assert(!native.includes(refs[1]!.id));
+      assert.equal(native.includes('Chosen hero marker'),included.length>0);
+      if(!included.length)assert(!native.includes(refs[0]!.id));
+      assert.equal(projected.base!.thesis,base.payload.state.thesis);
+      assert.deepEqual(projected.base!.metrics,base.payload.state.metrics);
+      if(kind==='AI')assert.deepEqual((projected.base!.parameters['ai'] as unknown as AISpec).page,parseSpec(base.payload.state.parameters['ai']).page);
+      providers.prepare(s.p.id,{expectedProject:reference(s.p),artifact:null,operation:'directions',scope:'landing-page',directionRequest:reference(q),instructions:'Offline scope test',references:included,size:'1024x1024',quality:'low'});
+      const job=s.w.state(s.p.id).artifacts!.filter(a=>a.payload.kind==='website-provider-job').at(-1)!;
+      providers.submit(s.p.id,{job:reference(job)}); await providers.wait();
+      assert(captured); assert(!captured.includes('Private unchecked marker')); assert(!captured.includes(refs[1]!.id));
+      assert.equal(captured.includes('Chosen hero marker'),included.length>0);
+      if(!included.length)assert(!captured.includes(refs[0]!.id));
+    }
+    assert.equal(canonical(s.w.read(s.p.id,reference(base))),original);
+    assert.deepEqual(s.w.kernel.ledger(s.p.id).events.slice(0,before.events.length),before.events);
+  });
 }
 function request(s: ReturnType<typeof setup>, count = 2) {
   s.ai.request(s.p.id, {

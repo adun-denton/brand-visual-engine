@@ -33,7 +33,25 @@ const walk = (n: Element): Element[] => [
   n,
   ...(n.children ?? []).flatMap(walk),
 ];
-let active = "";
+const activeByProject = new Map<string, string>();
+const choiceKey = (pid: string) => "bve.active-page." + pid;
+function remember(pid: string, id: string) {
+  activeByProject.set(pid, id);
+  try { localStorage.setItem(choiceKey(pid), id); } catch { /* Eligible fallback remains usable. */ }
+}
+function historical(s: Studio, id: string) {
+  return s.results.some(r => r.payload.state.outcome === "historical"
+    && r.payload.state.proposals.some(p => p.id === id));
+}
+function activePage(pid: string, s: Studio) {
+  let chosen = activeByProject.get(pid);
+  if (!chosen) { try { chosen = localStorage.getItem(choiceKey(pid)) ?? undefined; } catch {} }
+  // An explicit historical choice is allowed. Discovery alone must never adopt it.
+  const p = s.pages.find(p => p.id === chosen)
+    ?? s.pages.filter(p => !historical(s, p.id)).at(-1);
+  if (p) remember(pid, p.id);
+  return p;
+}
 let comparison: VersionRef | null = null;
 let width = "desktop";
 const url = (path: string, pid: string, r: VersionRef) =>
@@ -47,8 +65,7 @@ const url = (path: string, pid: string, r: VersionRef) =>
   r.version;
 export function studioView(c: Context) {
   const { studio: s, project } = c;
-  const p = s.pages.find((p) => p.id === active) ?? s.pages.at(-1);
-  if (p) active = p.id;
+  const p = activePage(project.id, s);
   const pending = s.requests.filter(
     (q) => q.payload.state.status === "awaiting",
   );
@@ -58,12 +75,12 @@ export function studioView(c: Context) {
   const options = s.pages
     .map(
       (x) =>
-        `<option value="${enc(x)}" ${x.id === p?.id ? "selected" : ""}>${e(x.payload.state.page.title)} · v${x.version}</option>`,
+        `<option value="${enc(x)}" ${x.id === p?.id ? "selected" : ""}>${e(x.payload.state.page.title)} · v${x.version}${historical(s,x.id) ? " · historical" : ""}</option>`,
     )
     .join("");
   const tree = page ? walk(page.page.root) : [];
   return `<section class="studio-banner"><div><p class="eyebrow">INFERENCE WORKSPACE</p><h2>Design, inspect, decide.</h2><p>Give the AI a scoped instruction. Review the returned proposals beside the page.</p></div><span class="badge">Session handoff · paid API disabled</span></section>
- <div class="studio-pair"><section class="panel studio-preview"><div class="studio-controls"><label>Active page<select id="studio-active">${options || "<option>No page yet</option>"}</select></label><label>Preview width<select id="studio-width"><option value="desktop" ${width === "desktop" ? "selected" : ""}>Desktop</option><option value="narrow" ${width === "narrow" ? "selected" : ""}>390 px</option></select></label></div>${
+ <div class="studio-pair"><section class="panel studio-preview"><div class="studio-controls"><label>Active page<select id="studio-active">${!p && options ? '<option value="" disabled selected>Choose a proposal explicitly</option>' : ''}${options || "<option>No page yet</option>"}</select></label><label>Preview width<select id="studio-width"><option value="desktop" ${width === "desktop" ? "selected" : ""}>Desktop</option><option value="narrow" ${width === "narrow" ? "selected" : ""}>390 px</option></select></label></div>${
    p
      ? `<p class="hint">${e(p.id)} · v${p.version} · ${accepted ? `accepted v${accepted.version}` : "proposal"} · ${page!.page.responsive.length} responsive rules</p><div class="studio-frame ${width === "narrow" ? "narrow" : "desktop"}"><iframe title="Active page preview" sandbox="allow-same-origin" src="${url("page/preview", project.id, ptr(p))}"></iframe></div><a href="${url("page/preview", project.id, ptr(p))}" target="_blank" rel="noopener">Open full preview</a><p>${e(page!.rationale)}</p><details><summary>Exact state and local elements</summary><pre class="json-result">${e(JSON.stringify(page, null, 2))}</pre></details><ul>${[
          ...page!.page.unresolved,
@@ -155,7 +172,7 @@ export function studioView(c: Context) {
 }
 export function bindStudio(c: Context) {
   const { studio: s, project } = c;
-  const p = s.pages.find((x) => x.id === active) ?? s.pages.at(-1);
+  const p = activePage(project.id, s);
   const encodeFile = async (file: File) => {
     const bytes = new Uint8Array(await file.arrayBuffer());
     let data = "";
@@ -166,8 +183,7 @@ export function bindStudio(c: Context) {
   const field = (f: HTMLFormElement, k: string) =>
     String(new FormData(f).get(k) ?? "");
   document.querySelector("#studio-active")?.addEventListener("change", (ev) => {
-    active = (JSON.parse((ev.target as HTMLSelectElement).value) as VersionRef)
-      .id;
+    remember(project.id, (JSON.parse((ev.target as HTMLSelectElement).value) as VersionRef).id);
     comparison = null;
     c.render();
   });
