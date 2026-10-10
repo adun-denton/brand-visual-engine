@@ -11,7 +11,7 @@ change canonical acceptance or publish a license.
 
 ## Observed evidence
 
-- Node 24.19.0 locked install, build, typecheck, 176 unit/service tests, both smokes, fixture consistency
+- Node 24.19.0 locked install, build, typecheck, 177 unit/service tests, both smokes, fixture consistency
   and whitespace validation passed locally. No skipped unit tests.
 - All eight retained browser workflows and the new chat workflow passed with Chromium 143.0.7499.0.
   Windows/Linux CI includes all nine; exact remote results belong to the returned head receipt.
@@ -59,7 +59,10 @@ Browser assertions now check a decoded image and an empty sent composer. Candida
 pinned to exact versions; incomplete/cancelled/stale turns cannot activate drafts. Legacy browser
 fixtures opt into optional controls explicitly, and their original semantic assertions remain.
 
-Initial incomplete/failing checks are retained separately from passing receipts. A duplicate download
+A first Windows CI run reached the asset workflow but timed out waiting for HTTP shutdown while the
+browser kept polling. Shutdown now stops admission, closes idle connections and drains HTTP readers
+before private chat persistence. A polling/repeated-close/reopen regression covers that repair. Initial
+incomplete/failing checks are retained separately from passing receipts. A duplicate download
 selector was scoped to the legacy interface, sandboxed initialization was guarded, and canvas polling
 now refreshes the exact preview when selection changes. No paid calls, delegation, merge or deployment
 were performed. Coordinator independent source/evidence review and actual account verification remain

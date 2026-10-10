@@ -47,11 +47,18 @@ export async function startApp(
   const pages = new Pages(workspace);
   const directions = new AIDirections(workspace);
   let origin = '';
+  let closing = false;
+  let closePromise: Promise<void> | undefined;
   const auth = new ChatAuth(root);
   const grants = new Map<string,{pid:string;tid:string}>();
   const account = new AccountChatDriver(root,auth,()=>origin,(pid,tid)=>{const token=randomBytes(32).toString('hex');grants.set(token,{pid,tid});return {token,release:()=>{grants.delete(token);}};},async(pid,refs)=>Promise.all(refs.map(async r=>{const m=await pages.mediaBytes(pid,r);return {type:'image' as const,url:'data:image/'+m.info.format+';base64,'+m.bytes.toString('base64')};})));
   const chat = new Chat(root,workspace,pages,workspaceOptions?.chatDriver ?? (process.env['BVE_CHAT_POLICY_FILE'] ? account : undefined),workspaceOptions?.chatImageDriver);
   const server = createServer(async (req, res) => {
+    if (closing) {
+      res.writeHead(503, { 'Content-Type': 'text/plain; charset=utf-8', Connection: 'close' });
+      res.end('Local workspace is stopping. Saved work is retained.');
+      return;
+    }
     const json = (status: number, body: unknown, augment = true) => {
       // Projection and serialization can fail. Commit success only after both finish.
       const output = JSON.stringify(
@@ -480,13 +487,21 @@ export async function startApp(
     pages,
     chat,
     origin,
-    close: async () => {
-      await chat.close();
-      await providers.close();
-      await new Promise<void>((resolve, reject) =>
+    close: () => {
+      if (closePromise) return closePromise;
+      closing = true;
+      // Stop HTTP admission/drain readers before closing private chat persistence.
+      const drained = new Promise<void>((resolve, reject) =>
         server.close((e) => (e ? reject(e) : resolve())),
       );
-      workspace.close();
+      server.closeIdleConnections();
+      closePromise = (async () => {
+        await providers.close();
+        await drained;
+        await chat.close();
+        workspace.close();
+      })();
+      return closePromise;
     },
   };
 }
