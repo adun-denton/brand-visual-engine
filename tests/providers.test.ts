@@ -131,7 +131,7 @@ function setup(
   extra: Partial<ProviderConfig> = {},
 ) {
   const root = mkdtempSync(join(tmpdir(), 'bve-provider-'));
-  let w = new Workspace(root);
+  let w = new Workspace(root, { directionFixture: true });
   let api = new Providers(w, config(transport, extra));
   const p = w.create({
     title: 'Synthetic API studio',
@@ -164,7 +164,7 @@ function setup(
     first,
     reopen(alreadyClosed = false) {
       if (!alreadyClosed) w.close();
-      w = new Workspace(root);
+      w = new Workspace(root, { directionFixture: true });
       api = new Providers(w, config(transport, extra));
     },
     queue(
@@ -992,7 +992,7 @@ test('same-section native/API comparison selection and independent acceptance su
   const copy = s.root + '-copy';
   s.w.close();
   cpSync(s.root, copy, { recursive: true });
-  const restored = new Workspace(copy);
+  const restored = new Workspace(copy, { directionFixture: true });
   assert.deepEqual(restored.kernel.selected(s.pid, 'hero'), out);
   assert.deepEqual(
     (await restored.originalImage(s.pid, nativeOut)).bytes,
@@ -1042,6 +1042,7 @@ test('provider HTTP endpoints retain origin/token checks and original-byte fidel
     0,
     join(import.meta.dirname, '../dist'),
     config(async () => imageResponse(bytes)),
+    { directionFixture: true },
   );
   t.after(async () => {
     await app.close();
@@ -1146,7 +1147,7 @@ test('process interruption recovers one uncertain attempt and reservation withou
     projectId: string;
     attemptId: string;
   };
-  const w = new Workspace(root);
+  const w = new Workspace(root, { directionFixture: true });
   let calls = 0;
   const api = new Providers(
     w,
@@ -1294,8 +1295,8 @@ test('uncertain run blocks another submission until explicit reconciliation, ret
 
 test('two independent service instances cannot claim the same queued attempt twice', async (t) => {
   const root = mkdtempSync(join(tmpdir(), 'bve-provider-claim-'));
-  const w1 = new Workspace(root),
-    w2 = new Workspace(root);
+  const w1 = new Workspace(root, { directionFixture: true }),
+    w2 = new Workspace(root, { directionFixture: true });
   let calls = 0;
   const config1 = config(async () => {
     calls++;

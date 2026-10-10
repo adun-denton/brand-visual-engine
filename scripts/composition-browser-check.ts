@@ -26,7 +26,7 @@ import type {
 const runtime = mkdtempSync(join(tmpdir(), 'bve-composition-browser-')),
   evidence = resolve(process.env['BVE_EVIDENCE_DIR'] ?? 'docs/evidence');
 mkdirSync(evidence, { recursive: true });
-const w = new Workspace(runtime),
+const w = new Workspace(runtime, { directionFixture: true }),
   seed = await seedComposition(w),
   pid = seed.project.id;
 w.close();

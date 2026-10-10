@@ -50,7 +50,7 @@ async function setup(
   mode: 'branded' | 'freeroam' = 'freeroam',
 ) {
   const root = mkdtempSync(join(tmpdir(), 'bve-region-test-'));
-  const w = new Workspace(root);
+  const w = new Workspace(root, { directionFixture: true });
   let calls = 0,
     closed = false;
   const additionalConnections: Workspace[] = [];
@@ -378,7 +378,7 @@ test('native raw and strict composite stay distinct, verify outside RGBA and sur
     copied = s.root + '-closed-copy';
   await s.close();
   cpSync(s.root, copied, { recursive: true });
-  const reopened = new Workspace(copied);
+  const reopened = new Workspace(copied, { directionFixture: true });
   t.after(() => {
     reopened.close();
     rmSync(copied, { recursive: true, force: true });
@@ -559,7 +559,7 @@ test('acceptance revalidates module inputs inside the kernel transaction after a
   const s = await setup(t),
     op = s.prepare('native', { preservation: 'review-raw' }),
     raw = await s.nativeReturn(op, await pixels());
-  const other = new Workspace(s.root);
+  const other = new Workspace(s.root, { directionFixture: true });
   s.track(other);
   const accept = s.w.kernel.accept.bind(s.w.kernel);
   s.w.kernel.accept = (...args: Parameters<typeof accept>) => {

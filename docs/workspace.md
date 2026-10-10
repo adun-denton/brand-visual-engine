@@ -72,10 +72,10 @@ are described separately in openai-providers.md.
    content, exclusions, commitments and unresolved choices; save with a reason.
 2. Attach permitted PNG/JPEG/WebP references and choose roles/scopes. Save later role/selection changes
    as new revisions. Missing inputs remain visible; unconfigured executors do not prevent editing.
-3. Explore 3/6/9 coherent deterministic proposals. A chosen prior design can center a smaller round.
-   Compare two at the same scale, save why, select a direction, then separately accept it with a reason.
-   Relative dimensions are exploration controls, not scores. Colors remain provisional if no palette
-   exists; preview illustrations/text are authored synthetic fixtures, not live AI design or a composer.
+3. Prepare a pinned AI direction request for 1/3/6/9 candidates. Export/import native AI JSON or use
+   the separately approved API directions operation, then compare/select and separately accept. No
+   deterministic product fallback exists. AI decisions render from structured page state; see
+   [AI directions and reusable assets](ai-directions-assets.md). Historical fixture rounds remain readable.
 4. Create a section-scoped native request against an explicit design/image. Export its JSON request;
    attach the selected original reference/input files separately to your authorized native host. The
    export includes the pinned project/context, artifact state, request instructions and preservation

@@ -96,10 +96,16 @@ const url = (c: Context, r: VersionRef, action = 'preview') =>
 export function compositionView(c: Context): string {
   const comps = choose(c),
     directions = c.artifacts.filter((a) => a.payload.kind === 'website-design'),
-    images = c.artifacts.filter((a) =>
-      ['website-image', 'website-api-image', 'website-region-image'].includes(
-        a.payload.kind,
-      ),
+    images = c.artifacts.filter(
+      (a) =>
+        (a.payload.kind !== 'website-asset' ||
+          (a.payload.state as { role: string }).role === 'placeable') &&
+        [
+          'website-asset',
+          'website-image',
+          'website-api-image',
+          'website-region-image',
+        ].includes(a.payload.kind),
     );
   const start = `<section class="panel"><h2>Compose a landing page</h2><p>Four bounded section recipes and five block types. Text, actions, order and responsive styles stay structured. Review is an AI technical assessment; designer review follows separately.</p><form id="composition-start"><label>Design direction<select name="direction" required>${directions.map((a) => opt(JSON.stringify(ptr(a)), `${a.id} · v${a.version}`, c.accepted['design']?.id === a.id)).join('')}</select></label>${input('Reason for choosing this direction', 'reason', 'Use this synthetic direction for an editable page.')}<button type="submit" ${directions.length ? '' : 'disabled'}>Start composition</button></form></section>`;
   if (!loaded || !edit) return start;
@@ -108,7 +114,7 @@ export function compositionView(c: Context): string {
     current = comps.find((p) => p.id === a.id)?.version === a.version;
   const accepted = c.accepted['composition'];
   const versionBar = `<section class="panel"><div class="composition-controls"><label>Composition<select id="composition-family">${comps.map((x) => opt(x.id, x.id, x.id === selected)).join('')}</select></label><form id="composition-load"><label>Revision<input name="version" type="number" min="1" max="${comps.find((x) => x.id === selected)?.version}" value="${a.version}" required></label><button>Open exact revision</button></form><button type="button" id="composition-width">${narrow ? 'Show desktop' : 'Show narrow'}</button></div><p id="composition-status">${e(a.id)} · v${a.version} · ${current ? 'Saved draft' : 'Historical revision'} · ${accepted?.id === a.id && accepted.version === a.version ? 'Explicitly accepted' : 'Not the accepted composition'}</p><p>Context ${e(s.context.mode)} · brief v${s.project.version} · pinned direction ${e(s.direction.id)} v${s.direction.version}. ${s.project.version !== c.project.version ? 'Context changed: save with a direction from the current brief to rebase and review again.' : ''}</p><details><summary>Pinned direction, context origins and locked decisions</summary><pre>${e(JSON.stringify({ direction: s.directionState, context: s.context, lockedValues: s.lockedValues }, null, 2))}</pre></details><iframe title="Saved composition preview" id="composition-preview" sandbox="allow-same-origin" src="${url(c, ptr(a))}" class="composition-preview ${narrow ? 'narrow' : ''}"></iframe><p>Preview shows the saved revision. Save visible edits to refresh it. Narrow recipes switch at 760px; desktop and 390px evidence is captured from this same renderer.</p></section>`;
-  const editor = `<form id="composition-editor" class="panel"><h2>Edit composition v${a.version}</h2><fieldset ${current ? '' : 'disabled'}>${input('Page title', 'title', edit.title)}${input('Description', 'description', edit.description)}<label>Direction for this revision<select name="direction">${directions.map((d) => opt(JSON.stringify(ptr(d)), `${d.id} · v${d.version}`, d.id === s.direction.id)).join('')}</select></label><details open><summary>Global style</summary><div class="composition-fields">${styleFields(edit.style, 'global-')}</div></details><label>Unresolved content and exceptions<textarea name="unresolved" rows="3">${e(edit.unresolved.join('\n'))}</textarea></label>${edit.sections
+  const editor = `<form id="composition-editor" class="panel"><h2>Edit composition v${a.version}</h2><fieldset ${current ? '' : 'disabled'}>${input('Page title', 'title', edit.title)}${input('Description', 'description', edit.description)}<label>Direction for this revision<select name="direction">${!directions.some((d) => d.id === s.direction.id && d.version === s.direction.version) ? opt(JSON.stringify(s.direction), `${s.direction.id} · pinned v${s.direction.version}`, true) : ''}${directions.map((d) => opt(JSON.stringify(ptr(d)), `${d.id} · v${d.version}`, d.id === s.direction.id && d.version === s.direction.version)).join('')}</select></label><details open><summary>Global style</summary><div class="composition-fields">${styleFields(edit.style, 'global-')}</div></details><label>Unresolved content and exceptions<textarea name="unresolved" rows="3">${e(edit.unresolved.join('\n'))}</textarea></label>${edit.sections
     .map(
       (sec, i) =>
         `<section class="composition-section" data-section="${sec.id}"><h3>${sec.id} · ${s.reviews[sec.id] ? 'Reviewed' : 'Needs review'}</h3>${s.reviews[sec.id] ? `<p class="hint">${e(s.reviews[sec.id]!.reason)}</p>` : ''}<div class="composition-controls"><button type="button" data-section-move="${i}" data-offset="-1" ${i === 0 ? 'disabled' : ''}>Move section up</button><button type="button" data-section-move="${i}" data-offset="1" ${i === 3 ? 'disabled' : ''}>Move section down</button><label>Recipe<select name="s${i}-recipe">${['stack', 'split', 'cards', 'band'].map((v) => opt(v, v, sec.recipe === v)).join('')}</select></label><label>Alignment<select name="s${i}-align">${['left', 'center'].map((v) => opt(v, v, sec.align === v)).join('')}</select></label><label>Image fit<select name="s${i}-fit">${['cover', 'contain'].map((v) => opt(v, v, sec.fit === v)).join('')}</select></label></div><details><summary>Section overrides (blank inherits global)</summary><div class="composition-fields">${styleFields(sec.overrides, `s${i}-`, true)}</div><p class="hint">Effective values: ${e(JSON.stringify(effectiveStyle(edit!.style, sec)))}</p></details>${sec.blocks
@@ -116,7 +122,7 @@ export function compositionView(c: Context): string {
             (b, j) =>
               `<fieldset class="composition-block"><legend>${e(b.kind)} · ${e(b.id)}</legend>${b.kind === 'heading' || b.kind === 'paragraph' || b.kind === 'button' ? `<label>Text<textarea aria-label="Text" name="s${i}-b${j}-text" required>${e(b.text)}</textarea></label>` : ''}${b.kind === 'button' ? input('Link (section anchor, HTTPS, mailto or tel)', `s${i}-b${j}-href`, b.href) : ''}${b.kind === 'list' ? `<label>List items, one per line<textarea name="s${i}-b${j}-items" required>${e(b.items.join('\n'))}</textarea></label>` : ''}${
                 b.kind === 'image'
-                  ? `<label>Deliberate exact image<select name="s${i}-b${j}-asset">${opt('', 'Unresolved image', !b.asset)}${images
+                  ? `<label>Deliberate exact image<select name="s${i}-b${j}-asset">${opt('', 'Unresolved image', !b.asset)}${b.asset && !images.some((x) => x.id === b.asset!.id && x.version === b.asset!.version) ? opt(JSON.stringify(b.asset), `Pinned placement ${b.asset.id} v${b.asset.version}`, true) : ''}${images
                       .filter((x) =>
                         [sec.id, 'landing-page'].includes(x.payload.scope),
                       )

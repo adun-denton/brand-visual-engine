@@ -22,7 +22,7 @@ await new Promise<void>((r) => reservation.close(() => r()));
 const origin = 'http://127.0.0.1:' + port;
 let service: ChildProcess | null = null;
 async function start() {
-  service = spawn(process.execPath, ['scripts/dev.ts'], {
+  service = spawn(process.execPath, ['scripts/direction-fixture-service.ts'], {
     cwd: resolve(import.meta.dirname, '..'),
     env: {
       ...process.env,

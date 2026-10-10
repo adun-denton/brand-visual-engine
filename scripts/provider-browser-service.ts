@@ -98,7 +98,7 @@ const app = await startApp(root, port, undefined, {
       { headers: { 'x-request-id': 'req_fixture_' + calls } },
     );
   },
-});
+}, { directionFixture: true });
 console.log('Offline fixture workspace: ' + app.origin);
 let closing: Promise<void> | null = null;
 const close = () => (closing ??= app.close());

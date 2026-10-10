@@ -60,18 +60,26 @@ command below injects no chargeable provider. A ChatGPT subscription is not an A
 
 ## Compare, reject, select and accept a direction
 
-In **02 Explore & compare**, choose 3/6/9 directions and **Explore directions**. These are deterministic
-synthetic treatments, not live AI generations or objective quality scores. Check **Compare** on up to
-two proposals and **Save comparison** with reasons. To deliberately reject one, name it and explain
-why in that reason, then choose the other with **Select direction**. There is no separate Reject
-button/status in this version; the reason preserves the rejected alternative without erasing it.
+In **02 Explore & compare**, choose 1/3/6/9 candidates and **Explore directions** to save a pinned
+AI request. Export it to an authorized AI and import its validated structured response with source and
+AI-authorship attestation, or prepare the separately approved API direction path. Requests remain pending
+without AI output; there is no preset fallback. Follow [AI directions and assets](ai-directions-assets.md)
+for the full handoff and exact JSON contract. Existing synthetic rounds are historical fixtures.
+
+Check **Compare** on up to two proposals and **Save comparison** with reasons. To deliberately reject
+one, name it and explain why in that reason, then choose the other with **Select direction**. There is
+no separate Reject status; the reason preserves the alternative without erasing it.
 
 Selection is provisional. **Accept selected design** separately records that exact version and your
 reason. Changing a selection or saving a comparison does not accept it. Use **Exploration round**
 and **04 History** to inspect prior decisions; a historical brief requires a new current round.
 
+Reusable supplied/generated assets and exact cross-direction placement are in **08 Project assets**;
+see [the connected asset loop](ai-directions-assets.md#connected-operator-flow).
+
 ## Bring back a native image, or use the separate API path
 
+The selected AI direction supplies editable section image needs/defaults; inspect them before saving.
 In **03 Native handoff**, choose **Original design or image**, **Section scope**, instructions and what
 to preserve. **Create native request**, then **Export request JSON**. Attach the selected original
 reference/input files separately when taking this ordinary section request to an authorized native

@@ -281,3 +281,11 @@ Use the documented Playwright install; select a private `BVE_EVIDENCE_DIR`. Huma
 license, real brief/designer selection and release disposition remain pending in the private return.
 No source-level claim or successful rehearsal substitutes for independent review or actual designer
 trial. Matching-code rollback and live-provider uncertainty boundaries remain in the guide/matrix.
+
+## AI direction and asset loop
+
+Run `npm run test:browser:ai-assets` in addition to all five retained workflows. The new UI rehearsal
+uses explicit authored response fixtures with zero provider/native host calls. Kernel regressions check
+no fallback, locks/unsafe output, exact cross-direction asset reuse/role history, forged/foreign/corrupt
+bindings, accepted export recovery and separate direction-call approval. Actual AI output evidence and
+independent technical review remain separate from fixture passing results.

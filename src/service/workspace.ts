@@ -1,4 +1,5 @@
 import { validateCompositionLinks } from './compositions.ts';
+import { AIDirections, validateAILinks } from './ai-directions.ts';
 import type {
   ProviderJob,
   ApiImage,
@@ -83,7 +84,13 @@ export class Workspace {
   kernel: KernelStore;
   assets: Assets;
   legacy: LegacyAssets;
-  constructor(root: string) {
+  // Test-only explicit dependency injection; never a browser/environment option.
+  readonly options: { directionFixture?: boolean; aiResponseFixture?: boolean };
+  constructor(
+    root: string,
+    options: { directionFixture?: boolean; aiResponseFixture?: boolean } = {},
+  ) {
+    this.options = options;
     this.assets = new Assets(root);
     this.legacy = new LegacyAssets(root);
     this.kernel = new KernelStore(root, {
@@ -122,6 +129,7 @@ export class Workspace {
     return p;
   }
   private validateLinks(p: NodePacket<DesignArtifact<unknown>>) {
+    validateAILinks(p, this.kernel, this.assets);
     validateRegionLinks(p, this.kernel, this.assets);
     validateCompositionLinks(p, this.kernel, this.assets);
     const known = (pointer: VersionRef, type: string, kind?: string) => {
@@ -173,12 +181,27 @@ export class Workspace {
         m.project,
         'module-project',
       ) as unknown as NodePacket<ModuleProject>;
+      if (m.directionRequest) {
+        const q = known(
+          m.directionRequest,
+          'design-artifact',
+          'website-ai-request',
+        ).payload.state as { project: VersionRef; references: VersionRef[] };
+        if (
+          m.operation !== 'directions' ||
+          !same(q.project, m.project) ||
+          canonical(q.references) !==
+            canonical(m.references.map((x) => x.artifact))
+        )
+          throw new InputError('API direction request binding mismatch');
+      }
       const sourceRefs =
         sourceProject.payload.localContext['references']?.override ?? [];
       for (const r of m.references)
         if (
           !r.selected ||
-          ![m.scope, 'landing-page'].includes(r.scope) ||
+          (m.operation !== 'directions' &&
+            ![m.scope, 'landing-page'].includes(r.scope)) ||
           !Array.isArray(sourceRefs) ||
           !sourceRefs.some(
             (x) =>
@@ -225,11 +248,18 @@ export class Workspace {
         const a = known(
           o,
           'design-artifact',
-          m.operation === 'assistant'
-            ? 'website-assistant-proposal'
-            : 'website-api-image',
+          m.operation === 'directions'
+            ? 'website-ai-evidence'
+            : m.operation === 'assistant'
+              ? 'website-assistant-proposal'
+              : 'website-api-image',
         );
-        if ((a.payload.state as ApiImage | AssistantProposal).job.id !== p.id)
+        if (
+          (m.operation === 'directions'
+            ? (a.payload.state as { providerJob: VersionRef }).providerJob
+            : (a.payload.state as ApiImage | AssistantProposal).job
+          ).id !== p.id
+        )
           throw new InputError('API output job mismatch');
       }
     }
@@ -304,6 +334,7 @@ export class Workspace {
           'website-image',
           'website-api-image',
           'website-region-image',
+          'website-asset',
         ].includes(a.payload.kind)
       )
         throw new InputError('Wrong native input type');
@@ -311,6 +342,7 @@ export class Workspace {
         'website-image',
         'website-api-image',
         'website-region-image',
+        'website-asset',
       ].includes(a.payload.kind)
         ? (a.payload.state as ImageState).image
         : null;
@@ -381,7 +413,7 @@ export class Workspace {
       throw new InputError('Project changed; reload before saving', 409);
     return p;
   }
-  private references(project: NodePacket<ModuleProject>): ReferenceInput[] {
+  references(project: NodePacket<ModuleProject>): ReferenceInput[] {
     const refs = list(
       project.payload.localContext['references']?.override ?? [],
       parseReference,
@@ -413,6 +445,7 @@ export class Workspace {
     const visualOS = packets.filter((p) => p.type === 'visual-os');
     if (!projectId)
       return {
+        directionFixture: this.options.directionFixture === true,
         projects,
         visualOS,
         capabilities: syntheticCapabilities().payload,
@@ -425,11 +458,15 @@ export class Workspace {
     for (const p of artifacts) {
       const payload = p.payload as DesignArtifact<unknown>;
       if (
-        validateWorkspaceArtifact(payload as unknown as Record<string, unknown>)
+        validateWorkspaceArtifact(
+          payload as unknown as Record<string, unknown>,
+        ) ||
+        payload.kind === 'website-design'
       )
         this.owned(reference(p), projectId);
     }
     return {
+      directionFixture: this.options.directionFixture === true,
       projects,
       visualOS,
       capabilities: syntheticCapabilities().payload,
@@ -697,6 +734,8 @@ export class Workspace {
     return this.state(projectId);
   }
   explore(projectId: string, input: unknown) {
+    if (!this.options.directionFixture)
+      return new AIDirections(this).request(projectId, input);
     const r = record(input, ['expectedProject', 'count', 'base']);
     const p = this.project(projectId, r['expectedProject']);
     const base =
@@ -991,6 +1030,7 @@ export class Workspace {
     );
     if (
       ![
+        'website-asset',
         'website-design',
         'website-image',
         'website-api-image',
@@ -1031,6 +1071,7 @@ export class Workspace {
         'website-image',
         'website-api-image',
         'website-region-image',
+        'website-asset',
       ].includes(a.payload.kind)
         ? (a.payload.state as ImageState).image
         : null,
@@ -1252,6 +1293,7 @@ export class Workspace {
     const p = this.owned<DesignArtifact<ImageState>>(pointer, projectId);
     if (
       ![
+        'website-asset',
         'website-image',
         'website-api-image',
         'website-region-image',

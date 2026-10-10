@@ -91,3 +91,7 @@ See [workspace.md](docs/workspace.md#structured-composition-s4) and
 [verification.md](docs/verification.md#structured-composition-checks) for limitations and reconstruction
 requirements. Separate reconstruction/independent review and later designer acceptance are not implied
 by a successful local export.
+
+AI-authored direction handoffs and exact reusable asset placement are documented in
+[AI directions and assets](docs/ai-directions-assets.md). Product Explore has no deterministic fallback;
+legacy synthetic rounds and explicit mechanical test fixtures remain distinguishable from actual AI evidence.

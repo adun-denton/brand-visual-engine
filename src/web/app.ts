@@ -1,3 +1,12 @@
+import {
+  requestView,
+  assetsView,
+  needsView,
+  evidenceView,
+  bindAI,
+} from './ai.ts';
+import type { AISpec } from '../modules/website/ai-contracts.ts';
+import type { DirectionEvidence } from '../modules/website/ai-contracts.ts';
 import { compositionView, bindCompositions } from './compositions.ts';
 import { regionView, bindRegions } from './regions.ts';
 import type {
@@ -25,6 +34,7 @@ import type {
   DirectionProposal,
 } from '../modules/website/workspace-contracts.ts';
 interface State {
+  directionFixture?: boolean;
   providers?: ReturnType<Providers['status']>;
   projects: NodePacket<ModuleProject>[];
   visualOS: NodePacket<VisualOS>[];
@@ -151,7 +161,7 @@ function shell() {
   return `<div class="shell"><aside class="sidebar"><a class="brand" href="/" aria-label="AI Design OS home"><span class="mark">◈</span><span>Design OS<small>LOCAL STUDIO</small></span></a><p class="eyebrow">WORKSPACES</p><nav aria-label="Projects">${state.projects.map((p) => button(String(p.payload.localContext['title']?.override ?? 'Website'), 'open', `data-id="${e(p.id)}"`, state.project?.id === p.id ? 'project active' : 'project')).join('')}</nav>${button('+ New workspace', 'home', '', 'new-project')}<div class="sidebar-bottom"><span class="dot"></span> Local & private<br><small>Manual image handoff<br>API configuration shown in Images & assistant</small></div></aside><main id="main" tabindex="-1">${state.project ? workspace() : entry()}</main></div>`;
 }
 function entry() {
-  return `<section class="entry"><p class="eyebrow">ONE MODULE. TWO STARTING POINTS.</p><h1>Make intent<br><em>inspectable.</em></h1><p class="intro">A place to explore a website, compare directions and keep the reasons behind your choices.</p><form id="create" class="panel"><h2>Open Website</h2><label>Workspace name<input name="title" required maxlength="100" value="Fictional Home Care"></label><div class="mode-choices"><label><input type="radio" name="mode" value="freeroam" checked> <strong>Freeroam</strong><small>Start with your brief. Brand inputs can stay unresolved.</small></label><label><input type="radio" name="mode" value="branded"> <strong>Branded</strong><small>Explicitly create or mount a minimal VisualOS.</small></label></div><label>VisualOS for Branded<select name="visualOS">${option('new', 'Create and approve this manual palette')}${state.visualOS.map((p) => option(JSON.stringify(ptr(p)), 'Saved VisualOS · ' + p.id.slice(-8))).join('')}</select></label><div class="palette-inputs"><label>Primary<input type="color" name="primary" value="#173f45"></label><label>Background<input type="color" name="background" value="#f3ede0"></label><label>Accent<input type="color" name="accent" value="#de8159"></label></div><p class="hint">Branded creation approves only these explicit palette values and system typography. Motion remains unresolved.</p><button class="primary" type="submit">Enter Website <span aria-hidden="true">↗</span></button></form><p class="hint">Website is the only available module. Synthetic proposals are deterministic, with no AI quality score.</p></section>`;
+  return `<section class="entry"><p class="eyebrow">ONE MODULE. TWO STARTING POINTS.</p><h1>Make intent<br><em>inspectable.</em></h1><p class="intro">A place to explore a website, compare directions and keep the reasons behind your choices.</p><form id="create" class="panel"><h2>Open Website</h2><label>Workspace name<input name="title" required maxlength="100" value="Fictional Home Care"></label><div class="mode-choices"><label><input type="radio" name="mode" value="freeroam" checked> <strong>Freeroam</strong><small>Start with your brief. Brand inputs can stay unresolved.</small></label><label><input type="radio" name="mode" value="branded"> <strong>Branded</strong><small>Explicitly create or mount a minimal VisualOS.</small></label></div><label>VisualOS for Branded<select name="visualOS">${option('new', 'Create and approve this manual palette')}${state.visualOS.map((p) => option(JSON.stringify(ptr(p)), 'Saved VisualOS · ' + p.id.slice(-8))).join('')}</select></label><div class="palette-inputs"><label>Primary<input type="color" name="primary" value="#173f45"></label><label>Background<input type="color" name="background" value="#f3ede0"></label><label>Accent<input type="color" name="accent" value="#de8159"></label></div><p class="hint">Branded creation approves only these explicit palette values and system typography. Motion remains unresolved.</p><button class="primary" type="submit">Enter Website <span aria-hidden="true">↗</span></button></form><p class="hint">Website is the only available module. ${state.directionFixture ? 'TEST FIXTURE: synthetic directions, no AI call or quality claim.' : 'Direction generation requires AI-authored output. Unavailable execution leaves a pending handoff.'}</p></section>`;
 }
 function workspace() {
   const p = state.project!;
@@ -163,6 +173,7 @@ function workspace() {
     ['providers', '05', 'Images & assistant'],
     ['regions', '06', 'Regional edit'],
     ['composition', '07', 'Compose page'],
+    ['assets', '08', 'Project assets'],
   ]
     .map(([key, n, label]) =>
       button(
@@ -174,7 +185,7 @@ function workspace() {
     )
     .join(
       '',
-    )}</nav>${view === 'brief' ? brief() : view === 'explore' ? explore() : view === 'native' ? native() : view === 'providers' ? providerView() : view === 'regions' ? regionView(regionContext()) : view === 'composition' ? compositionView(compositionContext()) : history()}</div>`;
+    )}</nav>${view === 'brief' ? brief() : view === 'explore' ? explore() : view === 'native' ? native() : view === 'providers' ? providerView() : view === 'regions' ? regionView(regionContext()) : view === 'composition' ? compositionView(compositionContext()) : view === 'assets' ? assetsView(aiContext()) : history()}</div>`;
 }
 function brief() {
   const p = state.project!;
@@ -220,6 +231,7 @@ function preview(p: NodePacket<DesignArtifact<unknown>>) {
       'website-api-image',
       'website-region-image',
       'website-reference',
+      'website-asset',
       'website-direction',
     ].includes(p.payload.kind)
   )
@@ -228,7 +240,8 @@ function preview(p: NodePacket<DesignArtifact<unknown>>) {
     p.payload.kind === 'website-image' ||
     p.payload.kind === 'website-api-image' ||
     p.payload.kind === 'website-region-image' ||
-    p.payload.kind === 'website-reference'
+    p.payload.kind === 'website-reference' ||
+    p.payload.kind === 'website-asset'
   )
     return `<div class="image-preview"><img alt="Returned image candidate" src="${imageUrl(ptr(p))}"></div>`;
   if (p.payload.kind === 'website-direction') {
@@ -236,6 +249,8 @@ function preview(p: NodePacket<DesignArtifact<unknown>>) {
     return `<div class="proposal-preview"><h3>${e(s.title)}</h3><p>${e(s.rationale)}</p><p><strong>Uncertainty</strong> ${e(s.uncertainty)}</p><ul>${s.unresolved.map((x) => `<li>${e(x)}</li>`).join('')}</ul><span class="badge unresolved">Reviewed proposal · no brand approval</span></div>`;
   }
   const s = p.payload.state as WebsiteDesignState;
+  if (s.parameters['ai'])
+    return `<div class="ai-direction-preview"><h4>${e(s.thesis)}</h4><iframe title="${e(s.thesis)} page preview" src="${imageUrl(ptr(p)).replace('/image?', '/direction/preview?')}" sandbox="allow-same-origin"></iframe>${needsView(p as NodePacket<DesignArtifact<WebsiteDesignState>>)}</div>`;
   const space = s.metrics.find((x) => x.family === 'Spatial')?.relative ?? 0.5,
     style = s.metrics.find((x) => x.family === 'Styling')?.relative ?? 0.5,
     structure =
@@ -252,7 +267,7 @@ function explore() {
         .filter((x): x is NodePacket<DesignArtifact<unknown>> => !!x)
     : [];
   const selected = b?.payload.selection ? find(b.payload.selection) : undefined;
-  return `<section class="explore-intro"><div><p class="eyebrow">BOUNDED EXPLORATION</p><h2>Find a direction worth pursuing.</h2><p>Nine coherent treatments of structure, space, styling and interaction intent.<br>Deterministic proposals, judged by you.</p></div><form id="explore"><label>Candidate count<select name="count">${[3, 6, 9].map((n) => option(String(n), String(n) + ' directions', n === 9)).join('')}</select></label><label>Starting point<select name="base">${option('none', 'Broad exploration')}${all()
+  return `<section class="explore-intro"><div><p class="eyebrow">BOUNDED EXPLORATION</p><h2>Find a direction worth pursuing.</h2><p>${state.directionFixture ? 'TEST FIXTURE · deterministic mechanics, no AI generation proof.' : 'AI-authored structure, copy, style and image needs. Prepare a pinned request and apply its validated response.'}</p></div><form id="explore"><label>Candidate count<select name="count">${[1, 3, 6, 9].map((n) => option(String(n), String(n) + ' directions', n === 9)).join('')}</select></label><label>Starting point<select name="base">${option('none', 'Broad exploration')}${all()
     .filter((a) => a.payload.kind === 'website-design')
     .map((a) =>
       option(
@@ -262,9 +277,19 @@ function explore() {
           : 'Design',
       ),
     )
-    .join(
-      '',
-    )}</select></label><button class="primary" type="submit">Explore directions</button></form></section>${!b ? '<div class="panel empty"><strong>Your design space is open.</strong><p>Explore a first round. Sparse context is welcome; unresolved inputs stay visible.</p></div>' : `<div class="round-bar"><label>Exploration round<select id="round">${bundles.map((x, i) => option(x.id, 'Round ' + (i + 1) + ' · input revision ' + x.payload.projectRef.version, x.id === b.id)).join('')}</select></label><span class="badge">${b.payload.projectRef.version === state.project!.version ? 'Current brief' : 'Historical brief · acceptance requires a new round'}</span><span>${candidates.length} proposals · ${b.payload.status}</span></div><div class="candidate-grid">${candidates.map((p, i) => `<article class="candidate ${match(b.payload.selection, ptr(p)) ? 'chosen' : ''}"><div class="candidate-head"><h3>Direction ${i + 1}</h3><label class="check"><input type="checkbox" data-compare="${encoded(ptr(p))}" ${compared.some((r) => match(r, ptr(p))) ? 'checked' : ''}> Compare</label></div>${preview(p)}<div class="candidate-foot"><div class="dimension-list">${(p.payload.state as WebsiteDesignState).metrics.map((m) => `<span>${e(m.family)}<b>${Math.round(m.relative * 100)}%</b></span>`).join('')}</div><small>Relative exploration controls · colors provisional without a palette</small>${button(match(b.payload.selection, ptr(p)) ? 'Selected direction' : 'Select direction', 'select', `data-bundle="${encoded(ptr(b))}" data-candidate="${encoded(ptr(p))}"`)}<span class="badge">Proposal · v${p.version}</span></div></article>`).join('')}</div>`}<section class="panel comparison"><div class="section-heading"><p class="eyebrow">SIDE BY SIDE</p><h2>Compare before committing</h2><p>Select up to two proposals. Saved comparisons remain in history.</p></div><div class="comparison-grid">${
+    .join('')}</select></label>${
+    state.directionFixture
+      ? ''
+      : `<label>Direction instructions<textarea name="instructions" required>Propose editable landing-page directions for this brief; preserve locks and disclose uncertainty.</textarea></label><fieldset><legend>Deliberately included references</legend>${
+          (state.references ?? [])
+            .filter((r) => r.selected)
+            .map(
+              (r) =>
+                `<label class="check"><input type="checkbox" name="reference" value="${encoded(r.artifact)}">${e(r.label)} · ${e(r.scope)}</label>`,
+            )
+            .join('') || '<p>No references included.</p>'
+        }</fieldset>`
+  }<button class="primary" type="submit">Explore directions</button></form></section>${state.directionFixture ? '' : requestView(aiContext())}${!b ? '<div class="panel empty"><strong>Your design space is open.</strong><p>Explore a first round. Sparse context is welcome; unresolved inputs stay visible.</p></div>' : `<div class="round-bar"><label>Exploration round<select id="round">${bundles.map((x, i) => option(x.id, 'Round ' + (i + 1) + ' · input revision ' + x.payload.projectRef.version, x.id === b.id)).join('')}</select></label><span class="badge">${b.payload.projectRef.version === state.project!.version ? 'Current brief' : 'Historical brief · acceptance requires a new round'}</span><span>${candidates.length} proposals · ${b.payload.status}</span></div><div class="candidate-grid">${candidates.map((p, i) => `<article class="candidate ${match(b.payload.selection, ptr(p)) ? 'chosen' : ''}"><div class="candidate-head"><h3>Direction ${i + 1}</h3><label class="check"><input type="checkbox" data-compare="${encoded(ptr(p))}" ${compared.some((r) => match(r, ptr(p))) ? 'checked' : ''}> Compare</label></div>${preview(p)}<div class="candidate-foot"><div class="dimension-list">${(p.payload.state as WebsiteDesignState).metrics.map((m) => `<span>${e(m.family)}<b>${Math.round(m.relative * 100)}%</b></span>`).join('')}</div><small>${(p.payload.state as WebsiteDesignState).parameters['ai'] ? 'Derived style summary; AI rationale and unresolved choices below.' : 'Relative fixture controls · colors provisional without a palette'}</small>${button(match(b.payload.selection, ptr(p)) ? 'Selected direction' : 'Select direction', 'select', `data-bundle="${encoded(ptr(b))}" data-candidate="${encoded(ptr(p))}"`)}<span class="badge">Proposal · v${p.version}</span></div></article>`).join('')}</div>`}<section class="panel comparison"><div class="section-heading"><p class="eyebrow">SIDE BY SIDE</p><h2>Compare before committing</h2><p>Select up to two proposals. Saved comparisons remain in history.</p></div><div class="comparison-grid">${
     compared.length
       ? compared
           .map((r) => find(r))
@@ -337,10 +362,14 @@ function providerView() {
     .map((a) => {
       const j = a.payload.state,
         m = j.request;
-      return `<section class="panel api-job" data-attempt="${e(a.id)}"><div class="job-heading"><h2>${e(m.operation)} · ${e(m.scope)}</h2><span class="badge ${j.status === 'outcome-uncertain' ? 'unresolved' : ''}">${e(j.status)}</span></div><p>${e(m.instructions)}</p><p class="hint">OpenAI API · requested ${e(m.model)} · recipe ${e(m.recipe)}<br>Brief v${m.project.version} · ${m.references.length} selected image references · input ${e(m.artifact?.id.slice(-8) ?? 'brief only')}<br>${m.operation === 'assistant' ? 'No tools; 2,000 output tokens maximum' : `${e(m.settings.size)} · ${e(m.settings.quality)} · one opaque PNG`}<br>App attempt ${e(a.id)} is separate from transport/result IDs.</p><details><summary>Inspect immutable request</summary><pre class="json-result">${e(JSON.stringify(m, null, 2))}</pre></details><div class="button-row">${button('Submit this API attempt', 'provider-submit', `data-job="${encoded(ptr(a))}" ${j.status !== 'queued' || !config?.available ? 'disabled' : ''}`, 'primary')}${button('Cancel API attempt locally', 'provider-cancel', `data-job="${encoded(ptr(a))}" ${!['queued', 'submitting', 'running', 'outcome-uncertain'].includes(j.status) ? 'disabled' : ''}`)}</div><p class="hint">Submission uses one reserved call. Local cancellation cannot promise remote cancellation or zero charge. No automatic retry.</p>${j.observations.map((o) => `<div class="outcome"><strong>${e(o.kind)}</strong><p>${e(o.message)}</p><small>Transport ${e(o.transportRequestId ?? 'unknown')} · result ${e(o.resultId ?? 'unknown')} · reported model ${e(o.reportedModel ?? 'unknown')} · actual cost unknown</small><pre class="json-result">${e(JSON.stringify({ usage: o.usage, reportedSettings: o.reportedSettings }, null, 2))}</pre></div>`).join('')}${j.outputs
+      return `<section class="panel api-job" data-attempt="${e(a.id)}"><div class="job-heading"><h2>${e(m.operation)} · ${e(m.scope)}</h2><span class="badge ${j.status === 'outcome-uncertain' ? 'unresolved' : ''}">${e(j.status)}</span></div><p>${e(m.instructions)}</p><p class="hint">OpenAI API · requested ${e(m.model)} · recipe ${e(m.recipe)}<br>Brief v${m.project.version} · ${m.references.length} selected image references · input ${e(m.artifact?.id.slice(-8) ?? 'brief only')}<br>${m.operation === 'assistant' ? 'No tools; 2,000 output tokens maximum' : `${e(m.settings.size)} · ${e(m.settings.quality)} · one opaque PNG`}<br>App attempt ${e(a.id)} is separate from transport/result IDs.</p><details><summary>Inspect immutable request</summary><pre class="json-result">${e(JSON.stringify(m, null, 2))}</pre></details><div class="button-row">${button('Submit this API attempt', 'provider-submit', `data-job="${encoded(ptr(a))}" ${j.status !== 'queued' || !config?.available || (m.operation === 'directions' && !config.directionGenerationApproved) ? 'disabled' : ''}`, 'primary')}${button('Cancel API attempt locally', 'provider-cancel', `data-job="${encoded(ptr(a))}" ${!['queued', 'submitting', 'running', 'outcome-uncertain'].includes(j.status) ? 'disabled' : ''}`)}</div><p class="hint">Submission uses one reserved call. Local cancellation cannot promise remote cancellation or zero charge. No automatic retry.</p>${j.observations.map((o) => `<div class="outcome"><strong>${e(o.kind)}</strong><p>${e(o.message)}</p><small>Transport ${e(o.transportRequestId ?? 'unknown')} · result ${e(o.resultId ?? 'unknown')} · reported model ${e(o.reportedModel ?? 'unknown')} · actual cost unknown</small><pre class="json-result">${e(JSON.stringify({ usage: o.usage, reportedSettings: o.reportedSettings }, null, 2))}</pre></div>`).join('')}${j.outputs
         .map(find)
         .filter((a): a is NodePacket<DesignArtifact<unknown>> => !!a)
         .map((a) => {
+          if (a.payload.kind === 'website-ai-evidence')
+            return evidenceView(
+              a as NodePacket<DesignArtifact<DirectionEvidence>>,
+            );
           if (a.payload.kind === 'website-api-image') {
             const i = a.payload.state as ApiImage;
             return `<article class="image-result">${preview(a)}<p>API candidate · ${e(i.outcome)} · ${i.image.width} × ${i.image.height}</p><small>SHA-256 ${e(i.image.checksum)}</small><a class="text-link" href="${imageUrl(ptr(a)).replace('/image?', '/asset?')}">Download API original</a><form class="accept-image" data-artifact="${encoded(ptr(a))}" data-scope="${e(a.payload.scope)}"><label>Acceptance reason<input name="reason" required></label><label class="check"><input type="checkbox" name="historical"> I reviewed the original, possibly historical inputs</label><button type="submit" ${j.status !== 'returned' || regionalJob(i.job.id) ? 'disabled' : ''}>${regionalJob(i.job.id) ? 'Review in Regional edit' : 'Accept API section image'}</button></form></article>`;
@@ -484,7 +513,80 @@ function compositionContext() {
     },
   };
 }
+function aiContext() {
+  return {
+    project: state.project!,
+    artifacts: all(),
+    bundles: state.bundles ?? [],
+    providers: state.providers,
+  };
+}
+function activeDirection() {
+  const b = (state.bundles ?? [])
+    .filter(
+      (b) =>
+        b.payload.projectRef.version === state.project?.version &&
+        b.payload.selection,
+    )
+    .at(-1);
+  return b?.payload.selection ? find(b.payload.selection) : undefined;
+}
+function bindDirectionDefaults() {
+  const selected = activeDirection();
+  for (const selector of ['#native', '#provider-prepare']) {
+    const form = document.querySelector<HTMLFormElement>(selector);
+    if (!form) continue;
+    const input = form.elements.namedItem('artifact') as HTMLSelectElement,
+      scope = form.elements.namedItem('scope') as HTMLSelectElement,
+      instructions = form.elements.namedItem(
+        'instructions',
+      ) as HTMLTextAreaElement;
+    if (
+      selected &&
+      Array.from(input.options).some(
+        (o) => o.value === JSON.stringify(ptr(selected)),
+      )
+    )
+      input.value = JSON.stringify(ptr(selected));
+    const update = () => {
+      let a: NodePacket<DesignArtifact<unknown>> | undefined;
+      try {
+        a = find(jsonRef(input.value));
+      } catch {}
+      if (
+        a?.payload.kind !== 'website-design' ||
+        !(a.payload.state as WebsiteDesignState).parameters['ai']
+      )
+        return;
+      const spec = (a.payload.state as WebsiteDesignState).parameters[
+          'ai'
+        ] as unknown as AISpec,
+        need = spec.imageNeeds.find((n) => n.section === scope.value)!;
+      instructions.value = need.prompt;
+      const preserve = form.elements.namedItem(
+        'preservation',
+      ) as HTMLTextAreaElement | null;
+      if (preserve) preserve.value = need.preservation.join('\n');
+      else instructions.value += '\nPreserve: ' + need.preservation.join('; ');
+      const size = form.elements.namedItem('size') as HTMLSelectElement | null;
+      if (size) size.value = need.size;
+      const note = form.querySelector('.active-needs');
+      if (note)
+        note.textContent = `${need.role} · ${need.size} · ${need.references.length} reference hints; check inclusion deliberately. Direction ${a.id} v${a.version}.`;
+    };
+    const note = document.createElement('p');
+    note.className = 'hint active-needs';
+    form.prepend(note);
+    scope.addEventListener('change', update);
+    input.addEventListener('change', update);
+    update();
+  }
+}
 function bind() {
+  if (state.project) {
+    bindAI({ ...aiContext(), onForm, mutate });
+    bindDirectionDefaults();
+  }
   if (view === 'composition' && state.project)
     bindCompositions(compositionContext());
   if (view === 'regions' && state.project) bindRegions(regionContext());
@@ -542,7 +644,7 @@ function bind() {
             {
               bundle: jsonRef(b.dataset['bundle']!),
               candidate: jsonRef(b.dataset['candidate']!),
-              reason: 'Select closest deterministic direction',
+              reason: 'Select this proposed direction',
             },
             'Direction selected; acceptance remains separate.',
           );
@@ -719,15 +821,23 @@ function bind() {
     notify('Pointers inspected; no context mounted.');
   });
   onForm('#explore', async (f) => {
-    const { s } = formData(f);
+    const { s, d } = formData(f);
     await mutate(
       'explore',
       {
         expectedProject: ptr(state.project!),
         count: Number(s('count')),
         base: s('base') === 'none' ? null : jsonRef(s('base')),
+        ...(state.directionFixture
+          ? {}
+          : {
+              instructions: s('instructions'),
+              references: d.getAll('reference').map((x) => jsonRef(String(x))),
+            }),
       },
-      'Deterministic proposals saved.',
+      state.directionFixture
+        ? 'Synthetic fixture proposals saved; no AI call.'
+        : 'AI direction request saved; export to an authorized AI or prepare API execution.',
     );
     round = state.bundles?.at(-1)?.id ?? '';
     render();

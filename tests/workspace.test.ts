@@ -68,7 +68,7 @@ function closeWorkspace(w: Workspace) {
 }
 function setup(t: test.TestContext) {
   const { root, cleanup } = temporaryRoot(t);
-  const w = new Workspace(root);
+  const w = new Workspace(root, { directionFixture: true });
   cleanup(() => closeWorkspace(w));
   return { root, w, cleanup };
 }
@@ -464,7 +464,7 @@ test('fresh service and closed-root copied restore reconstruct brief references 
   const oldDb = readFileSync(join(root, 'workspace.sqlite'));
   // Reopen the service only after the legacy store closes: it never runs legacy recovery/mutations.
   closeWorkspace(w);
-  const ws = new Workspace(root);
+  const ws = new Workspace(root, { directionFixture: true });
   cleanup(() => closeWorkspace(ws));
   assert.equal(ws.legacy.exists(asset.id, asset.checksum), true);
   const p = create(ws, 'branded'),
@@ -512,7 +512,7 @@ test('fresh service and closed-root copied restore reconstruct brief references 
   assert.deepEqual(readFileSync(join(root, 'workspace.sqlite')), oldDb);
   const { root: backup, cleanup: backupCleanup } = temporaryRoot(t);
   cpSync(root, backup, { recursive: true });
-  const restored = new Workspace(backup);
+  const restored = new Workspace(backup, { directionFixture: true });
   backupCleanup(() => closeWorkspace(restored));
   assert.equal(canonical(restored.state(p.id)), before);
   assert.equal(restored.legacy.exists(asset.id, asset.checksum), true);
@@ -555,7 +555,7 @@ test('portable metadata known mismatches reject; missing pointers do not mount c
 });
 test('HTTP host/origin/token/method/nested/file boundaries reject; valid browser requests persist and fresh session token changes', async (t) => {
   const { root, cleanup } = temporaryRoot(t),
-    app = await startApp(root);
+    app = await startApp(root, 0, undefined, undefined, { directionFixture: true });
   let appClosed = false;
   cleanup(async () => {
     if (!appClosed) await app.close();
@@ -640,7 +640,7 @@ test('HTTP host/origin/token/method/nested/file boundaries reject; valid browser
   assert.equal(response.status, 404);
   await app.close();
   appClosed = true;
-  const restarted = await startApp(root);
+  const restarted = await startApp(root, 0, undefined, undefined, { directionFixture: true });
   cleanup(() => restarted.close());
   const fresh = (await (
     await fetch(restarted.origin + '/api/v1/session')
@@ -651,7 +651,7 @@ test('HTTP host/origin/token/method/nested/file boundaries reject; valid browser
 for (const format of ['jpeg', 'webp', 'png'] as const) {
   test(`HTTP ${format} reference/result downloads preserve original bytes while previews normalize; owner/type/corruption reject`, async (t) => {
     const { root, cleanup } = temporaryRoot(t);
-    const app = await startApp(root);
+    const app = await startApp(root, 0, undefined, undefined, { directionFixture: true });
     cleanup(() => app.close());
     const w = app.workspace,
       p = create(w),
