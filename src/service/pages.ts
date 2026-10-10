@@ -131,7 +131,7 @@ export class Pages {
       "inference-request",
     );
   }
-  private latest(pid: string, kind: string) {
+  private discovery(pid: string) {
     const sequence = new Map(
       this.workspace.kernel
         .ledger(pid)
@@ -142,24 +142,28 @@ export class Pages {
       .latestPackets()
       .filter(
         (p) =>
-          p.projectId === pid &&
-          (p.payload as DesignArtifact<unknown>).kind === kind,
+          p.projectId === pid,
       )
       .sort((a, b) => (sequence.get(a.id) ?? 0) - (sequence.get(b.id) ?? 0));
   }
+  private latest(pid: string, kind: string) {
+    return this.discovery(pid).filter(p => (p.payload as DesignArtifact<unknown>).kind === kind);
+  }
   state(pid: string) {
-    const pages = this.latest(pid, "website-page").map((p) =>
+    const discovered = this.discovery(pid);
+    const latest = (kind: string) => discovered.filter(p => (p.payload as DesignArtifact<unknown>).kind === kind);
+    const pages = latest("website-page").map((p) =>
       this.page(pid, reference(p)),
     );
     return {
       pages,
-      media: this.latest(pid, "page-media").map((p) =>
+      media: latest("page-media").map((p) =>
         this.media(pid, reference(p)),
       ),
-      requests: this.latest(pid, "inference-request").map((p) =>
+      requests: latest("inference-request").map((p) =>
         this.request(pid, reference(p)),
       ),
-      results: this.latest(pid, "inference-result").map((p) =>
+      results: latest("inference-result").map((p) =>
         this.read<InferenceResult>(
           pid,
           reference(p),
@@ -167,7 +171,7 @@ export class Pages {
           "inference-result",
         ),
       ),
-      websites: this.latest(pid, "website-assembly").map((p) =>
+      websites: latest("website-assembly").map((p) =>
         this.website(pid, reference(p)),
       ),
       accepted: Object.fromEntries(
@@ -179,7 +183,7 @@ export class Pages {
       acceptedWebsite: this.workspace.kernel.selected(pid, "website"),
       signatures: Object.fromEntries([
         ...pages.map((p) => [p.id, pageSignature(p.payload.state)]),
-        ...this.latest(pid, "website-assembly").map((p) => [
+        ...latest("website-assembly").map((p) => [
           p.id,
           digest((p.payload as DesignArtifact<WebsiteState>).state),
         ]),

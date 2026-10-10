@@ -272,12 +272,13 @@ export function bindRegions(c: Context): void {
       draw();
     };
     const draw = () => {
+      if (!form.isConnected || !image.isConnected || !overlay.isConnected) return;
       const b = values(),
         ellipse =
           form.querySelector<HTMLSelectElement>('[name=shape]')!.value ===
           'ellipse';
-      const rect = document.querySelector('#region-rect')!,
-        circle = document.querySelector('#region-ellipse')!;
+      const rect = overlay.querySelector('#region-rect')!,
+        circle = overlay.querySelector('#region-ellipse')!;
       for (const k of ['x', 'y', 'width', 'height'] as const)
         rect.setAttribute(k, String(b[k]));
       for (const [k, v] of Object.entries({
@@ -291,6 +292,8 @@ export function bindRegions(c: Context): void {
       circle.setAttribute('visibility', ellipse ? 'visible' : 'hidden');
     };
     const ready = () => {
+      // An image can finish loading after navigation/re-render detached this view.
+      if (!form.isConnected || !image.isConnected || !overlay.isConnected) return;
       overlay.setAttribute(
         'viewBox',
         `0 0 ${image.naturalWidth} ${image.naturalHeight}`,

@@ -13,7 +13,7 @@ import { createHash } from "node:crypto";
 import { startApp } from "../src/service/server.ts";
 import type { RunningApp } from "../src/service/server.ts";
 import { reference } from "../src/kernel/packets.ts";
-import { syntheticCompositionImage } from "./composition-fixture.ts";
+import { seedComposition, syntheticCompositionImage } from "./composition-fixture.ts";
 const evidence = resolve(
   process.env["BVE_EVIDENCE_DIR"] ?? "/tmp/bve-pages-evidence",
 );
@@ -21,6 +21,7 @@ mkdirSync(evidence, { recursive: true });
 const root = mkdtempSync(join(tmpdir(), "bve-pages-browser-"));
 let app: RunningApp | null = await startApp(root, 0, undefined, undefined, {
   aiResponseFixture: true,
+  directionFixture: true,
 });
 const browser = await chromium.launch({
   headless: true,
@@ -267,6 +268,7 @@ try {
   cpSync(root, restored, { recursive: true });
   app = await startApp(restored, 0, undefined, undefined, {
     aiResponseFixture: true,
+  directionFixture: true,
   });
   expect(JSON.stringify(app.pages.state(pid))).toBe(before);
   expect((await app.pages.export(pid, accepted)).bytes).toEqual(tar);
@@ -281,6 +283,28 @@ try {
     page.getByRole("heading", { name: "Design, inspect, decide." }),
   ).toBeVisible();
   await screenshot("restored-narrow");
+  // Hold the real image response, navigate away, then exercise the detached load callback.
+  // This is a mechanical lifecycle regression, not a provider/generation claim.
+  const legacy = await seedComposition(app.workspace);
+  await page.goto(app.origin);
+  await page.getByRole("button", {name:"Fieldwork composition fixture",exact:true}).click();
+  let observed!: () => void, release!: () => void;
+  const observedImage = new Promise<void>(r => observed = r);
+  const releaseImage = new Promise<void>(r => release = r);
+  await page.route("**/api/v1/image?**", async route => {
+    const response = await route.fetch(); observed(); await releaseImage;
+    await route.fulfill({response});
+  });
+  await page.getByRole("button", {name:"06 Regional edit"}).click();
+  await observedImage;
+  const detached = await page.locator("#region-source-image").elementHandle();
+  expect(detached).not.toBeNull();
+  await page.getByRole("button", {name:"Design workspace",exact:true}).click();
+  release();
+  await detached!.evaluate(image => image.dispatchEvent(new Event("load")));
+  await expect(page.getByRole("heading",{name:"Design, inspect, decide."})).toBeVisible();
+  await page.unroute("**/api/v1/image?**");
+  expect(errors).toEqual([]);
   if (process.env["BVE_SESSION_TRIAL_DIR"]) {
     await app.close();
     app = await startApp(
@@ -384,6 +408,7 @@ try {
           "exact accepted Website route selection",
           "byte-identical closed-copy page and Website exports",
           "narrow overflow",
+          "detached regional-image callback after navigation",
           "session designs remain unaccepted",
         ],
         pageExportSHA256: createHash("sha256").update(tar).digest("hex"),

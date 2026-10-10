@@ -63,8 +63,13 @@ physical-device check, crash/power-loss recovery, paid call or native image-gene
 
 The initial Windows push job failed in the retained readiness workflow; its diagnostic catch then
 read a closed page and obscured the original error. A follow-up preserves the original stack and
-partial artifacts without weakening assertions or retrying operations. The initial cause remains
-unestablished; final fresh CI results and any remaining failure are recorded in the private return.
+partial artifacts without weakening assertions or retrying operations. The improved diagnostic exposed a regional-image load callback writing to a view removed by
+navigation. Connected-view guards and a held-image/detached-callback browser regression address
+that finding. The controlled regression reproduces the same null-view exception with the original
+335a13e region binding and passes with the guard; assertions remain intact. Final fresh CI results are recorded in the private return. State discovery also now
+uses one chronological snapshot rather than six repeated scans. A synthetic before/after probe
+preserves exact returned state; local median discovery time fell from about 6.3ms to 1.1ms. This
+is a bounded adapter measurement, not a local-model or general performance benchmark.
 
 ## Scope limits and rollback
 
