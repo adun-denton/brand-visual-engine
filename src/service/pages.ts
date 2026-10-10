@@ -188,6 +188,7 @@ export class Pages {
           digest((p.payload as DesignArtifact<WebsiteState>).state),
         ]),
       ]),
+      findings: Object.fromEntries(pages.map(p=>[p.id,pageFindings(p.payload.state.page)])),
       execution: {
         session: "manual-request-result-exchange",
         local: "not-configured",
