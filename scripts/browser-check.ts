@@ -593,7 +593,11 @@ try {
     await page
       .getByRole('button', { name: '+ New workspace', exact: true })
       .click();
+    await expect(page.locator('#create')).toBeVisible();
+    await expect(page.locator('#app')).not.toHaveAttribute('aria-busy', 'true');
     await page.getByRole('button', { name: title, exact: true }).click();
+    await expect(page.locator('.workspace-title h1')).toHaveText(title);
+    await expect(page.locator('#app')).not.toHaveAttribute('aria-busy', 'true');
     await page.getByRole('button', { name: '02 Explore & compare' }).click();
     await expect(page.locator('[data-compare]:checked')).toHaveCount(2);
     await expect(page.locator('.comparison-grid article')).toHaveCount(2);

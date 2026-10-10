@@ -33,6 +33,10 @@ inference-workspace findings and both inherited Task009 findings, without mergin
 workflows remain required; the new regression is included on both CI platforms. Mechanical fixtures
 and injected transports remain explicitly labeled. Failing original-source probes and passing repaired
 checks are recorded separately in the private return, along with actual head/tree and fresh CI results.
+The first local retained foundation run timed out on a detached tab during rapid project switching.
+Its final two transitions now wait for the entry/project view and application action to finish before
+clicking the next tab. Original comparison, ownership and history assertions remain unchanged;
+the initial failure is retained rather than counted as a pass.
 
 The original actual two-round primary-session text exercise is exposed as sanitized, hash-bound
 request/result JSON in private MSB for independent inspection, rather than relying solely on an archive
