@@ -61,6 +61,11 @@ The GitHub workflow includes all seven browser checks for Ubuntu24.04 and Window
 execution is reported separately, not inferred from local Linux results. No Windows local run,
 physical-device check, crash/power-loss recovery, paid call or native image-generation call occurred.
 
+The initial Windows push job failed in the retained readiness workflow; its diagnostic catch then
+read a closed page and obscured the original error. A follow-up preserves the original stack and
+partial artifacts without weakening assertions or retrying operations. The initial cause remains
+unestablished; final fresh CI results and any remaining failure are recorded in the private return.
+
 ## Scope limits and rollback
 
 See the inference workspace guide for grammar and execution limits. Local runtime/model/hardware
