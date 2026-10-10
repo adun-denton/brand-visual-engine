@@ -52,6 +52,9 @@ const submit = async (selector: string, message: string) => {
     .locator(selector + ' button')
     .last()
     .click();
+  // A repeated operation can leave the same notice visible while the next request runs.
+  // Wait for the application action (including rendering) before reading its outcome.
+  await expect(page.locator('#app')).not.toHaveAttribute('aria-busy', 'true');
   await expect(page.locator('#notice')).toContainText(message);
 };
 const overflow = async () => {
