@@ -71,10 +71,11 @@ state; the Design OS smoke uses two processes.
 
 Inspect [design-os.json](../fixtures/design-os.json) as data, not a visual deliverable. Regenerate it
 with `node scripts/serialize-design-fixtures.ts` and confirm `git diff --exit-code -- fixtures/design-os.json`.
-The Linux CI workflow uses Node 24.19.0 and immutable action references. It has no secret or provider
+The Windows/Linux CI workflow uses Node 24.19.0 and immutable action references. It has no secret or provider
 steps. Record whether a workflow actually ran and its result, rather than assuming a committed
-workflow establishes CI success. Windows/macOS, graphical previews, live providers, designer review,
-full storage unification and production auth remain unverified/out of scope.
+workflow establishes CI success. This paragraph describes the original foundation boundary. Current S4 evidence includes
+Windows/Linux browser previews; macOS, live direct API behavior, designer review, full storage
+unification and production auth remain unverified/out of scope.
 
 ## Designer rubric
 
@@ -125,3 +126,166 @@ retry, closed late-return controls, and new Branded/Freeroam project comparisons
 the prior owning comparison. JPEG reference and WebP result links exercise actual original downloads.
 [Synthetic evidence](evidence/) is technical
 implementer evidence only. Native-host generation and independent round trip remain separate checks.
+
+## Optional API adapter checks (offline)
+
+The suite now retains all 70 workspace/foundation tests and adds 24 provider regressions, for 94
+top-level tests before the envelope/shutdown repairs. They exercise serialized JSON/multipart/Responses boundaries, original bytes/parent
+lineage, missing configuration/budget, unsupported controls, duplicate/independent-instance claims,
+source/owner checks, refusal/rate-limit/malformed/oversized/corrupt output, timeout/network uncertainty,
+process interruption, late/cancelled results, cross-project persisted run limits, explicit reconciliation,
+storage failure, assistant review and copied-root native/API comparison history. No test calls OpenAI.
+
+Five assistant-envelope regression groups and one portable fixture-lifecycle group bring the total to
+100 top-level tests, retaining all 94 preceding tests. Direct adapter and persisted-job checks cover
+reasoning plus valid proposal/refusal, available IDs/numeric usage, no retries, restart equality and
+distinct edited human review without VisualOS approval. Negative envelopes cover tools, unknown types,
+multiple/non-final messages, malformed reasoning/content/schema and ambiguous mixed refusal/text.
+The lifecycle test checks acknowledged store closure, completed stdio, closed-root copy/reopen and
+failed-startup cleanup. The complete provider browser workflow also uses reasoning plus a final proposal,
+requires exact acknowledged counts `[0, 4, 0]`, and writes its receipt only after graceful process closure.
+
+The provider browser regression holds the second successful preparation response while the earlier
+stale job remains queued. Before releasing it, assertions require a busy application, two durably queued
+jobs without observations, only the old visible row, and no new submission. Preparation correlates the
+successful response's newly created attempt with its rendered pointer and waits for the action to finish.
+Submission clicks that exact attempt once; only read-only outcome refresh is polled. The completed flow
+requires one intended assistant submission/result, an unchanged stale job, five distinct HTTP submissions
+(one intentional stale rejection plus four injected calls), and the retained exact IPC counts. The gate
+uses assertion-controlled response delivery, without timing sleeps or automatic provider retries.
+
+```sh
+npm run build
+npm run test:browser
+npm run test:browser:providers
+node scripts/serialize-design-fixtures.ts
+git diff --exit-code -- fixtures/design-os.json
+git diff --check
+```
+
+Both browser scripts use temporary synthetic roots. The provider script uses a test-only injected
+transport and records zero real provider calls. Sources, supported controls, secret/budget boundaries,
+proposed opt-in live review and limitations are in [local capability providers](openai-providers.md).
+The retained Windows/Linux Node 24.19.0 CI runs all unit/smoke/build/fixture checks and all four retained browser
+workflows, plus the Phase A rehearsal, uploading public-safe receipts/screenshots for each platform. Record actual run results before
+claiming success. Windows directory durability
+and real provider/account verification remain unproven by these checks.
+
+## Regional workflow checks
+
+The 100 retained tests are joined by 20 regional groups (120 top-level tests). Coverage includes
+1254-square production RGBA masks/composites, PNG/JPEG/WebP and orientation, non-square geometry,
+source/version/dimension/mask rejection without writes, source/overlay separation, byte-exact native
+bundle/reference/null metadata, immutable raw/strict lineage, outside RGB/alpha, closed-copy reopen,
+geometry rejection, late/cancelled results, concurrent selection/composite/acceptance conflicts,
+unsupported recipes, type/owner/scope bindings, strict-policy bypass rejection, replacement-source active selection/competing initial save conflicts, second-connection
+freshness revalidation inside acceptance, injected atomic-write failure/retry, Branded context
+preservation and one-call regional execution through the existing offline API adapter.
+The comparison renderer regression restores the latest saved operation decision after outputs
+append, keeps unresolved distinct from selection/acceptance, and ignores foreign project/scope,
+source/selection mismatch and future-operation bindings without persistence changes.
+
+`npm run test:browser:regions` adds the actual regional form workflow at 1440×1000 and 390×844.
+Receipts require one intended injected API submission, private IPC counts `[1,0]`, zero real calls,
+exact source bytes, native bundle files, outside-mask RGB/alpha, explicit comparison/acceptance,
+correct historical crops after a selection revision and closed-root/fresh-session equality. The
+retained provider receipt still requires exactly four offline calls and `[0,4,0]`; neither assertion
+is weakened. Screenshots and receipts are uploaded by both CI platforms. These are AI technical
+fixtures; the regional designer rubric above requires separate operator/designer judgment.
+The regional receipt also records visible saved subset/selected/unresolved/reason restoration
+immediately after save, across tab navigation/reload, in a fresh browser and after closed-root
+recovery, with two independently compared operations and a candidate appended after comparison.
+Assertions check actual checkbox/select/input values and selection/acceptance indicators as well
+as stored state; comparison saves and candidate appends leave acceptance unchanged.
+
+## Structured composition checks
+
+The retained 120 tests are joined by 18 composition groups (138 top-level tests) in `tests/compositions.test.ts`: immutable local
+edits/assets, section isolation, effective global/override review dependencies, context rebase, stale
+conflicts, exact accepted-image independence, foreign/wrong-scope/corrupt/missing assets, safe text/link/
+style/accessibility input, review forgery consumption checks, bounded deterministic export privacy and
+closed-copy package recovery, all-section-overridden global contrast rejection with no writes, and two
+distinct owned hero images preserved through export. These are technical assertions, not designer fidelity approval.
+
+```sh
+npm run build
+npm run typecheck
+npm test
+npm run smoke
+npm run smoke:design-os
+node scripts/serialize-design-fixtures.ts
+git diff --exit-code -- fixtures/design-os.json
+git diff --check
+npm run test:browser
+npm run test:browser:providers
+npm run test:browser:regions
+npm run test:browser:composition
+```
+
+Use the existing documented Playwright setup and Node 24.19.x. The new synthetic browser workflow seeds
+manually authored raster outputs, then uses actual controls to choose a direction, add/reorder blocks and
+sections, place exact images, edit at both widths, save/navigate/reload, review, accept, locally replace
+the hero, compare/open historical versions and download a handoff. Separate renderer pages exercise
+1440/390px order, overflow, image decoding, skip-link/focus and action hierarchy. Graceful fixture closure,
+closed-copy reopen, fresh browser/session token and visible controls establish recovery independently of
+store equality. Restored downloads must match bytes. Test-only fixture IPC receipts require zero offline
+transport and zero real provider calls for this workflow. Existing provider/regional fixtures remain intact.
+Evidence contains the package, focused screenshots, asset hashes and `composition-browser-check.json`.
+CI uploads the new evidence alongside all three retained workflows on Windows/Linux.
+
+The composition browser workflow also runs `scripts/composition-repair-check.ts` in a fresh isolated
+fixture. It saves/reviews/accepts two distinct hero images and readable overrides on every section,
+then rejects cream-on-cream global text before any version, acceptance or ledger changes. Live preview
+and pinned standalone export at both widths require non-overlapping image rectangles, decoded original
+bytes and center hit-tests (element count alone cannot detect stacking). Actual computed header, nav,
+footer and focused skip-link contrast must be >=4.5:1, with visible keyboard focus and no overflow.
+Its `repair-check.json`, five-asset package and screenshots are included in the existing CI artifact.
+For historical reproduction only, `BVE_REPAIR_BASELINE=1` runs the same probe against the pre-repair
+renderer/validator and expects the defects; do not use baseline mode as a passing repair check.
+
+Handoff manifest version 1 now carries additive `rendererDefaults` schema/version 2 and expanded
+reconstruction instructions. Fixed defaults include list/paragraph margins, tracking, weights, header
+bounds/gaps, band border, footer and image row bands. Multiple split images occupy separate five-row
+bands; at <=760px images reset to normal source-order flow. No store migration or history rewrite is
+required. Invalid historical global color pairs fail validation clearly; their stored bytes are retained.
+
+
+The receipt labels direction comparison as AI technical assessment and records exceptions (authored
+raster versus synthetic CSS shapes, navigation/structured blocks, explicit spacing override, unresolved
+motion and booking). Another separately approved implementing model must reconstruct a fresh page from
+only the immutable package; copying index.html is not reconstruction. A separate AI reviewer compares
+1440/390px text/order/links/styles/assets/layout/interactions and exceptions, with discrepancies and repairs
+retained. If no separately approved executor is supplied, prepare the package and mark that acceptance
+criterion pending for coordinator execution. Task006 designer evaluation and Task003 live API remain
+separate. Never substitute these browser/unit checks for either assessment.
+
+Rollback: leave the dependent draft unmerged, or scope-revert S4 to `847b292`. Preserve all runtime assets,
+versions and ledger records. Older module validators cannot read the additive composition kinds; adopt
+from a gracefully closed pre-S4 backup rather than deleting new history. This is not a schema migration.
+
+
+## Phase A guide rehearsal
+
+The [operator guide](operator-guide.md), blank [designer trial](designer-trial-template.md) and
+[candidate evidence matrix](candidate-readiness.md) keep technical preparation separate from human
+judgments and owner decisions. `npm run test:browser:readiness` creates a fresh synthetic workspace,
+uses actual guide controls through brief/reference, rejection reason/comparison, native fixture imports,
+section replacement, regional raw/strict comparison, page acceptance/export and visible closed-copy
+recovery. All images are authored fixtures; no host tool or real API submission occurs. Its private
+receipt records actual platform/browser/Node, decisions, original/export/backup hashes, elapsed rehearsal
+steps, calls, errors and screenshots at1440/390. Windows/Linux CI executes it after the four retained
+browser workflows. It tests CLI startup separately from the acknowledged fixture closure used for backup;
+Windows signal termination of the startup-only probe is not claimed as graceful backup evidence.
+
+Use the documented Playwright install; select a private `BVE_EVIDENCE_DIR`. Human rubric values,
+license, real brief/designer selection and release disposition remain pending in the private return.
+No source-level claim or successful rehearsal substitutes for independent review or actual designer
+trial. Matching-code rollback and live-provider uncertainty boundaries remain in the guide/matrix.
+
+## AI direction and asset loop
+
+Run `npm run test:browser:ai-assets` in addition to all five retained workflows. The new UI rehearsal
+uses explicit authored response fixtures with zero provider/native host calls. Kernel regressions check
+no fallback, locks/unsafe output, exact cross-direction asset reuse/role history, forged/foreign/corrupt
+bindings, accepted export recovery and separate direction-call approval. Actual AI output evidence and
+independent technical review remain separate from fixture passing results.

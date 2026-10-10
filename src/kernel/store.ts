@@ -46,7 +46,8 @@ export class KernelStore {
     return value as NodePacket<T>; // Consumers still validate their port before crossing a boundary.
   }
   environment(): GateEnvironment {
-    return { ...this.services, lookup: ref => this.lookup(ref), currentVersion: id => this.currentVersion(id) };
+    return { ...this.services, lookup: ref => this.lookup(ref), currentVersion: id => this.currentVersion(id),
+      accepted: (pid, ref) => this.ledger(pid).events.some(e => e.kind === 'acceptance' && e.subject.id === ref.id && e.subject.version === ref.version) };
   }
   private event(projectId: string, subject: VersionRef, kind: LedgerEvent['kind'], actor: string,
       reason: string, related: VersionRef[] = []): LedgerEvent {
@@ -69,9 +70,9 @@ export class KernelStore {
     return this.transaction(() => this.insert(input, port));
   }
   /** One local workflow write; every packet still crosses its declared gate. */
-  putMany(packets: NodePacket<unknown>[]): void {
+  putMany(packets: NodePacket<unknown>[], writeGuard?: () => void): void {
     if (!packets.length) throw new Error('empty write');
-    this.transaction(() => { for (const input of packets) this.insert(input, writePort(input.type)); });
+    this.transaction(() => { writeGuard?.(); for (const input of packets) this.insert(input, writePort(input.type)); });
   }
   /** Bounded app discovery. Reads retain the same identity/integrity checks as lookup. */
   latestPackets(): NodePacket<unknown>[] {
@@ -105,13 +106,13 @@ export class KernelStore {
     });
   }
   accept(projectId: string, slot: string, artifactRef: VersionRef, expected: VersionRef | null,
-      actor: string, reason: string, bundleRef: VersionRef | null = null): LedgerEvent {
+      actor: string, reason: string, bundleRef: VersionRef | null = null, acceptanceGuard?: () => void): LedgerEvent {
     return this.transaction(() => {
       if (!this.services.grantedPermissions.includes('accept')) throw new Error('acceptance permission denied');
       const artifact = this.get(artifactRef);
-      if (artifact.type !== 'design-artifact' || artifact.projectId !== projectId) throw new Error('artifact acceptance scope mismatch');
+      if (!['design-artifact', 'website-assembly'].includes(artifact.type) || artifact.projectId !== projectId) throw new Error('artifact acceptance scope mismatch');
       if (!slot.trim()) throw new Error('acceptance slot required');
-      revalidatePacket(artifact, writePort('design-artifact'), this.environment());
+      revalidatePacket(artifact, writePort(artifact.type), this.environment());
       if (artifactRef.freshness === 'current' && this.currentVersion(artifact.id) !== artifact.version) throw new Error('stale acceptance artifact');
       const current = this.selected(projectId, slot);
       if ((current?.id ?? null) !== (expected?.id ?? null) || (current?.version ?? null) !== (expected?.version ?? null)) throw new Error('stale acceptance');
@@ -122,6 +123,7 @@ export class KernelStore {
           || bundle.payload.selection?.id !== artifactRef.id || bundle.payload.selection.version !== artifactRef.version) throw new Error('bundle selection mismatch');
         revalidatePacket(bundle, writePort('iteration-bundle'), this.environment());
       }
+      acceptanceGuard?.(); // Module-specific current-input checks run inside the same acceptance transaction.
       const event = this.event(projectId, artifactRef, 'acceptance', actor, reason, bundleRef ? [bundleRef] : []);
       this.db.prepare('INSERT INTO kernel_selections VALUES(?,?,?) ON CONFLICT(project_id,slot) DO UPDATE SET body=excluded.body')
         .run(projectId, slot, JSON.stringify(artifactRef));

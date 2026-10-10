@@ -5,12 +5,30 @@ contracts connect brand intent, visual references, Website design exploration, i
 local design decisions.
 
 This repository contains a local browser workspace, shared kernel, Website exploration, persistence,
-manual native-image export/import, legacy asset compatibility and synthetic fixtures. Live providers
-and production website composition are not implemented. Broader intended behavior remains below.
+manual native-image export/import, bound regional selections and strict composites, server-side
+OpenAI image/assistant adapters, legacy asset compatibility
+and synthetic fixtures. Provider wiring is tested offline; live account/usage/quality verification remains
+pending. A bounded editable landing-page composer and developer export are implemented;
+production hosting/publishing and real booking are not. Designer usefulness and release disposition remain pending.
 
 The application is standalone and is developed/tested with synthetic website briefs, sample assets,
 and mock providers. No existing website or client pilot is required to start development. Real
 provider checks validate integrations; a later website/designer pilot evaluates usefulness and quality.
+
+The inference workspace adds independent full-snapshot pages with arbitrary internal sections,
+responsive flow/flex/grid styling, separate exact media resources, scoped AI request/result exchange,
+and independently accepted Website route assemblies. Opening or creating a workspace starts with
+paired page preview and instructions. Existing tools and historical records remain available.
+
+**Paid API execution is disabled in this build**, including when an old private policy or key is present.
+Injected offline transports remain test-only. Use the session handoff for reasoning and permitted native
+image files. Local reasoning is not configured or benchmarked; no hardware or model choice is implied.
+See the [inference workspace guide](docs/inference-workspace.md) and
+[implementation evidence](docs/inference-workspace-result.md) for scope and limitations.
+
+Start with the [operator guide](docs/operator-guide.md) for installation, visible controls, accepted
+handoff and full-root recovery. The [candidate readiness matrix](docs/candidate-readiness.md) separates
+synthetic technical evidence from the blank [designer trial](docs/designer-trial-template.md).
 
 ## Intended experience
 
@@ -20,8 +38,8 @@ section imagery, refine selected image regions, and hand over an approved design
 Image-provider paths:
 
 - native ChatGPT/Codex generation through an explicit export/import handoff;
-- OpenAI image generation and editing through an in-app, server-side API integration;
-- optional local ComfyUI generation through compatible, versioned workflows.
+- retained OpenAI image/assistant adapters, disabled for paid execution in this candidate;
+- optional local ComfyUI is planned and unimplemented.
 
 The native path does not assume this application can call a host's internal tools or inherit its
 subscription. Provider capabilities and available metadata are represented honestly.
@@ -51,7 +69,7 @@ public-safe technical changes and verification evidence.
 
 ## Setup and validation
 
-With Node 24.19.0 (tested on Linux x64):
+With Node 24.19.0 (locked install/build checked on Windows and Linux):
 
 ```sh
 npm ci --ignore-scripts
@@ -68,9 +86,23 @@ browser checks and limitations. No provider call or production deployment is sta
 
 - [Shared foundation, context modes and legacy mapping](docs/design-os-contracts.md)
 - [Legacy standalone interfaces and persistence](docs/standalone-contracts.md)
+- [In-app providers, configuration, spending and recovery](docs/openai-providers.md)
+- [Regional editing, masks, recipes and strict preservation](docs/regions.md)
 - [Provider capabilities and evidence boundaries](docs/provider-boundaries.md)
 - [Technical checks and designer review rubric](docs/verification.md)
 
 For documentation changes, check local links, read the changed files, and run `git diff --check`.
 Runtime data, credentials, model weights, and generated/client assets are excluded by `.gitignore`.
 Only deliberately selected, public-safe fixtures belong in source control.
+
+S4 adds an editable structured landing-page composition with immutable drafts, per-section technical
+review, separate whole-page acceptance and a bounded developer handoff archive. Start from the selected
+synthetic Website direction in **Compose page**; no image generation or production deployment is needed.
+See [workspace.md](docs/workspace.md#structured-composition-s4) and
+[verification.md](docs/verification.md#structured-composition-checks) for limitations and reconstruction
+requirements. Separate reconstruction/independent review and later designer acceptance are not implied
+by a successful local export.
+
+AI-authored direction handoffs and exact reusable asset placement are documented in
+[AI directions and assets](docs/ai-directions-assets.md). Product Explore has no deterministic fallback;
+legacy synthetic rounds and explicit mechanical test fixtures remain distinguishable from actual AI evidence.

@@ -22,7 +22,7 @@ await new Promise<void>((r) => reservation.close(() => r()));
 const origin = 'http://127.0.0.1:' + port;
 let service: ChildProcess | null = null;
 async function start() {
-  service = spawn(process.execPath, ['scripts/dev.ts'], {
+  service = spawn(process.execPath, ['scripts/direction-fixture-service.ts'], {
     cwd: resolve(import.meta.dirname, '..'),
     env: {
       ...process.env,
@@ -182,6 +182,7 @@ try {
   await screen('entry-desktop');
   await page.getByLabel('Workspace name').fill('Fictional Home Care');
   await page.getByRole('button', { name: 'Enter Website' }).click();
+  await page.getByRole('button', { name: '01 Brief & references' }).click();
   await expect(
     page.getByRole('heading', { name: 'A useful brief' }),
   ).toBeVisible();
@@ -516,6 +517,7 @@ try {
   await page.getByLabel('Workspace name').fill('Branded Fixture');
   await page.getByRole('radio', { name: 'Branded', exact: false }).check();
   await page.getByRole('button', { name: 'Enter Website' }).click();
+  await page.getByRole('button', { name: '01 Brief & references' }).click();
   await expect(
     page.locator('.context-field').filter({ hasText: 'palette' }),
   ).toContainText('inherited');
@@ -578,6 +580,7 @@ try {
   await page.getByLabel('Workspace name').fill('Freeroam Comparison Fixture');
   await page.getByRole('radio', { name: 'Freeroam', exact: false }).check();
   await page.getByRole('button', { name: 'Enter Website' }).click();
+  await page.getByRole('button', { name: '01 Brief & references' }).click();
   await expect(
     page.locator('.context-field').filter({ hasText: 'palette' }),
   ).toContainText('Placeholder');
@@ -590,7 +593,11 @@ try {
     await page
       .getByRole('button', { name: '+ New workspace', exact: true })
       .click();
+    await expect(page.locator('#create')).toBeVisible();
+    await expect(page.locator('#app')).not.toHaveAttribute('aria-busy', 'true');
     await page.getByRole('button', { name: title, exact: true }).click();
+    await expect(page.locator('.workspace-title h1')).toHaveText(title);
+    await expect(page.locator('#app')).not.toHaveAttribute('aria-busy', 'true');
     await page.getByRole('button', { name: '02 Explore & compare' }).click();
     await expect(page.locator('[data-compare]:checked')).toHaveCount(2);
     await expect(page.locator('.comparison-grid article')).toHaveCount(2);

@@ -97,8 +97,12 @@ export class Assets {
     if (hash(bytes) !== id) throw new InputError('Asset checksum mismatch');
     return bytes;
   }
-  save(bytes: Buffer, info: ImageInfo): void {
-    if (hash(bytes) !== info.checksum)
+  save(bytes: Buffer, info: Pick<ImageInfo, 'id' | 'checksum'>): void {
+    if (
+      bytes.length > MAX_IMAGE_BYTES ||
+      hash(bytes) !== info.checksum ||
+      info.id !== info.checksum
+    )
       throw new InputError('Asset checksum mismatch');
     const path = join(this.root, info.id);
     if (existsSync(path)) {

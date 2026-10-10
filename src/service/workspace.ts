@@ -1,3 +1,11 @@
+import { validateCompositionLinks } from './compositions.ts';
+import { AIDirections, validateAILinks } from './ai-directions.ts';
+import type {
+  ProviderJob,
+  ApiImage,
+  AssistantProposal,
+  AssistantReview,
+} from '../modules/website/provider-contracts.ts';
 import { randomUUID } from 'node:crypto';
 import type {
   ArtifactMetadata,
@@ -38,6 +46,7 @@ import type {
 } from '../modules/website/workspace-contracts.ts';
 import { LegacyAssets } from './legacy-assets.ts';
 import { Assets, decode } from './assets.ts';
+import { validateRegionLinks } from './regions.ts';
 import {
   InputError,
   record,
@@ -75,7 +84,13 @@ export class Workspace {
   kernel: KernelStore;
   assets: Assets;
   legacy: LegacyAssets;
-  constructor(root: string) {
+  // Test-only explicit dependency injection; never a browser/environment option.
+  readonly options: { directionFixture?: boolean; aiResponseFixture?: boolean };
+  constructor(
+    root: string,
+    options: { directionFixture?: boolean; aiResponseFixture?: boolean } = {},
+  ) {
+    this.options = options;
     this.assets = new Assets(root);
     this.legacy = new LegacyAssets(root);
     this.kernel = new KernelStore(root, {
@@ -114,6 +129,9 @@ export class Workspace {
     return p;
   }
   private validateLinks(p: NodePacket<DesignArtifact<unknown>>) {
+    validateAILinks(p, this.kernel, this.assets);
+    validateRegionLinks(p, this.kernel, this.assets);
+    validateCompositionLinks(p, this.kernel, this.assets);
     const known = (pointer: VersionRef, type: string, kind?: string) => {
       const a = this.kernel.get<DesignArtifact<unknown>>(pointer);
       if (
@@ -124,18 +142,210 @@ export class Workspace {
         throw new InputError('Workspace link owner/type mismatch');
       return a;
     };
+    if (p.payload.kind === 'website-provider-budget') {
+      const state = p.payload
+        .state as import('../modules/website/provider-contracts.ts').BudgetState;
+      const seen = new Set<string>();
+      for (const reservation of state.reservations) {
+        const job = this.kernel.get<DesignArtifact<ProviderJob>>(
+          reservation.attempt,
+        );
+        if (
+          job.type !== 'design-artifact' ||
+          job.payload.kind !== 'website-provider-job' ||
+          job.id !== job.payload.state.request.attemptId ||
+          reservation.attempt.version !== 1 ||
+          !state.policy.models.includes(job.payload.state.request.model) ||
+          reservation.amountUSD !== state.policy.reserveUSD ||
+          seen.has(job.id)
+        )
+          throw new InputError('Run reservation binding mismatch');
+        seen.add(job.id);
+      }
+    }
+    if (p.payload.kind === 'website-provider-job') {
+      const s = p.payload.state as ProviderJob,
+        m = s.request;
+      const original = this.kernel.lookup({
+        id: p.id,
+        version: 1,
+        freshness: 'pinned',
+      }) as NodePacket<DesignArtifact<ProviderJob>> | null;
+      if (
+        m.attemptId !== p.id ||
+        m.project.id !== p.projectId ||
+        (original && canonical(original.payload.state.request) !== canonical(m))
+      )
+        throw new InputError('API request identity/immutability mismatch');
+      const sourceProject = known(
+        m.project,
+        'module-project',
+      ) as unknown as NodePacket<ModuleProject>;
+      if (m.directionRequest) {
+        const q = known(
+          m.directionRequest,
+          'design-artifact',
+          'website-ai-request',
+        ).payload.state as { project: VersionRef; references: VersionRef[] };
+        if (
+          m.operation !== 'directions' ||
+          !same(q.project, m.project) ||
+          canonical(q.references) !==
+            canonical(m.references.map((x) => x.artifact))
+        )
+          throw new InputError('API direction request binding mismatch');
+      }
+      const sourceRefs =
+        sourceProject.payload.localContext['references']?.override ?? [];
+      for (const r of m.references)
+        if (
+          !r.selected ||
+          (m.operation !== 'directions' &&
+            ![m.scope, 'landing-page'].includes(r.scope)) ||
+          !Array.isArray(sourceRefs) ||
+          !sourceRefs.some(
+            (x) =>
+              canonical(x) ===
+              canonical(
+                Object.fromEntries(
+                  Object.entries(r).filter(([k]) => k !== 'image'),
+                ),
+              ),
+          )
+        )
+          throw new InputError('API reference role/version mismatch');
+      if (m.artifact) {
+        const a = known(m.artifact, 'design-artifact');
+        if (
+          m.operation === 'generate'
+            ? a.payload.kind !== 'website-design'
+            : ![
+                'website-image',
+                'website-api-image',
+                'website-region-image',
+              ].includes(a.payload.kind) || a.payload.scope !== m.scope
+        )
+          throw new InputError('API input type/scope mismatch');
+        if (
+          canonical(m.inputAsset) !==
+          canonical(
+            m.operation === 'edit'
+              ? (a.payload.state as ImageState).image
+              : null,
+          )
+        )
+          throw new InputError('API input checksum mismatch');
+      }
+      for (const r of m.references) {
+        const a = known(r.artifact, 'design-artifact', 'website-reference');
+        if (
+          canonical(r.image) !==
+          canonical((a.payload.state as ImageState).image)
+        )
+          throw new InputError('API reference binding mismatch');
+      }
+      for (const o of s.outputs) {
+        const a = known(
+          o,
+          'design-artifact',
+          m.operation === 'directions'
+            ? 'website-ai-evidence'
+            : m.operation === 'assistant'
+              ? 'website-assistant-proposal'
+              : 'website-api-image',
+        );
+        if (
+          (m.operation === 'directions'
+            ? (a.payload.state as { providerJob: VersionRef }).providerJob
+            : (a.payload.state as ApiImage | AssistantProposal).job
+          ).id !== p.id
+        )
+          throw new InputError('API output job mismatch');
+      }
+    }
+    if (
+      p.payload.kind === 'website-api-image' ||
+      p.payload.kind === 'website-assistant-proposal'
+    ) {
+      const s = p.payload.state as ApiImage | AssistantProposal;
+      const job = known(s.job, 'design-artifact', 'website-provider-job');
+      const m = (job.payload.state as ProviderJob).request;
+      if (p.payload.scope !== m.scope)
+        throw new InputError('API output scope mismatch');
+      if (p.payload.kind === 'website-api-image') {
+        const i = s as ApiImage;
+        if (
+          m.operation === 'assistant' ||
+          !same(i.originalArtifact, m.artifact) ||
+          canonical(i.parentAsset) !== canonical(m.inputAsset) ||
+          i.requestedModel !== m.model ||
+          i.recipe !== m.recipe ||
+          canonical(i.settings) !== canonical(m.settings)
+        )
+          throw new InputError('API result binding mismatch');
+      } else {
+        const a = s as AssistantProposal;
+        if (
+          m.operation !== 'assistant' ||
+          !same(a.project, m.project) ||
+          canonical(a.sourceReferences) !==
+            canonical(m.references.map((r) => r.artifact))
+        )
+          throw new InputError('Assistant source binding mismatch');
+      }
+    }
+    if (p.payload.kind === 'website-assistant-review') {
+      const s = p.payload.state as AssistantReview;
+      const raw = known(
+        s.originalProposal,
+        'design-artifact',
+        'website-assistant-proposal',
+      ).payload.state as AssistantProposal;
+      if (
+        canonical(s.proposal.sourceReferences) !==
+        canonical(raw.sourceReferences)
+      )
+        throw new InputError('Human review source mismatch');
+    }
+    if (p.payload.kind === 'website-image-comparison') {
+      const s = p.payload.state as { compared: VersionRef[] };
+      for (const r of s.compared) {
+        const a = known(r, 'design-artifact');
+        if (
+          ![
+            'website-image',
+            'website-api-image',
+            'website-region-image',
+          ].includes(a.payload.kind) ||
+          a.payload.scope !== p.payload.scope
+        )
+          throw new InputError('Image comparison scope/type mismatch');
+      }
+    }
     if (p.payload.kind === 'website-native-job') {
       const m = (p.payload.state as NativeJob).manifest;
       if (m.jobId !== p.id || m.project.id !== p.projectId)
         throw new InputError('Native manifest identity mismatch');
       known(m.project, 'module-project');
       const a = known(m.artifact, 'design-artifact');
-      if (!['website-design', 'website-image'].includes(a.payload.kind))
+      if (
+        ![
+          'website-design',
+          'website-image',
+          'website-api-image',
+          'website-region-image',
+          'website-asset',
+        ].includes(a.payload.kind)
+      )
         throw new InputError('Wrong native input type');
-      const input =
-        a.payload.kind === 'website-image'
-          ? (a.payload.state as ImageState).image
-          : null;
+      const input = [
+        'website-image',
+        'website-api-image',
+        'website-region-image',
+        'website-asset',
+      ].includes(a.payload.kind)
+        ? (a.payload.state as ImageState).image
+        : null;
       if (canonical(input) !== canonical(m.inputAsset))
         throw new InputError('Native original asset mismatch');
       for (const r of m.references) {
@@ -169,7 +379,11 @@ export class Workspace {
       )
         throw new InputError('Returned image original binding mismatch');
     }
-    if (['website-image', 'website-reference'].includes(p.payload.kind)) {
+    if (
+      ['website-image', 'website-api-image', 'website-reference'].includes(
+        p.payload.kind,
+      )
+    ) {
       const image = (p.payload.state as ImageState).image;
       if (
         p.assets.length !== 1 ||
@@ -199,7 +413,7 @@ export class Workspace {
       throw new InputError('Project changed; reload before saving', 409);
     return p;
   }
-  private references(project: NodePacket<ModuleProject>): ReferenceInput[] {
+  references(project: NodePacket<ModuleProject>): ReferenceInput[] {
     const refs = list(
       project.payload.localContext['references']?.override ?? [],
       parseReference,
@@ -231,6 +445,7 @@ export class Workspace {
     const visualOS = packets.filter((p) => p.type === 'visual-os');
     if (!projectId)
       return {
+        directionFixture: this.options.directionFixture === true,
         projects,
         visualOS,
         capabilities: syntheticCapabilities().payload,
@@ -243,11 +458,15 @@ export class Workspace {
     for (const p of artifacts) {
       const payload = p.payload as DesignArtifact<unknown>;
       if (
-        validateWorkspaceArtifact(payload as unknown as Record<string, unknown>)
+        validateWorkspaceArtifact(
+          payload as unknown as Record<string, unknown>,
+        ) ||
+        payload.kind === 'website-design'
       )
         this.owned(reference(p), projectId);
     }
     return {
+      directionFixture: this.options.directionFixture === true,
       projects,
       visualOS,
       capabilities: syntheticCapabilities().payload,
@@ -258,6 +477,7 @@ export class Workspace {
       ),
       ledger: this.kernel.ledger(projectId),
       accepted: {
+        composition: this.kernel.selected(projectId, 'composition'),
         design: this.kernel.selected(projectId, 'design'),
         hero: this.kernel.selected(projectId, 'hero'),
         services: this.kernel.selected(projectId, 'services'),
@@ -514,6 +734,8 @@ export class Workspace {
     return this.state(projectId);
   }
   explore(projectId: string, input: unknown) {
+    if (!this.options.directionFixture)
+      return new AIDirections(this).request(projectId, input);
     const r = record(input, ['expectedProject', 'count', 'base']);
     const p = this.project(projectId, r['expectedProject']);
     const base =
@@ -589,6 +811,25 @@ export class Workspace {
       ref(r['artifact']),
       projectId,
     );
+    const resultJob = (a.payload.state as ImageState).job;
+    if (
+      ['website-image', 'website-api-image'].includes(a.payload.kind) &&
+      resultJob &&
+      this.kernel
+        .latestPackets()
+        .some(
+          (p) =>
+            p.projectId === projectId &&
+            p.type === 'design-artifact' &&
+            (p.payload as DesignArtifact<{ execution?: VersionRef }>).kind ===
+              'website-region-operation' &&
+            (p.payload as DesignArtifact<{ execution?: VersionRef }>).state
+              .execution?.id === resultJob.id,
+        )
+    )
+      throw new InputError(
+        'Use regional acceptance to review its bound mask and preservation policy',
+      );
     const slot = choice(r['slot'], [
       'design',
       'hero',
@@ -599,6 +840,30 @@ export class Workspace {
     if (a.payload.kind === 'website-design') {
       if (slot !== 'design' || r['bundle'] === null)
         throw new InputError('Select a design in its bundle first');
+    } else if (a.payload.kind === 'website-api-image') {
+      const s = a.payload.state as ApiImage;
+      if (slot !== a.payload.scope || slot === 'design' || r['bundle'] !== null)
+        throw new InputError('API image acceptance scope mismatch');
+      const job = this.owned<DesignArtifact<ProviderJob>>(
+        { ...s.job, version: this.kernel.currentVersion(s.job.id)! },
+        projectId,
+      );
+      if (
+        job.payload.kind !== 'website-provider-job' ||
+        job.payload.state.status !== 'returned' ||
+        !job.payload.state.outputs.some((o) => same(o, reference(a)))
+      )
+        throw new InputError('API image is not an eligible recorded result');
+      if (
+        (s.outcome === 'late' ||
+          job.payload.state.request.project.version !==
+            this.project(projectId).version) &&
+        !bool(r['allowHistorical'])
+      )
+        throw new InputError(
+          'Historical API input: explicitly acknowledge review before acceptance',
+          409,
+        );
     } else if (a.payload.kind === 'website-image') {
       const s = a.payload.state as ImageState;
       if (slot !== a.payload.scope || slot === 'design')
@@ -743,20 +1008,35 @@ export class Workspace {
       },
     });
   }
-  native(projectId: string, input: unknown) {
+  native(
+    projectId: string,
+    input: unknown,
+    companions?: (
+      job: NodePacket<DesignArtifact<NativeJob>>,
+    ) => NodePacket<unknown>[],
+  ) {
     const r = record(input, [
       'expectedProject',
       'artifact',
       'scope',
       'instructions',
       'preservation',
+      'references',
     ]);
     const p = this.project(projectId, r['expectedProject']);
     const a = this.owned<DesignArtifact<WebsiteDesignState | ImageState>>(
       ref(r['artifact']),
       projectId,
     );
-    if (!['website-design', 'website-image'].includes(a.payload.kind))
+    if (
+      ![
+        'website-asset',
+        'website-design',
+        'website-image',
+        'website-api-image',
+        'website-region-image',
+      ].includes(a.payload.kind)
+    )
       throw new InputError('Choose a design or image as the native input');
     const scope = choice(r['scope'], scopes);
     const refs = this.references(p)
@@ -768,6 +1048,17 @@ export class Workspace {
         image: this.owned<DesignArtifact<ImageState>>(x.artifact, projectId)
           .payload.state.image,
       }));
+    const chosen =
+      r['references'] === undefined
+        ? refs
+        : list(r['references'], ref, 4).map((pointer) => {
+            const entry = refs.find((x) => same(x.artifact, pointer));
+            if (!entry)
+              throw new InputError('Choose a selected reference in this scope');
+            return entry;
+          });
+    if (new Set(chosen.map((x) => x.artifact.id)).size !== chosen.length)
+      throw new InputError('Duplicate reference');
     const jobId = 'native-job-' + randomUUID();
     const manifest: NativeManifest = {
       contractVersion: 1,
@@ -776,12 +1067,16 @@ export class Workspace {
       moduleId: 'website',
       scope,
       artifact: reference(a),
-      inputAsset:
-        a.payload.kind === 'website-image'
-          ? (a.payload.state as ImageState).image
-          : null,
+      inputAsset: [
+        'website-image',
+        'website-api-image',
+        'website-region-image',
+        'website-asset',
+      ].includes(a.payload.kind)
+        ? (a.payload.state as ImageState).image
+        : null,
       instructions: string(r['instructions']),
-      references: refs,
+      references: chosen,
       selection: this.kernel.selected(
         projectId,
         scope === 'landing-page' ? 'design' : scope,
@@ -799,11 +1094,12 @@ export class Workspace {
       'website-native-job',
       scope,
       { manifest, status: 'awaiting', outcomes: [], outputs: [] } as NativeJob,
-      [reference(p), reference(a), ...refs.map((x) => x.artifact)],
-      refs.map((x) => x.image),
+      [reference(p), reference(a), ...chosen.map((x) => x.artifact)],
+      chosen.map((x) => x.image),
     );
     const { integrity: _, ...body } = job;
-    this.kernel.put(packet({ ...body, id: jobId }));
+    const prepared = packet<DesignArtifact<NativeJob>>({ ...body, id: jobId });
+    this.kernel.putMany([prepared, ...(companions?.(prepared) ?? [])]);
     return this.state(projectId);
   }
   manifest(projectId: string, pointer: VersionRef) {
@@ -995,7 +1291,15 @@ export class Workspace {
   }
   async originalImage(projectId: string, pointer: VersionRef) {
     const p = this.owned<DesignArtifact<ImageState>>(pointer, projectId);
-    if (!['website-image', 'website-reference'].includes(p.payload.kind))
+    if (
+      ![
+        'website-asset',
+        'website-image',
+        'website-api-image',
+        'website-region-image',
+        'website-reference',
+      ].includes(p.payload.kind)
+    )
       throw new InputError('Not an image');
     const bytes = this.assets.read(p.payload.state.image.id);
     const info = await decode(bytes);

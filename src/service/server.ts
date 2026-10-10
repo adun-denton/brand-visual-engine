@@ -1,3 +1,9 @@
+import { Compositions } from './compositions.ts';
+import { Pages } from './pages.ts';
+import { AIDirections } from './ai-directions.ts';
+import { Providers } from './providers.ts';
+import { Regions } from './regions.ts';
+import type { ProviderConfig } from './providers.ts';
 import { createServer } from 'node:http';
 import type { Server } from 'node:http';
 import { randomBytes } from 'node:crypto';
@@ -9,6 +15,10 @@ import { MAX_IMAGE_BYTES } from './assets.ts';
 export interface RunningApp {
   server: Server;
   workspace: Workspace;
+  providers: Providers;
+  regions: Regions;
+  compositions: Compositions;
+  pages: Pages;
   origin: string;
   close: () => Promise<void>;
 }
@@ -16,16 +26,38 @@ export async function startApp(
   root: string,
   port = 0,
   webRoot = join(import.meta.dirname, '../../dist'),
+  providerConfig?: ProviderConfig,
+  workspaceOptions?: {
+    directionFixture?: boolean;
+    aiResponseFixture?: boolean;
+  },
 ): Promise<RunningApp> {
-  const workspace = new Workspace(root),
+  const workspace = new Workspace(root, workspaceOptions),
     token = randomBytes(32).toString('hex');
+  const providers = new Providers(workspace, providerConfig);
+  const regions = new Regions(workspace, providers);
+  const compositions = new Compositions(workspace);
+  const pages = new Pages(workspace);
+  const directions = new AIDirections(workspace);
   let origin = '';
   const server = createServer(async (req, res) => {
-    const json = (status: number, body: unknown) => {
-      res.writeHead(status, {
-        'Content-Type': 'application/json; charset=utf-8',
-      });
-      res.end(JSON.stringify(body));
+    const json = (status: number, body: unknown, augment = true) => {
+      // Projection and serialization can fail. Commit success only after both finish.
+      const output = JSON.stringify(
+          body && typeof body === 'object'
+            && augment
+            ? {
+                ...body,
+                ...('capabilities' in body
+                  ? { capabilities: providers.registry() }
+                  : {}),
+                providers: providers.status(),
+                ...('project' in body && body.project ? { inference: pages.state((body.project as {id:string}).id) } : {}),
+              }
+            : body,
+        );
+      res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(output);
     };
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -49,15 +81,42 @@ export async function startApp(
           return;
         }
         const projectId = url.searchParams.get('project');
+        if (path.startsWith('/api/v1/page/') || path.startsWith('/api/v1/website/')) {
+          const pid = id(projectId), pointer = ref({id:url.searchParams.get('id'),version:Number(url.searchParams.get('version')),freshness:'pinned'});
+          if (path === '/api/v1/page/history') { json(200,{history:pages.history(pid,pointer)}); return; }
+          if (path === '/api/v1/page/request') {
+            const output=JSON.stringify(pages.exportRequest(pid,pointer),null,2)+'\n';
+            res.writeHead(200,{'Content-Type':'application/json; charset=utf-8','Content-Disposition':'attachment; filename="request.json"'});
+            res.end(output); return;
+          }
+          if (path === '/api/v1/page/preview') {
+            const html=await pages.preview(pid,pointer);
+            res.setHeader('Content-Security-Policy',"default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'");
+            res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(html);return;
+          }
+          if (path === '/api/v1/page/media') {
+            const m=await pages.mediaBytes(pid,pointer);res.writeHead(200,{'Content-Type':'image/'+m.info.format});res.end(m.bytes);return;
+          }
+          if (['/api/v1/page/package','/api/v1/page/export','/api/v1/website/export'].includes(path)) {
+            const output=path.endsWith('/package')?await pages.requestPackage(pid,pointer):path.startsWith('/api/v1/website/')?await pages.exportWebsite(pid,pointer):await pages.export(pid,pointer);
+            res.writeHead(200,{'Content-Type':'application/x-tar','Content-Disposition':'attachment; filename="'+(path.endsWith('/package')?'request':'handoff')+'.tar"'});res.end(output.bytes);return;
+          }
+          throw new InputError('Not found',404);
+        }
         if (path === '/api/v1/workspace') {
           json(200, workspace.state(id(projectId)));
           return;
         }
         if (
+          path === '/api/v1/composition/preview' ||
+          path === '/api/v1/direction/preview' ||
+          path === '/api/v1/direction/request' ||
+          path === '/api/v1/composition/export' ||
           path === '/api/v1/manifest' ||
           path === '/api/v1/artifact' ||
           path === '/api/v1/image' ||
-          path === '/api/v1/asset'
+          path === '/api/v1/asset' ||
+          path === '/api/v1/region/bundle'
         ) {
           const pointer = ref({
             id: url.searchParams.get('id'),
@@ -65,6 +124,49 @@ export async function startApp(
             freshness: 'pinned',
           });
           const pid = id(projectId);
+          if (path === '/api/v1/direction/request') {
+            const exported = directions.export(pid, pointer);
+            res.writeHead(200, {
+              'Content-Type': 'application/json; charset=utf-8',
+              'Content-Disposition': `attachment; filename="ai-direction-request-${pointer.id}.json"`,
+            });
+            res.end(JSON.stringify(exported, null, 2) + '\n');
+            return;
+          }
+          if (path === '/api/v1/direction/preview') {
+            const html = await directions.preview(pid, pointer);
+            res.setHeader(
+              'Content-Security-Policy',
+              "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'",
+            );
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+            res.end(html);
+            return;
+          }
+          if (path === '/api/v1/composition/preview') {
+            const html = await compositions.preview(pid, pointer);
+            res.setHeader(
+              'Content-Security-Policy',
+              "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'",
+            );
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+            res.end(html);
+            return;
+          }
+          if (path === '/api/v1/composition/export') {
+            const result = await compositions.export(pid, pointer);
+            res.writeHead(200, {
+              'Content-Type': 'application/x-tar',
+              'Content-Disposition': `attachment; filename="handoff-${pointer.id}-v${pointer.version}.tar"`,
+              'X-BVE-Package-SHA256': result.checksum,
+            });
+            res.end(result.bytes);
+            return;
+          }
+          if (path === '/api/v1/region/bundle') {
+            json(200, await regions.bundle(pid, pointer));
+            return;
+          }
           if (path === '/api/v1/asset') {
             const { bytes, info } = await workspace.originalImage(pid, pointer);
             const extension = info.format === 'jpeg' ? 'jpg' : info.format;
@@ -97,8 +199,9 @@ export async function startApp(
         };
         const file = files[path];
         if (!file) throw new InputError('Not found', 404);
+        const output = readFileSync(join(webRoot, file.file));
         res.writeHead(200, { 'Content-Type': file.type });
-        res.end(readFileSync(join(webRoot, file.file)));
+        res.end(output);
         return;
       }
       if (req.method !== 'POST') throw new InputError('Use GET or POST', 405);
@@ -138,6 +241,82 @@ export async function startApp(
         const pid = id(outer['projectId']);
         const v = outer['input'];
         switch (path) {
+          case '/api/v1/page/prepare': result=pages.prepare(pid,v);break;
+          case '/api/v1/page/apply': result=await pages.apply(pid,v);break;
+          case '/api/v1/page/cancel': result=pages.cancel(pid,v);break;
+          case '/api/v1/page/add-media': result=await pages.addMedia(pid,v);break;
+          case '/api/v1/page/place': result=await pages.place(pid,v);break;
+          case '/api/v1/page/save': result=pages.save(pid,v);break;
+          case '/api/v1/page/accept': result=pages.accept(pid,v);break;
+          case '/api/v1/page/import': result=await pages.importPortable(pid,v);break;
+          case '/api/v1/page/convert': result=await pages.convert(pid,v);break;
+          case '/api/v1/website/assemble': result=pages.assemble(pid,v);break;
+          case '/api/v1/website/accept': result=pages.acceptWebsite(pid,v);break;
+          case '/api/v1/direction/apply':
+            result = directions.apply(pid, v);
+            break;
+          case '/api/v1/direction/place':
+            result = await directions.place(pid, v);
+            break;
+          case '/api/v1/assets/revise':
+            result = directions.reviseAsset(pid, v);
+            break;
+          case '/api/v1/assets/add': {
+            const r = record(v, [
+              'expectedProject',
+              'origin',
+              'label',
+              'role',
+              'permission',
+              'file',
+            ]);
+            let bytes: Buffer | undefined;
+            if (r['file'] !== undefined) {
+              const s = string(
+                r['file'],
+                Math.ceil(MAX_IMAGE_BYTES / 3) * 4 + 4,
+              );
+              if (s.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(s))
+                throw new InputError('Invalid encoded image');
+              bytes = Buffer.from(s, 'base64');
+            }
+            const { file: _, ...input } = r;
+            result = await directions.addAsset(pid, input, bytes);
+            break;
+          }
+          case '/api/v1/composition/start':
+            result = compositions.start(pid, v);
+            break;
+          case '/api/v1/composition/save':
+            result = await compositions.save(pid, v);
+            break;
+          case '/api/v1/composition/review':
+            result = await compositions.review(pid, v);
+            break;
+          case '/api/v1/composition/compare':
+            result = compositions.compare(pid, v);
+            break;
+          case '/api/v1/composition/accept':
+            result = await compositions.accept(pid, v);
+            break;
+          case '/api/v1/region/select':
+            result = await regions.select(pid, v);
+            break;
+          case '/api/v1/region/prepare':
+            result = regions.prepare(pid, v);
+            break;
+          case '/api/v1/region/collect':
+            result = regions.collect(pid, v);
+            break;
+          case '/api/v1/region/compose':
+            result = await regions.compose(pid, v);
+            break;
+          case '/api/v1/region/compare':
+            result = regions.compare(pid, v);
+            break;
+          case '/api/v1/region/accept':
+            result = await regions.accept(pid, v);
+            break;
           case '/api/v1/revise':
             result = workspace.reviseProject(pid, v);
             break;
@@ -152,6 +331,24 @@ export async function startApp(
             break;
           case '/api/v1/accept':
             result = workspace.accept(pid, v);
+            break;
+          case '/api/v1/provider/prepare':
+            result = providers.prepare(pid, v);
+            break;
+          case '/api/v1/provider/submit':
+            result = providers.submit(pid, v);
+            break;
+          case '/api/v1/provider/cancel':
+            result = providers.cancel(pid, v);
+            break;
+          case '/api/v1/provider/reconcile':
+            result = providers.reconcile(pid, v);
+            break;
+          case '/api/v1/provider/review':
+            result = providers.review(pid, v);
+            break;
+          case '/api/v1/provider/compare':
+            result = providers.compare(pid, v);
             break;
           case '/api/v1/native':
             result = workspace.native(pid, v);
@@ -223,6 +420,10 @@ export async function startApp(
       }
       json(200, result);
     } catch (error) {
+      if (res.headersSent || res.writableEnded || res.destroyed) {
+        if (!res.writableEnded && !res.destroyed) res.destroy();
+        return;
+      }
       const status = error instanceof InputError ? error.status : 400;
       json(status, {
         error:
@@ -231,7 +432,7 @@ export async function startApp(
             : error instanceof Error && !('code' in error)
               ? 'Operation rejected: ' + error.message
               : 'Operation rejected: stored data unavailable; inspect the private runtime root',
-      });
+      }, false); // Error responses never repeat fallible workspace/provider projection.
     }
   });
   server.requestTimeout = 15000;
@@ -247,8 +448,13 @@ export async function startApp(
   return {
     server,
     workspace,
+    providers,
+    regions,
+    compositions,
+    pages,
     origin,
     close: async () => {
+      await providers.close();
       await new Promise<void>((resolve, reject) =>
         server.close((e) => (e ? reject(e) : resolve())),
       );

@@ -1,10 +1,14 @@
 # Local Website workspace
 
 A thin, single-operator OS shell runs Website in Branded or Freeroam mode. The browser uses the
-same module and shared kernel in both modes. It does not call providers, mount metadata suggestions,
-approve reviewed direction proposals, or produce a production website.
+same module and shared kernel in both modes. API capabilities are optional and require explicit server credentials/run approval and user submission.
+It does not silently mount metadata suggestions, approve brand context or produce a production website.
+See [regional selection, native bundle and strict-composite workflow](regions.md) for bound edits.
+See [in-app provider boundaries and spending](openai-providers.md) for the additive image/assistant path.
 
 ## Run and storage
+
+Follow the [operator guide](operator-guide.md) for Windows/Linux commands and actual controls.
 
 Use Node **24.19.0** (the declared range remains `>=24.19.0 <25`):
 
@@ -59,7 +63,8 @@ schema, asset identity, fixed derived RGB paths, byte checksums and raster dimen
 raw legacy methods over HTTP or runs legacy job recovery. Existing legacy snapshots remain readable.
 The databases are not unified: old jobs/decisions remain historical; the kernel owns new acceptance.
 Both stores and both asset folders must be preserved together. There is no implicit legacy import,
-remote provider execution, external job reconciliation, schema migration or automatic Git sync.
+implicit provider execution, schema migration or automatic Git sync. Explicit API attempts/reconciliation
+are described separately in openai-providers.md.
 
 ## Browser workflow
 
@@ -67,10 +72,10 @@ remote provider execution, external job reconciliation, schema migration or auto
    content, exclusions, commitments and unresolved choices; save with a reason.
 2. Attach permitted PNG/JPEG/WebP references and choose roles/scopes. Save later role/selection changes
    as new revisions. Missing inputs remain visible; unconfigured executors do not prevent editing.
-3. Explore 3/6/9 coherent deterministic proposals. A chosen prior design can center a smaller round.
-   Compare two at the same scale, save why, select a direction, then separately accept it with a reason.
-   Relative dimensions are exploration controls, not scores. Colors remain provisional if no palette
-   exists; preview illustrations/text are authored synthetic fixtures, not live AI design or a composer.
+3. Prepare a pinned AI direction request for 1/3/6/9 candidates. Export/import native AI JSON or use
+   the separately approved API directions operation, then compare/select and separately accept. No
+   deterministic product fallback exists. AI decisions render from structured page state; see
+   [AI directions and reusable assets](ai-directions-assets.md). Historical fixture rounds remain readable.
 4. Create a section-scoped native request against an explicit design/image. Export its JSON request;
    attach the selected original reference/input files separately to your authorized native host. The
    export includes the pinned project/context, artifact state, request instructions and preservation
@@ -109,7 +114,7 @@ bounded parsed invalid images record job outcomes. Missing/corrupt private stora
 without emitting its full path or regenerating accepted work. The local token/origin checks are not
 multi-user authentication or production security. Decoding is bounded but not an OS sandbox; imports
 from adversarial sources and redistribution of native dependencies need a separate security/license
-review. No automatic chargeable retry occurs because no provider is submitted here.
+review. No automatic chargeable retry occurs. API submission is a separate explicit action under an approved policy.
 
 ## Dependencies and evidence
 
@@ -143,9 +148,11 @@ is synthetic. Regenerating evidence changes IDs/screenshots; review it before co
 retains the synthetic root for failure inspection and copied backup, never deletes operator data.
 
 The published screenshots/report under [evidence](evidence/) show implementer technical inspection
-at 1440×1000 and 390×844. This is not independent review or designer usefulness/approval. Actual native
-host generation is pending an operator-authorized host round trip; a synthetic attachment does not
-prove it. Windows/macOS UI and Windows directory crash durability remain unverified.
+at 1440×1000 and 390×844. This is not independent review or designer usefulness/approval. A separately recorded real native host round trip exists in coordinator evidence; its
+unknown model/settings/usage remain unknown and it does not close live direct API verification.
+These shipped screenshots/fixtures do not prove it. Windows/Linux automated browser checks and
+independent Windows reviewer checks are recorded at accepted S4; macOS UI and Windows directory
+crash durability remain unverified. See [readiness evidence](candidate-readiness.md).
 
 ## Recovery and rollback
 
@@ -160,3 +167,51 @@ scoped revert of the workspace commits, preserving both databases and asset hist
 cannot interpret new Website artifact kinds: keep the complete task-002 root untouched and use its
 verified matching-code backup for later restoration. Do not open that root in older code, force-push,
 delete live state or test restore on the only copy.
+
+## Structured composition (S4)
+
+`Compose page` starts an immutable `website-composition` family from a deliberate WebsiteDesignState
+choice and the current pinned brief. Four ordered sections (hero/services/proof/contact) support
+stack/split/cards/band recipes and ordered heading/paragraph/button/list/image blocks. Add/remove
+and order controls, text/actions, page metadata, layout/alignment/image fit, global style and blank-to-inherit
+section overrides are editable. This initial recipe set has no canvas, CMS, publishing or live booking.
+The iframe shows the saved revision, and the original image bytes are used by both preview and export.
+
+Save creates a candidate version. Review creates another version with section dependency signatures;
+comparison stores exact revisions and an optional selection. Neither changes acceptance. Whole-page
+acceptance requires reviewed sections, current pinned context/direction and an explicit reason that
+acknowledges unresolved exceptions. Accepted history remains available even after a later draft.
+Unsaved visible edits must be saved before review/acceptance. Historical revisions open through the
+revision control; edits require the latest family version. Stale edits and acceptance return conflicts.
+
+The review signature covers section content/layout/overrides and effective styles, pinned context and
+direction, page title/description/unresolved content and section order. A local image replacement affects
+only its section; global changes affect sections whose effective style changes. Overrides preserve their
+explicit values. Context/direction or order changes invalidate all section reviews. A context revision
+requires an explicit new current-brief direction and a draft save/rebase. Composition geometry never
+carries a region selection/mask into a different image: it can place only a completed exact image artifact.
+
+Placed images must be owned PNG/JPEG/WebP result artifacts in the section or landing-page scope, with
+pinned version, matching checksum/dimensions and alt text or an explicit accessibility exception. Private
+reference originals cannot be placed/exported. No later job or accepted-image pointer is consulted.
+Locked direction palettes remain enforced across effective global and override colors; changing a lock
+requires an explicit context/direction decision. Other direction locks remain pinned and inspectable.
+Local editable text does not rewrite the direction or grant brand approval.
+
+`Download accepted handoff` returns a deterministic bounded ustar archive (40 MiB maximum) containing
+manifest.json, index.html, RECONSTRUCT.md and only the deliberately placed original assets. The manifest
+pins accepted revision, project/direction/style/content/layout/overrides, review and acceptance provenance,
+asset inventory and unresolved exceptions. Design context origins are retained; reference/comparison
+bookkeeping, full stores, credentials, provider records and source transcripts are excluded. Generated
+relative checksum-based paths are the only archive asset paths. Text is escaped, links and style values
+validated, and preview/export have no scripts. The same pure renderer generates both previews. Export
+can target an explicitly accepted historical revision without consulting newer mutable selections.
+Reopen/restore preserves the package bytes; an archive is a handoff, not a deployment.
+
+HTTP: POST `composition/start`, `save`, `review`, `compare`, `accept` under `/api/v1/` use the existing
+token/origin/project envelope. GET `composition/preview` and `composition/export` require project/id/version.
+No new database schema, public task queue, provider, permissions integration or external write is added.
+
+Locked intent remains an explicit text block and all locked required-content strings must remain
+visible in text/list blocks. Palette colors must come from the pinned palette. Local text can be
+extended and reordered, but removing these required decisions is rejected before a version is saved.

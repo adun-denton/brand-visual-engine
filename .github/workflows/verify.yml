@@ -29,7 +29,44 @@ jobs:
       - run: git diff --check
       - run: npx playwright install --with-deps chromium
         if: runner.os == 'Linux'
+      - run: npx playwright install chromium
+        if: runner.os == 'Windows'
       - run: npm run test:browser
-        if: runner.os == 'Linux'
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-browser-evidence
+      - run: npm run test:browser:providers
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-provider-browser-evidence
+      - run: npm run test:browser:regions
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-region-browser-evidence
+      - run: npm run test:browser:composition
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-composition-browser-evidence
+      - run: npm run test:browser:readiness
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-readiness-browser-evidence
+          BVE_CANDIDATE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      - run: npm run test:browser:ai-assets
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-ai-assets-browser-evidence
+      - run: npm run test:browser:pages
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-pages-browser-evidence
+      - run: npm run test:browser:review-repairs
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-review-repairs-browser-evidence
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: offline-browser-evidence-${{ matrix.os }}
+          path: |
+            ${{ runner.temp }}/bve-browser-evidence
+            ${{ runner.temp }}/bve-provider-browser-evidence
+            ${{ runner.temp }}/bve-region-browser-evidence
+            ${{ runner.temp }}/bve-composition-browser-evidence
+            ${{ runner.temp }}/bve-readiness-browser-evidence
+            ${{ runner.temp }}/bve-ai-assets-browser-evidence
+            ${{ runner.temp }}/bve-pages-browser-evidence
+            ${{ runner.temp }}/bve-review-repairs-browser-evidence
+          if-no-files-found: error

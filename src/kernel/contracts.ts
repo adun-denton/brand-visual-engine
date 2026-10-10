@@ -6,7 +6,8 @@ export interface Placeholder {
   mayProceed: string[]; blocks: string[]; prohibitedAssumptions: string[]; resolutionRoutes: string[];
 }
 export type PacketType = 'visual-os' | 'module-project' | 'design-artifact' | 'iteration-bundle'
-  | 'bundle-template' | 'capability-registry' | 'artifact-metadata' | 'execution-record';
+  | 'bundle-template' | 'capability-registry' | 'artifact-metadata' | 'execution-record'
+  | 'media-asset' | 'work-record' | 'website-assembly';
 export interface NodePacket<T> {
   schemaVersion: 1; type: PacketType; id: string; version: number; projectId: string | null;
   contextRefs: VersionRef[]; dependencies: VersionRef[]; assets: { id: string; checksum: string }[];
@@ -43,7 +44,7 @@ export interface CapabilityRequest { capabilityId: string; inputType: string; ou
 export interface IterationBundle {
   projectRef: VersionRef; baseState: VersionRef | null; scope: string;
   inherited: Record<string, Value>; locked: Record<string, Value>; exploring: Dimension[];
-  placeholders: Placeholder[]; variationPlan: { strategy: 'coherent-grid'; amplitude: number };
+  placeholders: Placeholder[]; variationPlan: { strategy: 'coherent-grid' | 'ai-authored'; amplitude: number };
   candidateCount: number; candidates: VersionRef[]; selection: VersionRef | null;
   status: 'draft' | 'awaiting-capability' | 'candidates-ready' | 'selected';
   capabilities: CapabilityRequest[]; executionRefs: VersionRef[];
