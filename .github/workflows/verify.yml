@@ -56,6 +56,10 @@ jobs:
       - run: npm run test:browser:review-repairs
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-review-repairs-browser-evidence
+      - run: npm run test:browser:visual
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-visual-browser-evidence
+          BVE_CANDIDATE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
@@ -69,4 +73,5 @@ jobs:
             ${{ runner.temp }}/bve-ai-assets-browser-evidence
             ${{ runner.temp }}/bve-pages-browser-evidence
             ${{ runner.temp }}/bve-review-repairs-browser-evidence
+            ${{ runner.temp }}/bve-visual-browser-evidence
           if-no-files-found: error

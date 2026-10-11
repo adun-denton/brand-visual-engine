@@ -151,6 +151,7 @@ export class Exploration {
     permission: string,
     origin: RasterConcept["origin"] = "imported",
     previous: VersionRef | null = null,
+    expectedProject?: VersionRef,
   ): Promise<Work<RasterConcept>> {
     this.current(projectId, unit, "page-work-unit");
     choice(origin, ["synthetic", "imported", "semantic-screenshot"]);
@@ -170,6 +171,7 @@ export class Exploration {
     )
       throw new InputError("Candidate revision belongs to another work unit");
     const image = await decode(bytes);
+    this.w.project(projectId, expectedProject);
     this.current(projectId, unit, "page-work-unit");
     if (old) this.current(projectId, previous!, "raster-concept");
     string(permission);
@@ -267,7 +269,10 @@ export class Exploration {
     this.w.kernel.put(next);
     return next;
   }
-  freeze(projectId: string, input: unknown): Work<Specification> {
+  private specificationPacket(
+    projectId: string,
+    input: unknown,
+  ): Work<Specification> {
     const s = parseSpecification(input);
     this.w.project(projectId, s.project);
     this.current(projectId, s.workUnit, "page-work-unit");
@@ -291,8 +296,22 @@ export class Exploration {
     deps.push(...s.resources.map((r) => r.media));
     if (s.brand.enabled) deps.push(s.brand.source);
     const q = this.make(projectId, "raster-specification", s, deps);
+    return q;
+  }
+  freeze(projectId: string, input: unknown): Work<Specification> {
+    const q = this.specificationPacket(projectId, input);
     this.w.kernel.put(q);
     return q;
+  }
+  /** One transaction: a rejected preparation never leaves a frozen orphan specification. */
+  prepareOperation(
+    projectId: string,
+    input: unknown,
+  ): { specification: Work<Specification>; batch: Work<Batch> } {
+    const q = this.specificationPacket(projectId, input);
+    const b = this.batchPacket(projectId, q, null);
+    this.w.kernel.putMany([q, b]);
+    return { specification: q, batch: b };
   }
   metrics(
     projectId: string,
@@ -331,9 +350,18 @@ export class Exploration {
   ): Work<Batch> {
     const q = this.own<Specification>(projectId, spec, "raster-specification");
     if (retryOf) this.own(projectId, retryOf.batch, "raster-batch");
+    const b = this.batchPacket(projectId, q, retryOf);
+    this.w.kernel.put(b);
+    return b;
+  }
+  private batchPacket(
+    projectId: string,
+    q: Work<Specification>,
+    retryOf: Batch["retryOf"],
+  ): Work<Batch> {
     const s: Batch = {
       version: 1,
-      spec,
+      spec: reference(q),
       specHash: q.integrity,
       workUnit: q.payload.state.workUnit,
       attempts: Array.from({ length: q.payload.state.count }, (_, i) => ({
@@ -346,9 +374,7 @@ export class Exploration {
       executionAuthorization: null,
       harness: "synthetic-registration",
     };
-    const b = this.make(projectId, "raster-batch", s, this.batchDeps(s));
-    this.w.kernel.put(b);
-    return b;
+    return this.make(projectId, "raster-batch", s, this.batchDeps(s));
   }
   private updateBatch(b: Work<Batch>, s: Batch): Work<Batch> {
     const p = revise(
