@@ -10,6 +10,7 @@ import {
   toml,
 } from "../src/service/chat-process.ts";
 import { CHAT_PROTOCOL } from "../src/service/chat-contracts.ts";
+import { bveMcpConfig } from '../src/service/chat-mcp-config.ts';
 const binary = process.env["BVE_CODEX_BINARY"];
 if (!binary) throw Error("Supply the exact installed binary");
 const version = execFileSync(binary, ["--version"], {
@@ -62,17 +63,7 @@ const config = {
     },
   },
   features: { ...restrictedConfig.features, api_key_model_discovery: false },
-  mcp_servers: {
-    bve: {
-      command: process.execPath,
-      args: [resolve(import.meta.dirname, "chat-mcp.ts")],
-      env: {
-        BVE_CHAT_ORIGIN: "http://127.0.0.1:" + address.port,
-        BVE_CHAT_GRANT: "synthetic-offline-probe",
-      },
-      required: true,
-    },
-  },
+  mcp_servers: bveMcpConfig('http://127.0.0.1:' + address.port, 'synthetic-offline-probe'),
 };
 const args = ["app-server", "--listen", "stdio://"];
 for (const [k, v] of Object.entries(config)) args.push("-c", k + "=" + toml(v));

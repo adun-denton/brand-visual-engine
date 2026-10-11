@@ -22,7 +22,8 @@
     "test:browser:pages": "node scripts/pages-browser-check.ts",
     "test:browser:review-repairs": "node scripts/review-repairs-browser-check.ts",
     "test:browser:chat": "node scripts/chat-browser-check.ts",
-    "test:chat:protocol": "node scripts/chat-protocol-preflight.ts"
+    "test:chat:protocol": "node scripts/chat-protocol-preflight.ts",
+    "test:chat:permissions": "node scripts/chat-permission-preflight.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.58.2",

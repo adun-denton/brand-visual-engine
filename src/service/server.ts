@@ -53,6 +53,7 @@ export async function startApp(
   const grants = new Map<string,{pid:string;tid:string}>();
   const account = new AccountChatDriver(root,auth,()=>origin,(pid,tid)=>{const token=randomBytes(32).toString('hex');grants.set(token,{pid,tid});return {token,release:()=>{grants.delete(token);}};},async(pid,refs)=>Promise.all(refs.map(async r=>{const m=await pages.mediaBytes(pid,r);return {type:'image' as const,url:'data:image/'+m.info.format+';base64,'+m.bytes.toString('base64')};})));
   const chat = new Chat(root,workspace,pages,workspaceOptions?.chatDriver ?? (process.env['BVE_CHAT_POLICY_FILE'] ? account : undefined),workspaceOptions?.chatImageDriver);
+  chat.accountStatus = () => auth.status();
   const http = createDrainingServer(async (req, res) => {
     if (closing) {
       res.writeHead(503, { 'Content-Type': 'text/plain; charset=utf-8', Connection: 'close' });
@@ -102,9 +103,10 @@ export async function startApp(
         throw new InputError('Local host/origin required', 403);
       if (req.method === 'GET') {
         if (path === '/auth/callback') {
-          try { await auth.callback(url.searchParams); res.writeHead(200,{'Content-Type':'text/plain; charset=utf-8'});res.end('ChatGPT connected. Return to the BVE tab.'); }
+          try { await auth.callback(url.searchParams); res.writeHead(200,{'Content-Type':'text/plain; charset=utf-8'});res.end('ChatGPT sign-in saved. Return to the BVE tab.'); }
           catch {res.writeHead(400,{'Content-Type':'text/plain; charset=utf-8'});res.end('Sign-in could not complete. Return to BVE; saved drafts are retained.');} return;
         }
+        if(path==='/api/v1/chat/status'){json(200,{connection:chat.connection()},false);return;}
         if(path==='/api/v1/chat/state'){json(200,chat.state(id(url.searchParams.get('project'))),false);return;}
         if (path === '/api/v1/session') {
           json(200, { token, ...workspace.state() });

@@ -45,6 +45,7 @@ const ptr = (p: { id: string; version: number }): VersionRef => ({
   freshness: "pinned",
 });
 let state: State | undefined,
+  connection = 'Checking sign-in…',
   owner: string | undefined,
   ctx: Context,
   refreshing = false;
@@ -123,7 +124,7 @@ export function chatCanvas() {
                 )}</select></label></details><button type="button" id="chat-select-whole">Select whole image</button><span id="chat-mask-receipt" role="status">${target ? esc(JSON.stringify(target.bounds)) : "No region selected"}</span>`
             : ""
         }</div>`
-      : `<div class="chat-empty-canvas">Your page alternatives will appear here.<p>No connected engine means no generated candidates.</p></div>`
+      : `<div class="chat-empty-canvas">Your page alternatives will appear here.<p>Candidates appear after a successful design reply.</p></div>`
   }</section>`;
 }
 export function mountChat(c: Context) {
@@ -148,20 +149,23 @@ export function mountChat(c: Context) {
   }
   draw(!switched);
   bindCanvas();
-  if (pid) void poll();
+  void poll();
 }
 async function poll() {
-  if (refreshing || !owner) return;
+  if (refreshing) return;
   const { pid, context, current } = actionContext();
-  if (!pid) return;
   refreshing = true;
   try {
     const response = await fetch(
-      "/api/v1/chat/state?project=" + encodeURIComponent(pid),
+      pid ? "/api/v1/chat/state?project=" + encodeURIComponent(pid) : '/api/v1/chat/status',
     );
     if (!response.ok) throw Error("Conversation read unavailable");
     const next = (await response.json()) as State;
     if (!current()) return;
+    if (!pid) {
+      if (connection !== next.connection) { connection = next.connection; draw(); }
+      return;
+    }
     const changed = JSON.stringify(next) !== JSON.stringify(state);
     const canvasChanged =
       next.activePage?.integrity !== state?.activePage?.integrity;
@@ -194,7 +198,7 @@ function draw(preserveDraft = true) {
   const turns = state?.session.turns ?? [];
   const running = turns.at(-1)?.status === "running";
   const brief = ctx.project?.payload.localContext;
-  root.innerHTML = `<aside class="conversation panel" aria-label="Project conversation"><div class="chat-heading"><h2>Conversation</h2><span class="badge" id="chat-connection">${esc(state?.connection ?? "disconnected")}</span></div><p class="hint">${ctx.project ? "This project conversation follows you across views." : "Tell me what you want to make."}</p><button type="button" id="chat-connect">Continue with ChatGPT</button>${brief ? `<details class="chat-summary"><summary>Current brief and choices</summary><dl>${["intent", "audience", "offer", "response", "content", "unresolved"].map((k) => `<dt>${esc(k)}</dt><dd>${esc(JSON.stringify(brief[k]?.override ?? "Unknown"))}</dd>`).join("")}</dl><button type="button" id="chat-correct">Correct in conversation</button></details>` : ""}<div class="chat-transcript" role="log" aria-live="polite">${turns.map((t) => `<article class="chat-user"><strong>You</strong><p>${esc(t.text)}</p></article><article class="chat-reply"><strong>Assistant · ${esc(t.status)}</strong><p>${esc(t.reply)}</p><small>${esc(t.detail)}</small></article>`).join("")}</div><div class="chat-job-cards">${state?.jobs.map((j) => `<article class="chat-image-job"><strong>${j.status === "unavailable" ? "image engine unavailable" : "Returned image candidate"}</strong><p>${esc(j.instruction)}</p><small>${esc(j.preset)} · original ${j.dimensions.width} × ${j.dimensions.height} · ${esc(j.target.slot)}</small><button type="button" data-chat-return="${esc(j.id)}">Attach returned image</button>${j.candidate ? `<img alt="Returned image candidate" src="${url("page/media", ctx.project!.id, j.candidate)}"><button type="button" data-chat-permit="${esc(j.id)}">I have permission to use this image</button><button type="button" data-chat-place="${esc(j.id)}">Choose image for preview</button>` : ""}</article>`).join("") ?? ""}</div><form id="chat-send"><label for="chat-message">Describe or refine your design</label><textarea id="chat-message" rows="3" maxlength="12000" placeholder="Make a landing page for a bicycle repair shop, friendly and practical" required>${esc(draft)}</textarea><div class="chat-send-actions"><button class="primary" type="submit" ${running ? "disabled" : ""}>Send</button><button type="button" id="chat-stop" ${running ? "" : "disabled"}>Stop</button><label class="chat-attach-label">Attach to conversation<input id="chat-attach" type="file" accept="image/png,image/jpeg,image/webp"></label></div></form><div class="chat-attached">${included.map((r) => `<button type="button" data-chat-remove="${esc(r.id)}">Attached reference · remove ${esc(r.id.slice(-6))}</button>`).join("")}</div></aside>`;
+  root.innerHTML = `<aside class="conversation panel" aria-label="Project conversation"><div class="chat-heading"><h2>Conversation</h2><span class="badge" id="chat-connection">${esc(state?.connection ?? connection)}</span></div><p class="hint">${ctx.project ? "This project conversation follows you across views." : "Tell me what you want to make."}</p><button type="button" id="chat-connect">Continue with ChatGPT</button>${brief ? `<details class="chat-summary"><summary>Current brief and choices</summary><dl>${["intent", "audience", "offer", "response", "content", "unresolved"].map((k) => `<dt>${esc(k)}</dt><dd>${esc(JSON.stringify(brief[k]?.override ?? "Unknown"))}</dd>`).join("")}</dl><button type="button" id="chat-correct">Correct in conversation</button></details>` : ""}<div class="chat-transcript" role="log" aria-live="polite">${turns.map((t) => `<article class="chat-user"><strong>You</strong><p>${esc(t.text)}</p></article><article class="chat-reply"><strong>Assistant · ${esc(t.status)}</strong><p>${esc(t.reply)}</p><small>${esc(t.detail)}</small></article>`).join("")}</div><div class="chat-job-cards">${state?.jobs.map((j) => `<article class="chat-image-job"><strong>${j.status === "unavailable" ? "image engine unavailable" : "Returned image candidate"}</strong><p>${esc(j.instruction)}</p><small>${esc(j.preset)} · original ${j.dimensions.width} × ${j.dimensions.height} · ${esc(j.target.slot)}</small><button type="button" data-chat-return="${esc(j.id)}">Attach returned image</button>${j.candidate ? `<img alt="Returned image candidate" src="${url("page/media", ctx.project!.id, j.candidate)}"><button type="button" data-chat-permit="${esc(j.id)}">I have permission to use this image</button><button type="button" data-chat-place="${esc(j.id)}">Choose image for preview</button>` : ""}</article>`).join("") ?? ""}</div><form id="chat-send"><label for="chat-message">Describe or refine your design</label><textarea id="chat-message" rows="3" maxlength="12000" placeholder="Make a landing page for a bicycle repair shop, friendly and practical" required>${esc(draft)}</textarea><div class="chat-send-actions"><button class="primary" type="submit" ${running ? "disabled" : ""}>Send</button><button type="button" id="chat-stop" ${running ? "" : "disabled"}>Stop</button><label class="chat-attach-label">Attach to conversation<input id="chat-attach" type="file" accept="image/png,image/jpeg,image/webp"></label></div></form><div class="chat-attached">${included.map((r) => `<button type="button" data-chat-remove="${esc(r.id)}">Attached reference · remove ${esc(r.id.slice(-6))}</button>`).join("")}</div></aside>`;
   if (focused)
     root.querySelector<HTMLTextAreaElement>("#chat-message")?.focus();
   const run = async (f: () => Promise<void>) => {

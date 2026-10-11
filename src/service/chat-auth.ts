@@ -86,6 +86,8 @@ export class ChatAuth {
   status() {
     return {
       connected: !!this.credentials,
+      credentialState: !this.credentials ? 'missing' as const
+        : this.credentials.expiresAt <= Date.now() ? 'expired' as const : 'stored' as const,
       route: "ChatGPT plan · own OAuth credentials",
       liveVerified: false,
     };

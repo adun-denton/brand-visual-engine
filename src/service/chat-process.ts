@@ -8,6 +8,7 @@ import { CHAT_PROTOCOL } from "./chat-contracts.ts";
 import type { ChatDriver } from "./chat-contracts.ts";
 import type { ChatAuth } from "./chat-auth.ts";
 import { InputError } from "./validation.ts";
+import { bveMcpConfig } from './chat-mcp-config.ts';
 // Version-isolated environments:[] is experimental in this exact generated protocol.
 export const restrictedConfig = {
   features: {
@@ -236,14 +237,7 @@ export class AccountChatDriver implements ChatDriver {
             stream_max_retries: 0,
           },
         },
-        mcp_servers: {
-          bve: {
-            command: process.execPath,
-            args: [resolve(import.meta.dirname, "../../scripts/chat-mcp.ts")],
-            env: { BVE_CHAT_ORIGIN: this.origin(), BVE_CHAT_GRANT: grant.token },
-            required: true,
-          },
-        },
+        mcp_servers: bveMcpConfig(this.origin(), grant.token),
       };
       const args = ["app-server", "--listen", "stdio://"];
       for (const [k, v] of Object.entries(config))

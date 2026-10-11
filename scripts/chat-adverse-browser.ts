@@ -47,7 +47,7 @@ export async function chatAdverseBrowser(browser: Browser, evidence: string) {
       expect((await response).status()).toBe(200);
       expect(calls).toBe(1);
       expect(callbacks[0]!.site).toBe("cross-site");
-      await expect(page.locator("body")).toContainText("ChatGPT connected");
+    await expect(page.locator("body")).toContainText("ChatGPT sign-in saved");
       await page.screenshot({ path: join(evidence, "foreign-callback.png") });
       await page.goto(`http://localhost:${foreignPort}`);
       const wrong = page.waitForResponse((r) => r.url().includes("/auth/callback"));

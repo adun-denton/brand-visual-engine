@@ -27,6 +27,10 @@ jobs:
       - run: node scripts/serialize-design-fixtures.ts
       - run: git diff --exit-code -- fixtures/design-os.json
       - run: git diff --check
+      - run: npm install --ignore-scripts --no-save --package-lock=false @openai/codex@0.162.1
+      - run: npm run test:chat:permissions
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-permission-evidence
       - run: npx playwright install --with-deps chromium
         if: runner.os == 'Linux'
       - run: npx playwright install chromium
@@ -73,4 +77,5 @@ jobs:
             ${{ runner.temp }}/bve-pages-browser-evidence
             ${{ runner.temp }}/bve-review-repairs-browser-evidence
             ${{ runner.temp }}/bve-chat-browser-evidence
+            ${{ runner.temp }}/bve-permission-evidence
           if-no-files-found: error

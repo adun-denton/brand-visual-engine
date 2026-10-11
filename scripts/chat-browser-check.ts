@@ -58,7 +58,25 @@ const screen = async (name: string) => {
   });
 };
 try {
+  // Initial workspace has no project to poll. Stored sign-in is local evidence,
+  // distinct from account health and from a configured/synthetic driver.
+  const originalDriver = app.chat.driver, originalStatus = app.chat.accountStatus;
+  app.chat.driver = null;
+  let credentialState: 'missing' | 'stored' | 'expired' = 'missing';
+  app.chat.accountStatus = () => ({credentialState});
   await page.goto(app.origin);
+  await expect(page.locator('#chat-connection')).toHaveText('Sign-in required');
+  credentialState = 'stored';
+  await expect(page.locator('#chat-connection')).toHaveText('Sign-in saved · connection unverified');
+  await screen('sign-in-saved-1440');
+  await page.setViewportSize({width: 390, height: 844});
+  await screen('sign-in-saved-390');
+  credentialState = 'expired';
+  await expect(page.locator('#chat-connection')).toHaveText('Sign-in saved · renewal required');
+  app.chat.driver = originalDriver; app.chat.accountStatus = originalStatus;
+  await page.setViewportSize({width: 1440, height: 1000});
+  await page.goto(app.origin);
+  await expect(page.locator('#chat-connection')).toHaveText('test fixture · no GPT call');
   await expect(page.locator("#create")).not.toBeVisible();
   await send(
     "Make a landing page for a bicycle repair shop, friendly and practical",

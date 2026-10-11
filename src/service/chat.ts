@@ -38,6 +38,7 @@ export class Chat {
   pages: Pages;
   driver: ChatDriver | null;
   imageDriver: ChatImageDriver | null;
+  accountStatus: (() => { credentialState: 'missing' | 'stored' | 'expired' }) | null = null;
   controllers = new Map<string, AbortController>();
   pending = new Set<Promise<void>>();
   queues = new Map<string, Promise<unknown>>();
@@ -66,11 +67,7 @@ export class Chat {
           )
         : [],
       jobs: this.store.jobs(pid),
-      connection: this.driver
-        ? this.driver.kind === "test-fixture"
-          ? "test fixture · no GPT call"
-          : "account adapter"
-        : "disconnected",
+      connection: this.connection(),
       capabilities: {
         images: this.imageDriver
           ? "injected test image transport"
@@ -78,6 +75,13 @@ export class Chat {
         paid: false,
       },
     };
+  }
+  connection() {
+    if (this.driver?.kind === 'test-fixture') return 'test fixture · no GPT call';
+    const status = this.accountStatus?.().credentialState;
+    if (status === 'stored') return 'Sign-in saved · connection unverified';
+    if (status === 'expired') return 'Sign-in saved · renewal required';
+    return 'Sign-in required';
   }
   private turn(pid: string, tid: string) {
     const t = this.store.get(pid).turns.find((t) => t.id === tid);
@@ -206,7 +210,7 @@ export class Chat {
       reply: "",
       detail: this.driver
         ? ""
-        : "ChatGPT connection is unavailable. Your conversation and draft are saved; no candidates were generated.",
+        : "Sending is unavailable in this session. Your conversation and draft are saved; no candidates were generated.",
       threadId: s.threadId,
       protocolTurnId: null,
       requests: [],
@@ -288,7 +292,9 @@ export class Chat {
         }
         now.detail =
           now.status === "completed"
-            ? "Protocol completed. Candidates remain unaccepted."
+            ? now.candidates.length
+              ? `Protocol completed. ${now.candidates.length} design candidates are available for review; no automatic acceptance.`
+              : 'Protocol completed. No design candidates were created.'
             : "Turn did not complete; receipts retained.";
         this.persist(now);
       }
