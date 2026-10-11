@@ -54,6 +54,11 @@ All commands below exited 0. npm emitted its inherited unknown `http-proxy` conf
 
 Source evidence is the named tests below and unchanged legacy tests. CI status must be assessed at
 exact PR head; this document records local Linux results, not an unobserved Windows result.
+Initial CI71 Windows ran all behavior assertions but failed three after-hooks with EPERM because
+new reopened synthetic stores outlived temporary-directory deletion. The test helper now tracks and
+closes every reopened store before deleting any root. This test-only repair changes no contracts or
+production code. Final-head CI results supersede that failed run and must be checked separately.
+
 Local browser workflows were not run: no production UI or HTTP surface was changed. The existing CI
 workflow retains its ordinary Windows/Linux regression/browser behavior without modifications.
 

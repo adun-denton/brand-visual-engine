@@ -30,7 +30,12 @@ import type {
 } from "../src/kernel/contracts.ts";
 function setup(t: test.TestContext) {
   const root = mkdtempSync(join(tmpdir(), "bve-v01-"));
-  let w = new Workspace(root);
+  const w = new Workspace(root);
+  const stores = [w];
+  const track = (store: Workspace): Workspace => {
+    stores.push(store);
+    return store;
+  };
   const p = w.create({
     title: "Synthetic raster trial",
     mode: "freeroam",
@@ -39,12 +44,14 @@ function setup(t: test.TestContext) {
   }).project!;
   const e = new Exploration(w);
   t.after(() => {
-    try {
-      w.close();
-    } catch {}
+    for (const store of stores.reverse()) {
+      try {
+        store.close();
+      } catch {} // Explicitly closed snapshots need no second close.
+    }
     rmSync(root, { recursive: true, force: true });
   });
-  return { root, w, p, e };
+  return { root, w, p, e, track };
 }
 const image = async (
   color = "#256789",
@@ -62,7 +69,7 @@ function unit(s: ReturnType<typeof setup>, pageType = "homepage") {
   });
 }
 function spec(
-  s: ReturnType<typeof setup>,
+  s: Pick<ReturnType<typeof setup>, "w" | "p">,
   u: VersionRef,
   selection: NodePacket<DesignArtifact<Selections>> | null = null,
   count = 3,
@@ -218,8 +225,7 @@ test("two independent page work units, multi-selection notes, resize, reopen and
     1,
   );
   s.w.close();
-  const reopened = new Workspace(s.root);
-  t.after(() => reopened.close());
+  const reopened = s.track(new Workspace(s.root));
   const e = new Exploration(reopened);
   assert.equal(
     canonical(e.read(s.p.id, reference(sel), "raster-selections")),
@@ -819,8 +825,7 @@ test("legacy accepted page packets, bytes, hashes, pointers and standalone expor
   const restore = s.root + "-restore";
   t.after(() => rmSync(restore, { recursive: true, force: true }));
   cpSync(s.root, restore, { recursive: true });
-  const w = new Workspace(restore);
-  t.after(() => w.close());
+  const w = s.track(new Workspace(restore));
   assert.deepEqual(w.assets.read(oldImage.id), oldBytes);
   assert.equal(
     canonical(w.kernel.get(reference(oldMedia))),
@@ -963,8 +968,7 @@ test("running restart requires explicit uncertainty recovery; no replay and late
     b = s.e.prepareBatch(s.p.id, reference(q)),
     running = s.e.markRunning(s.p.id, reference(b), 1);
   s.w.close();
-  const w = new Workspace(s.root);
-  t.after(() => w.close());
+  const w = s.track(new Workspace(s.root));
   const e = new Exploration(w),
     before = canonical(w.kernel.latestPackets());
   assert.equal(
@@ -1108,7 +1112,7 @@ test("closed v1 legacy SQLite and RGB media remain byte-identical after additive
     "Synthetic rights",
   );
   const q = e.freeze(p.id, {
-      ...spec({ root, w, p, e }, reference(u)),
+      ...spec({ w, p }, reference(u)),
       count: 1,
     }),
     b = e.prepareBatch(p.id, reference(q));
