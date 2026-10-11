@@ -28,6 +28,17 @@ export function explorationGate(
 ): void {
   const a = p.payload as DesignArtifact<unknown>,
     kind = a.kind as ExplorationKind;
+  const previousKind = (
+    previous?.payload as DesignArtifact<unknown> | undefined
+  )?.kind;
+  if (
+    previous &&
+    (Object.hasOwn(explorationRoles, kind) ||
+      (previousKind !== undefined &&
+        Object.hasOwn(explorationRoles, previousKind))) &&
+    previousKind !== kind
+  )
+    throw new Error("Exploration semantic kind is immutable across lineage");
   if (!Object.hasOwn(explorationRoles, kind)) return;
   if (
     p.type !== explorationRoles[kind] ||

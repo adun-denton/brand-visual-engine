@@ -459,9 +459,17 @@ export class Exploration {
     const closed = ["cancelled", "uncertain"].includes(a.status);
     if (closed) actual = "uncertain";
     if (outcome === "succeeded") {
+      let image: Awaited<ReturnType<typeof decode>> | null = null;
+      // Only submission validation can consume a slot as invalid output.
       try {
         if (!bytes) throw new InputError("Missing synthetic raster");
-        const image = await decode(bytes);
+        image = await decode(bytes);
+      } catch (error) {
+        if (!(error instanceof InputError)) throw error;
+        actual = closed ? "uncertain" : "invalid";
+      }
+      // Storage/integrity failures propagate without committing attempt records.
+      if (image) {
         const m = packet({
           type: "media-asset",
           id: "page-media-" + randomUUID(),
@@ -497,7 +505,7 @@ export class Exploration {
             [reference(m)],
             [{ id: image.id, checksum: image.checksum }],
           );
-        this.w.assets.save(bytes, image);
+        this.w.assets.save(bytes!, image);
         if (closed) writes.push(m);
         else
           writes.push(
@@ -510,12 +518,6 @@ export class Exploration {
               derivation,
             ),
           );
-      } catch (error) {
-        if (!(error instanceof InputError)) throw error;
-        actual = closed ? "uncertain" : "invalid";
-        evidence = null;
-        result = null;
-        writes.length = 0;
       }
     }
     // A concurrent identical submission returns the already committed receipt.

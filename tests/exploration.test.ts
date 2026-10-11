@@ -14,6 +14,7 @@ import { Workspace } from "../src/service/workspace.ts";
 import { Exploration } from "../src/service/exploration.ts";
 import { Pages } from "../src/service/pages.ts";
 import { reference, packet, canonical, revise } from "../src/kernel/packets.ts";
+import { InputError } from "../src/service/validation.ts";
 import { checksum } from "../src/kernel/raster.ts";
 import {
   ExplorationConflict,
@@ -711,6 +712,12 @@ test("Level2 requested/inferred/observed remain version-bound and unsupported ob
       }),
     /false observed/,
   );
+  const newer = s.e.metrics(s.p.id, { ...input, values: [{ ...base, status: "requested", value: 70 }] }, reference(m));
+  assert.equal(newer.version, 2);
+  const reopened = s.track(new Workspace(s.root));
+  const e = new Exploration(reopened);
+  assert.equal(e.read(s.p.id, reference(m), "raster-metrics").integrity, m.integrity);
+  assert.equal(e.read(s.p.id, reference(newer), "raster-metrics").integrity, newer.integrity);
   assert.deepEqual(
     (await s.e.raster(s.p.id, reference(c))).bytes,
     await image(),
@@ -939,19 +946,15 @@ test("concurrent duplicates collect one receipt, result and event set; transacti
   assert.equal(canonical(s.w.kernel.ledger(s.p.id)), events);
   s.w.kernel.putMany = original;
   const save = s.w.assets.save.bind(s.w.assets);
-  s.w.assets.save = () => {
-    throw new Error("Injected storage failure");
-  };
-  await assert.rejects(
-    s.e.registerSynthetic(
-      s.p.id,
-      envelope(retry, 1, "storage"),
-      await image("#667788"),
-    ),
-    /storage failure/,
-  );
-  assert.equal(canonical(s.w.kernel.latestPackets()), before);
-  assert.equal(canonical(s.w.kernel.ledger(s.p.id)), events);
+  for (const fault of [new Error("Injected storage failure"), new InputError("Injected storage failure")]) {
+    s.w.assets.save = () => { throw fault; };
+    await assert.rejects(
+      s.e.registerSynthetic(s.p.id, envelope(retry, 1, "storage"), await image("#667788")),
+      (error) => error === fault,
+    );
+    assert.equal(canonical(s.w.kernel.latestPackets()), before);
+    assert.equal(canonical(s.w.kernel.ledger(s.p.id)), events);
+  }
   s.w.assets.save = save;
   const receipt = await s.e.registerSynthetic(
     s.p.id,
@@ -1210,4 +1213,61 @@ test("whole images retain storage bounds, regions retain 4 MP bound, and brand r
   assert.deepEqual(stored.constraints, input.constraints);
   assert.deepEqual((await s.e.raster(s.p.id, reference(c))).bytes, bytes);
   assert.equal(Object.hasOwn(c.payload.state, "requested-font"), false);
+});
+
+
+test("storage corruption leaves packets, events and slot unchanged until explicit fixture repair", async (t) => {
+  const s = setup(t), u = unit(s), bytes = await image();
+  const c = await s.e.importCandidate(s.p.id, reference(u), bytes, "rights");
+  const q = s.e.freeze(s.p.id, spec(s, reference(u), null, 1));
+  const b = s.e.prepareBatch(s.p.id, reference(q));
+  const input = envelope(b, 1, "storage-integrity");
+  const path = join(s.w.assets.root, c.payload.state.image.id);
+  const damaged = Buffer.from("Synthetic storage corruption");
+  writeFileSync(path, damaged);
+  const packets = canonical(s.w.kernel.latestPackets());
+  const events = canonical(s.w.kernel.ledger(s.p.id));
+  await assert.rejects(s.e.registerSynthetic(s.p.id, input, bytes), /checksum/i);
+  assert.equal(canonical(s.w.kernel.latestPackets()), packets);
+  assert.equal(canonical(s.w.kernel.ledger(s.p.id)), events);
+  assert.deepEqual(readFileSync(path), damaged);
+  assert.equal(latestBatch(s, b).payload.state.attempts[0]!.status, "pending");
+  // Explicit restoration is restricted to this disposable synthetic fixture.
+  writeFileSync(path, bytes);
+  const receipt = await s.e.registerSynthetic(s.p.id, input, bytes);
+  assert.equal(receipt.payload.state.outcome, "succeeded");
+  const committed = canonical(s.w.kernel.ledger(s.p.id));
+  assert.equal((await s.e.registerSynthetic(s.p.id, input, bytes)).id, receipt.id);
+  assert.equal(canonical(s.w.kernel.ledger(s.p.id)), committed);
+});
+
+test("V01 semantic identities cannot revise between kinds or cross legacy boundaries", (t) => {
+  const s = setup(t), u = unit(s);
+  const q = s.e.freeze(s.p.id, spec(s, reference(u), null, 1));
+  const sel = s.e.selections(s.p.id, { version: 1, workUnit: reference(u), entries: [] });
+  const legacy = packet<DesignArtifact<unknown>>({ id: "legacy-semantic-fixture", type: "work-record", projectId: s.p.id, payload: {
+    moduleId: "website", kind: "page-migration", scope: "fixture", lockedValues: {},
+    state: { source: reference(u), target: reference(u), sourceIntegrity: u.integrity, losses: [] },
+  }});
+  s.w.kernel.put(legacy);
+  const before = canonical(s.w.kernel.latestPackets());
+  const events = canonical(s.w.kernel.ledger(s.p.id));
+  const change = (source: NodePacket<DesignArtifact<unknown>>, payload: DesignArtifact<unknown>, dependencies: VersionRef[]) => {
+    const { integrity, ...body } = revise(source, payload, "fixture", "Forbidden semantic revision");
+    assert.throws(() => s.w.kernel.put(packet({ ...body, dependencies })), /kind|immutable|lineage/i);
+    assert.equal(canonical(s.w.kernel.latestPackets()), before);
+    assert.equal(canonical(s.w.kernel.ledger(s.p.id)), events);
+  };
+  change(q, sel.payload, [reference(u)]);
+  change(q, legacy.payload, []);
+  change(legacy, sel.payload, [reference(u)]);
+  // Same-kind mutable revisions remain supported and historical packets revalidate.
+  const newer = s.e.selections(s.p.id, sel.payload.state, reference(sel));
+  assert.equal(newer.version, 2);
+  const reopened = s.track(new Workspace(s.root));
+  const e = new Exploration(reopened);
+  assert.equal(e.read(s.p.id, reference(q), "raster-specification").integrity, q.integrity);
+  assert.equal(e.read(s.p.id, reference(sel), "raster-selections").integrity, sel.integrity);
+  assert.equal(e.read(s.p.id, reference(newer), "raster-selections").integrity, newer.integrity);
+  assert.equal(canonical(reopened.kernel.get(reference(legacy))), canonical(legacy));
 });
