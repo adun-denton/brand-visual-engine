@@ -12,7 +12,9 @@ function deferred<T>() {
   return { promise, resolve };
 }
 for (const stage of ["already", "auth", "initialize", "thread", "images", "turn-start", "running", "completed"] as const) {
-  test(`account driver cancellation boundary: ${stage}`, { timeout: 3000 }, async () => {
+  // Include cold native Windows ACL-helper startup in the fixture's setup allowance.
+  // Cancellation still has to settle while its deferred operation remains blocked.
+  test(`account driver cancellation boundary: ${stage}`, { timeout: process.platform === 'win32' ? 20000 : 3000 }, async () => {
     const controller = new AbortController(), entered = deferred<void>(), gate = deferred<void>();
     const methods: string[] = [], persisted: string[] = [];
     let reservations = 0, grants = 0, releases = 0, closed = 0, processes = 0;
