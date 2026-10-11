@@ -25,7 +25,7 @@ import type {
   Metric,
 } from "../modules/website/exploration-contracts.ts";
 import { ExplorationConflict } from "../modules/website/exploration-contracts.ts";
-import { requestControls } from "../modules/website/visual-controls.ts";
+import { requestControls, requestFields } from "../modules/website/visual-controls.ts";
 import { MAX_IMAGE_BYTES } from "./assets.ts";
 export type Work<T> = NodePacket<DesignArtifact<T>>;
 export function plainText(x: unknown, max = 4000): string {
@@ -106,7 +106,24 @@ export class VisualWorkspace {
         }),
       ).values(),
     ];
-    return { ...this.project(pid), unit: u, records, candidates };
+    // Selected closures are project-owned exact versions, not page membership.
+    const selectedSources = [...new Map(records
+      .filter((p) => (p.payload as DesignArtifact<unknown>).kind === "raster-selections")
+      .flatMap((p) => (p.payload as DesignArtifact<Selections>).state.entries)
+      .map((e) => {
+        const c = this.exploration.read<RasterConcept>(pid, e.candidate, "raster-concept");
+        return [c.id + ":" + c.version, c] as const;
+      })).values()];
+    const sourceOrigins: Record<string, string[]> = {};
+    for (const c of [...candidates, ...selectedSources]) {
+      const k = c.id + ":" + c.version;
+      sourceOrigins[k] = this.w.kernel.latestPackets()
+        .filter((p) => p.projectId === pid && (p.payload as DesignArtifact<unknown>).kind === "raster-membership")
+        .map((p) => p as Work<Membership>)
+        .filter((m) => canonical(m.payload.state.candidate) === canonical(reference(c)))
+        .map((m) => this.exploration.read<WorkUnit>(pid, m.payload.state.workUnit, "page-work-unit").payload.state.label);
+    }
+    return { ...this.project(pid), unit: u, records, candidates, selectedSources, sourceOrigins };
   }
   private order(pid: string) {
     const sequence = new Map<string, number>();
@@ -237,13 +254,15 @@ export class VisualWorkspace {
           "target",
         ]);
         const candidate = ref(e["candidate"]);
-        this.member(pid, unit, candidate);
         const c = this.exploration.read<RasterConcept>(
           pid,
           candidate,
           "raster-concept",
         );
         const intent = choice(e["intent"], ["inspiration", "include", "exact"]);
+        const preserved = old?.payload.state.entries.find(entry => entry.id === e["id"] &&
+          canonical(entry.candidate) === canonical(candidate) && canonical(entry.anchor) === canonical(e["anchor"]) &&
+          entry.intent === "exact" && entry.preservation?.target === e["target"]);
         const notes = list(e["notes"], (n) => {
           const x = record(n, ["id", "text"]);
           const text = plainText(x["text"]);
@@ -273,7 +292,7 @@ export class VisualWorkspace {
           notes,
           preservation:
             intent === "exact"
-              ? { predicate: "retained-bytes", target: e["target"] }
+              ? preserved?.preservation ?? { predicate: "retained-bytes", target: e["target"] }
               : null,
         };
       });
@@ -372,14 +391,14 @@ export class VisualWorkspace {
   ): Metric {
     const r = record(input, ["key", "value", "entryId"]);
     const key = string(r["key"], 80);
-    const control = requestControls.find(
+    const control = [...requestControls, ...requestFields].find(
       (c) => c.key === key && c.level === level,
     );
     if (!control || control.unavailable)
       throw new InputError("Request unavailable for static raster");
     const scope = r["entryId"] === null ? "page" : string(r["entryId"], 160);
     if (
-      scope !== "page" &&
+      r["entryId"] !== null &&
       !sel?.payload.state.entries.some((e) => e.id === scope)
     )
       throw new InputError("Request scope is not a selection");

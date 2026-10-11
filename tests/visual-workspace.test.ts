@@ -12,6 +12,7 @@ import {
 } from "../scripts/visual-fixture.ts";
 import { normalizedPoint, regionBetween } from "../src/web/visual-geometry.ts";
 import { requestControls } from "../src/modules/website/visual-controls.ts";
+import type { Selections, Specification } from "../src/modules/website/exploration-contracts.ts";
 async function setup(t: test.TestContext) {
   const root = mkdtempSync(join(tmpdir(), "bve-visual-test-"));
   const app = await startApp(root, 0, undefined, offlineVisualProviders);
@@ -244,7 +245,7 @@ test("selection CAS, page ownership, annotation sanitation and unsupported exact
       200,
     );
   assert.notEqual(
-    (await s.post("selections", { ...base, unit: reference(other) })).status,
+    (await s.post("selections", { ...base, previous: reference(sel), unit: reference(other) })).status,
     200,
   );
   const foreign = s.v.create({ title: "Other" });
@@ -293,6 +294,7 @@ test("requested inventory keeps six direct and 21 Tune concepts, static unavaila
     { key: "column-structure", value: 2, entryId: null },
     { key: "visual-density", value: 11, entryId: null },
     { key: "visual-density", value: 4, entryId: "missing" },
+    { key: "visual-density", value: 4, entryId: "page" },
   ])
     assert.notEqual(
       (await s.post("prepare", { ...preparation(s), requests: [request] }))
@@ -453,4 +455,74 @@ test("multiple saved selection sets require exact choice and incompatible exact 
     canonical(s.app.workspace.kernel.ledger(s.p.project.id)),
     before,
   );
+});
+
+test("same-project cross-page exact source closures edit and freeze without changing membership; invalid/foreign/corrupt sources reject", async (t) => {
+  const s = await setup(t), pid = s.p.project.id;
+  const about = s.v.exploration.createWorkUnit(pid, { version: 1, pageType: "about", label: "About reference", source: "Synthetic" });
+  const homeCandidate = await s.v.exploration.importCandidate(pid, reference(s.unit), await visualFixture(0), "Synthetic rights");
+  const aboutCandidate = await s.v.exploration.importCandidate(pid, reference(about), await visualFixture(1), "Synthetic rights");
+  const selection = s.v.exploration.selections(pid, { version: 1, workUnit: reference(s.unit), entries: [homeCandidate, aboutCandidate].map((c,i) => ({ id: "source-"+i, candidate: reference(c), integrity: c.integrity, image: c.payload.state.image, orientation: "encoded-top-left", coordinates: "normalized-original", anchor: { kind: "whole" }, intent: "inspiration", preservation: null, notes: [] })) });
+  const membership = canonical(s.v.state(pid, reference(s.unit)).candidates);
+  const revised = await s.v.exploration.importCandidate(pid, reference(about), await visualFixture(2), "Synthetic rights", "imported", reference(aboutCandidate));
+  assert.equal(revised.version, 2);
+  const view = s.v.state(pid, reference(s.unit));
+  assert.equal(canonical(view.candidates), membership);
+  assert.deepEqual(view.selectedSources.map(c => reference(c)), [reference(homeCandidate), reference(aboutCandidate)]);
+  assert.deepEqual(view.sourceOrigins[aboutCandidate.id+":1"], ["About reference"]);
+  const entries = selection.payload.state.entries.map(e => ({ id: e.id, candidate: e.candidate, anchor: e.anchor, intent: e.intent, target: null, notes: [{ id: "note-"+e.id, text: "Keep pinned source" }] }));
+  const edited = await s.post("selections", { expectedProject: s.p.project, unit: reference(s.unit), previous: reference(selection), entries });
+  assert.equal(edited.status, 200);
+  const current = await edited.json();
+  const frozen = await s.post("prepare", { ...preparation(s), selections: reference(current), direction: "follow" });
+  assert.equal(frozen.status, 200);
+  const spec = (await frozen.json()).specification.payload.state as Specification;
+  assert.deepEqual(spec.selectionSnapshot!.entries[1]!.candidate, reference(aboutCandidate));
+  assert.equal(canonical(s.v.state(pid, reference(s.unit)).candidates), membership);
+  const foreign = s.v.create({ title: "Foreign" });
+  const foreignUnit = s.v.exploration.createWorkUnit(foreign.project.id, { version: 1, pageType: "about", label: "Other", source: "Synthetic" });
+  const foreignCandidate = await s.v.exploration.importCandidate(foreign.project.id, reference(foreignUnit), await visualFixture(3), "Synthetic rights");
+  const before = canonical(s.app.workspace.kernel.ledger(pid));
+  for (const candidate of [reference(foreignCandidate), { ...reference(aboutCandidate), version: 99 }, { ...reference(aboutCandidate), freshness: "latest" }]) {
+    assert.notEqual((await s.post("selections", { expectedProject: s.p.project, unit: reference(s.unit), previous: reference(current), entries: [{ ...entries[1], candidate }] })).status, 200);
+  }
+  assert.equal(canonical(s.app.workspace.kernel.ledger(pid)), before);
+  writeFileSync(join(s.app.workspace.assets.root, aboutCandidate.payload.state.image.id), Buffer.from("corrupt"));
+  assert.throws(() => s.v.state(pid, reference(s.unit)));
+  assert.notEqual((await s.post("prepare", { ...preparation(s), selections: reference(current) })).status, 200);
+  assert.equal(canonical(s.app.workspace.kernel.ledger(pid)), before);
+});
+
+test("effect category and semantic strength freeze independently while legacy strength labels retain their meaning", async (t) => {
+  const s = await setup(t);
+  for (const requests of [
+    [{ key: "visual-effects-category", value: "glow", entryId: null }],
+    [{ key: "visual-effects-strength", value: 7.2, entryId: null }],
+    [{ key: "visual-effects", value: "subtle", entryId: null }],
+    [{ key: "visual-effects-category", value: "none", entryId: null }, { key: "visual-effects-strength", value: 1, entryId: null }],
+  ]) {
+    const r = await s.post("prepare", { ...preparation(s), requests });
+    assert.equal(r.status, 200);
+    const frozen = (await r.json()).specification.payload.state.metricRequests;
+    assert.deepEqual(frozen.map((m: { key: string; value: unknown }) => ({ key: m.key, value: m.value })), requests.map(r => ({ key: "page--"+r.key, value: r.value })));
+  }
+  const before = canonical(s.app.workspace.kernel.ledger(s.p.project.id));
+  for (const request of [{ key: "visual-effects-category", value: "unknown" }, { key: "visual-effects-strength", value: 0 }, { key: "visual-effects-strength", value: 11 }]) {
+    assert.notEqual((await s.post("prepare", { ...preparation(s), requests: [{ ...request, entryId: null }] })).status, 200);
+  }
+  assert.equal(canonical(s.app.workspace.kernel.ledger(s.p.project.id)), before);
+});
+
+test("editing an existing V01 mask source retains its preservation predicate without offering new mask authoring", async (t) => {
+  const s = await setup(t), pid = s.p.project.id;
+  const c = await s.v.exploration.importCandidate(pid, reference(s.unit), await visualFixture(0), "Synthetic rights");
+  const { checksum } = await import("../src/kernel/raster.ts");
+  const pixels = Array(c.payload.state.image.width * c.payload.state.image.height).fill(0) as number[];
+  pixels[0] = 1;
+  const anchor = { kind: "mask", width: c.payload.state.image.width, height: c.payload.state.image.height, pixels, hash: checksum(Buffer.from(pixels)) };
+  const selection = s.v.exploration.selections(pid, { version: 1, workUnit: reference(s.unit), entries: [{ id: "mask-source", candidate: reference(c), integrity: c.integrity, image: c.payload.state.image, orientation: "encoded-top-left", coordinates: "normalized-original", anchor, intent: "exact", preservation: { predicate: "outside-mask-pixels", target: "saved-mask" }, notes: [] }] });
+  const r = await s.post("selections", { expectedProject: s.p.project, unit: reference(s.unit), previous: reference(selection), entries: [{ id: "mask-source", candidate: reference(c), anchor, intent: "exact", target: "saved-mask", notes: [{ id: "note-mask", text: "Retain existing predicate" }] }] });
+  assert.equal(r.status, 200);
+  const current = await r.json();
+  assert.deepEqual(current.payload.state.entries[0].preservation, selection.payload.state.entries[0]!.preservation);
 });

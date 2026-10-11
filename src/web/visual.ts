@@ -12,8 +12,9 @@ import type {
   Specification,
   Anchor,
 } from "../modules/website/exploration-contracts.ts";
-import { requestControls } from "../modules/website/visual-controls.ts";
+import { requestControls, requestFields, type RequestControl } from "../modules/website/visual-controls.ts";
 import { normalizedPoint, regionBetween } from "./visual-geometry.ts";
+import { VisualDrafts, type PageDraft } from "./visual-drafts.ts";
 type Work<T> = NodePacket<DesignArtifact<T>>;
 type State = {
   project: VersionRef;
@@ -22,6 +23,8 @@ type State = {
   unit: Work<WorkUnit>;
   records: Work<unknown>[];
   candidates: Work<RasterConcept>[];
+  selectedSources: Work<RasterConcept>[];
+  sourceOrigins: Record<string, string[]>;
 };
 const root = document.querySelector<HTMLDivElement>("#visual-app")!;
 const notice = document.querySelector<HTMLDivElement>("#visual-notice")!;
@@ -57,6 +60,49 @@ let layout = "sheet",
   busy = false,
   epoch = 0;
 let observers: ResizeObserver[] = [];
+const drafts = new VisualDrafts();
+let workspaceError = "", errorUnit = "", pendingRemoval: string[] = [];
+const draft = (): PageDraft => drafts.page(pid, state ? key(state.unit) : errorUnit);
+const allCandidates = () => [...new Map([...(state?.candidates ?? []), ...(state?.selectedSources ?? [])].map(c => [key(c), c])).values()];
+const noteKey = (e: SelectionEntry) => JSON.stringify([selectionId, e.id, key(e.candidate), e.anchor]);
+const sourceLabel = (c: Work<RasterConcept>) => {
+  const index = state!.candidates.findIndex(x => key(x) === key(c));
+  return index >= 0 ? `Concept ${index + 1} · v${c.version}` : `${(state!.sourceOrigins[key(c)] ?? []).join(" / ") || "Same-project reference"} · v${c.version}`;
+};
+const requestScopeKey = () => {
+  const e = entries().find(e => e.id === draft().scope);
+  return e ? noteKey(e) : draft().scope === "" ? "page" : "unresolved:" + draft().scope;
+};
+const requestValues = () => draft().requests[requestScopeKey()]?.values ?? {};
+function setRequest(key: string, value: string) {
+  const scope = draft().scope;
+  if (scope !== "" && !entries().some(e => e.id === scope)) throw Error("Choose an existing source scope");
+  const k = requestScopeKey();
+  const r = draft().requests[k] ??= { entryId: scope === "" ? null : scope, selectionId, values: {} };
+  if (value === "") delete r.values[key]; else r.values[key] = value;
+}
+function dirtyNote(e: SelectionEntry) {
+  const n = draft().notes[noteKey(e)];
+  return !!n && (n.note !== (e.notes[0]?.text ?? "") || n.intent !== e.intent);
+}
+function requestRemoval(ids: string[]) {
+  if (entries().some(e => ids.includes(e.id) && (dirtyNote(e) || Object.keys(draft().requests[noteKey(e)]?.values ?? {}).length))) {
+    pendingRemoval = ids;
+    render();
+    notice.textContent = "This source has unsaved intent. Explicitly discard its drafts to remove it.";
+  } else void removeSources(ids);
+}
+async function removeSources(ids: string[]) {
+  await run(async () => {
+    const removed = entries().filter(e => ids.includes(e.id));
+    await saveEntries(entries().filter(e => !ids.includes(e.id)));
+    for (const e of removed) { delete draft().notes[noteKey(e)]; delete draft().requests[noteKey(e)]; }
+    if (ids.includes(draft().scope)) draft().scope = "";
+    if (ids.includes(entry)) entry = "";
+    pendingRemoval = [];
+    render();
+  }, "Source and its explicitly discarded drafts removed; other scopes retained");
+}
 let prepared: {
   specification: Work<Specification>;
   batch: Work<Batch>;
@@ -94,20 +140,29 @@ const selectionSets = () =>
     | undefined;
 const selection = () => selectionSets()?.find((p) => p.id === selectionId);
 const entries = () => selection()?.payload.state.entries ?? [];
-const active = () => state?.candidates.find((c) => key(c) === focused);
+const active = () => allCandidates().find((c) => key(c) === focused);
+function focusSource(k: string) {
+  focused = k;
+  entry = entries().find(e => key(e.candidate) === k)?.id ?? "";
+  draft().scope = entry || "";
+}
 const selected = (c: Work<RasterConcept>) =>
   entries().filter((e) => key(e.candidate) === key(c));
 async function reload() {
   if (!state) return;
   const ticket = ++epoch;
-  const next = (await get("state?" + query(ref(state.unit)))) as State;
+  errorUnit = key(state.unit);
+  let next: State;
+  try { next = (await get("state?" + query(ref(state.unit)))) as State; }
+  catch (e) { state = null; workspaceError = e instanceof Error ? e.message : "Stored source unavailable"; render(); throw e; }
   if (ticket !== epoch) return;
   state = next;
+  workspaceError = "";
   if (!selectionId && selectionSets()?.length === 1)
     selectionId = selectionSets()![0]!.id;
   project = next.project;
   units = next.units;
-  if (!state.candidates.some((c) => key(c) === focused))
+  if (!allCandidates().some((c) => key(c) === focused))
     focused = state.candidates[0] ? key(state.candidates[0]) : "";
   render();
 }
@@ -132,12 +187,16 @@ async function run(action: () => Promise<void>, message: string) {
 async function openProject(id: string) {
   ++epoch;
   pid = id;
+  workspaceError = "";
+  pendingRemoval = [];
   state = null;
   prepared = null;
   compared = [];
   focused = "";
   entry = "";
-  const p = await get("project?project=" + encodeURIComponent(pid));
+  let p;
+  try { p = await get("project?project=" + encodeURIComponent(pid)); }
+  catch (e) { units = []; project = null; workspaceError = e instanceof Error ? e.message : "Project unavailable"; render(); throw e; }
   project = p.project;
   units = p.units;
   if (units[0]) await openUnit(key(units[0]));
@@ -150,9 +209,15 @@ async function openUnit(k: string) {
   focused = "";
   entry = "";
   const u = units.find((u) => key(u) === k)!;
-  state = await get("state?" + query(ref(u)));
+  errorUnit = k;
+  state = null;
+  pendingRemoval = [];
+  try { state = await get("state?" + query(ref(u))); workspaceError = ""; }
+  catch (e) { workspaceError = e instanceof Error ? e.message : "Stored source unavailable"; render(); throw e; }
   focused = state!.candidates[0] ? key(state!.candidates[0]) : "";
   selectionId = selectionSets()?.length === 1 ? selectionSets()![0]!.id : "";
+  project = state!.project;
+  units = state!.units;
   zoom = 1;
   render();
 }
@@ -173,9 +238,9 @@ async function saveEntries(next: SelectionEntry[]) {
   await reload();
 }
 async function add(c: Work<RasterConcept>, anchor: Anchor) {
-  entry = "selection-" + crypto.randomUUID();
+  const nextEntry = "selection-" + crypto.randomUUID();
   const e: SelectionEntry = {
-    id: entry,
+    id: nextEntry,
     candidate: ref(c),
     integrity: c.integrity,
     image: c.payload.state.image,
@@ -187,6 +252,10 @@ async function add(c: Work<RasterConcept>, anchor: Anchor) {
     notes: [],
   };
   await saveEntries([...entries(), e]);
+  entry = nextEntry;
+  focused = key(c);
+  draft().scope = entry;
+  render();
 }
 const originLabel = (c: Work<RasterConcept>) =>
   c.payload.state.origin === "synthetic"
@@ -218,9 +287,9 @@ function focusView() {
   if (!c) return "";
   const comparisons =
     compared.length > 1
-      ? state!.candidates.filter((c) => compared.includes(key(c)))
+      ? allCandidates().filter((c) => compared.includes(key(c)))
       : [c];
-  return `<section class="focus-view"><div class="focus-toolbar"><span>Concept ${state!.candidates.indexOf(c) + 1} · v${c.version}</span><label>Region <select id="region-tool"><option value="rectangle" ${tool === "rectangle" ? "selected" : ""}>Rectangle</option><option value="ellipse" ${tool === "ellipse" ? "selected" : ""}>Ellipse</option></select></label><label>Zoom <select id="zoom">${[1, 1.5, 2].map((z) => `<option value="${z}" ${zoom === z ? "selected" : ""}>${z * 100}%</option>`).join("")}</select></label><button id="clear-compare">Single focus</button></div><div class="comparison ${comparisons.length > 1 ? "multiple" : ""}">${comparisons.map(canvas).join("")}</div><p class="hint">Drag on an image to select a region, or enter a region below. Requests do not change these pixels.</p><details class="region-access"><summary>Add region without dragging</summary><form id="region-form"><label>Shape <select name="shape"><option value="rectangle">Rectangle</option><option value="ellipse">Ellipse</option></select></label>${["x", "y", "width", "height"].map((n) => `<label>${n} (%)<input name="${n}" type="number" min="0" max="100" step="0.1" required></label>`).join("")}<button>Add region to focused concept</button></form></details></section>`;
+  return `<section class="focus-view"><div class="focus-toolbar"><span>${esc(sourceLabel(c))}</span><label>Region <select id="region-tool"><option value="rectangle" ${tool === "rectangle" ? "selected" : ""}>Rectangle</option><option value="ellipse" ${tool === "ellipse" ? "selected" : ""}>Ellipse</option></select></label><label>Zoom <select id="zoom">${[1, 1.5, 2].map((z) => `<option value="${z}" ${zoom === z ? "selected" : ""}>${z * 100}%</option>`).join("")}</select></label><button id="clear-compare">Single focus</button></div><div class="comparison ${comparisons.length > 1 ? "multiple" : ""}">${comparisons.map(canvas).join("")}</div>${contextControls()}<p class="hint">Drag on an image to select a region, or enter a region below. Requests do not change these pixels.</p><details class="region-access"><summary>Add region without dragging</summary><form id="region-form"><label>Shape <select name="shape"><option value="rectangle">Rectangle</option><option value="ellipse">Ellipse</option></select></label>${["x", "y", "width", "height"].map((n) => `<label>${n} (%)<input name="${n}" type="number" min="0" max="100" step="0.1" required></label>`).join("")}<button>Add region to focused concept</button></form></details></section>`;
 }
 function selectionView() {
   return `<aside class="selections"><div class="section-head"><h2>Selected sources <span>${entries().length}</span></h2></div>${
@@ -228,37 +297,48 @@ function selectionView() {
       ? entries()
           .map(
             (e, i) =>
-              `<button class="selection-item ${entry === e.id ? "active" : ""}" data-entry="${esc(e.id)}"><img src="${imageURL(state!.candidates.find((c) => key(c) === key(e.candidate))!)}" alt=""><span>Source ${i + 1} · ${e.anchor.kind}<small>Concept ${state!.candidates.findIndex((c) => key(c) === key(e.candidate)) + 1} · v${e.candidate.version} · ${e.intent}</small><small>${esc(e.notes[0]?.text ?? "Add a note")}</small></span></button>`,
+              `<button class="selection-item ${entry === e.id ? "active" : ""}" data-entry="${esc(e.id)}"><img src="${imageURL(allCandidates().find((c) => key(c) === key(e.candidate))!)}" alt=""><span>Source ${i + 1} · ${e.anchor.kind}<small>${esc(sourceLabel(allCandidates().find(c => key(c) === key(e.candidate))!))} · ${e.intent}</small><small>${esc(e.notes[0]?.text ?? "Add a note")}</small></span></button>`,
           )
           .join("")
       : '<p class="empty">Select whole concepts or regions to guide your next variation.</p>'
-  }${entryView()}</aside>`;
+  }${entryView()}${pendingRemoval.length ? `<div class="draft-removal" role="alert"><p>Removing this source discards its unsaved note and scoped requests. Other drafts stay intact.</p><button id="confirm-remove">Discard source drafts and remove</button><button id="cancel-remove">Keep source drafts</button></div>` : ""}</aside>`;
 }
 function entryView() {
   const e = entries().find((e) => e.id === entry);
   if (!e) return "";
-  return `<form id="annotation"><h3>Source ${entries().indexOf(e) + 1}</h3><label>Use as <select name="intent"><option value="inspiration" ${e.intent === "inspiration" ? "selected" : ""}>Inspiration</option><option value="include" ${e.intent === "include" ? "selected" : ""}>Include</option><option value="exact" ${e.intent === "exact" ? "selected" : ""} ${e.anchor.kind !== "whole" ? "disabled" : ""}>Exact retained bytes · whole only</option></select></label><p class="hint">${e.anchor.kind === "whole" ? "Exact requests retention of these original bytes as a named asset. It does not promise an identical rendered region." : "Exact region preservation needs a binary mask; rectangle/ellipse Exact is unavailable in this slice."}</p>${e.notes
+  const n = draft().notes[noteKey(e)] ?? { note: e.notes[0]?.text ?? "", intent: e.intent };
+  return `<form id="annotation"><h3>Source ${entries().indexOf(e) + 1}</h3><label>Use as <select name="intent"><option value="inspiration" ${n.intent === "inspiration" ? "selected" : ""}>Inspiration</option><option value="include" ${n.intent === "include" ? "selected" : ""}>Include</option><option value="exact" ${n.intent === "exact" ? "selected" : ""} ${e.anchor.kind !== "whole" && e.intent !== "exact" ? "disabled" : ""}>${e.preservation?.predicate === "outside-mask-pixels" ? "Exact · existing mask request" : "Exact retained bytes · whole only"}</option></select></label><p class="hint">${e.anchor.kind === "whole" ? "Exact requests retention of these original bytes as a named asset. It does not promise an identical rendered region." : "Exact region preservation needs a binary mask; rectangle/ellipse Exact is unavailable in this slice."}</p>${e.notes
     .slice(1)
     .map((n) => `<p class="hint">Additional saved note: ${esc(n.text)}</p>`)
     .join(
       "",
-    )}<label>Note<textarea name="note" rows="3" placeholder="What should carry forward or change?">${esc(e.notes[0]?.text ?? "")}</textarea></label><button>Save source note</button><button type="button" id="remove-entry">Remove selection</button><details><summary>Original coordinates</summary><pre>${esc(JSON.stringify(e.anchor, null, 2))}</pre></details></form>`;
+    )}<label>Note<textarea name="note" rows="3" placeholder="What should carry forward or change?">${esc(n.note)}</textarea></label><button>Save source note</button><button type="button" id="remove-entry">Remove selection</button><details><summary>Original coordinates</summary><pre>${esc(JSON.stringify(e.anchor, null, 2))}</pre></details></form>`;
 }
 function controls(level: 1 | 2) {
-  return requestControls
-    .filter((c) => c.level === level)
-    .map(
-      (c) =>
-        `<label class="request-control ${c.unavailable ? "unavailable" : ""}">${esc(c.label)}${c.type === "category" ? `<select data-request="${c.key}"><option value="">No request</option>${c.options!.map((o) => `<option>${o}</option>`).join("")}</select>` : `<input data-request="${c.key}" ${c.unavailable ? "disabled" : ""} type="${["scale", "count", "px"].includes(c.type) ? "number" : "text"}" placeholder="${c.unavailable ? "Unavailable for static raster" : c.type === "scale" ? "1.0–10.0" : c.type === "px" ? "Requested px" : c.type === "color" ? "#RRGGBB" : "No request"}" ${["scale", "count", "px"].includes(c.type) ? `min="${c.key === "corner-rounding" ? 0 : 1}" max="${c.type === "scale" ? 10 : c.type === "count" ? 100 : 8192}" step="${c.type === "scale" ? "0.1" : "1"}"` : ""}>`}${c.unavailable ? `<small>${c.unavailable}</small>` : ""}</label>`,
-    )
-    .join("");
+  if (draft().scope !== "" && !entries().some(e => e.id === draft().scope)) return '<p role="status">Source scope unavailable. Restore its saved set, choose another scope explicitly, or discard this page’s drafts.</p>';
+  const values = requestValues();
+  const fieldView = (c: RequestControl): string => {
+    if (c.fields) return `<fieldset data-request="${c.key}"><legend>${esc(c.label)}</legend>${c.fields.map(fieldView).join("")}</fieldset>`;
+    const value = values[c.key] ?? "";
+    if (c.unavailable) return `<label class="request-control unavailable">${esc(c.label)}<input disabled placeholder="Unavailable for static raster"><small>${esc(c.unavailable)}</small></label>`;
+    const field = c.type === "scale"
+      ? `<div class="semantic-scale ${value === "" ? "unset" : ""}"><input type="range" data-request="${c.key}" aria-label="${esc(c.label)} request" min="1" max="10" step="0.1" value="${esc(value || "1")}" aria-valuetext="${esc(value || "No request")}"><input type="number" data-number="${c.key}" aria-label="${esc(c.label)} numeric request" min="1" max="10" step="0.1" value="${esc(value)}" placeholder="No request"><button type="button" data-clear="${c.key}" aria-label="Clear ${esc(c.label)} request">Clear</button><output data-output="${c.key}">${esc(value || "No request")}</output></div>`
+      : c.type === "category" ? `<select data-request="${c.key}"><option value="">No request</option>${c.options!.map(o => `<option ${value === o ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>`
+      : `<input data-request="${c.key}" type="${["count","px"].includes(c.type) ? "number" : "text"}" value="${esc(value)}" placeholder="${c.type === "px" ? "Requested px" : c.type === "color" ? "#RRGGBB" : "No request"}" ${["count","px"].includes(c.type) ? `min="${c.key === "corner-rounding" ? 0 : 1}" max="${c.type === "count" ? 100 : 8192}" step="1"` : ""}>`;
+    return `<div class="request-control"><label>${esc(c.label)}${field}</label></div>`;
+  };
+  return requestControls.filter(c => c.level === level).map(fieldView).join("");
+}
+function scopeView() {
+  return `<label>Request scope<select id="request-scope"><option value="" ${draft().scope === "" ? "selected" : ""}>This page</option>${draft().scope !== "" && !entries().some(e => e.id === draft().scope) ? `<option value="${esc(draft().scope)}" selected disabled>Unavailable source scope</option>` : ""}${entries().map((e,i) => `<option value="${esc(e.id)}" ${draft().scope === e.id ? "selected" : ""}>Source ${i+1} · ${esc(sourceLabel(allCandidates().find(c => key(c) === key(e.candidate))!))}</option>`).join("")}</select></label>`;
+}
+function contextControls() {
+  return `<details id="level1-panel" class="context-controls" ${draft().open["level1-panel"] ? "open" : ""}><summary>Direct requests · Level 1 · ${draft().scope === "" ? "This page" : "Selected source"}</summary>${scopeView()}<p class="hint">Six optional requests for the visible scope. Current properties are unmeasured; requests change the next input, not these pixels.</p><div class="controls">${controls(1)}</div></details>`;
 }
 function prepareView() {
-  return `<section class="prepare"><div class="section-head"><h2>Next variation</h2><span>Preparation only</span></div><form id="prepare"><label class="intent">Intent<textarea name="intent" rows="2" required placeholder="Describe the next visual direction…"></textarea></label><div class="prepare-core"><label>Operation<select name="operation"><option value="refine">Refine selected sources</option><option value="refresh">Refresh alternatives</option><option value="create">Create direction</option><option value="branch">Branch</option></select></label><label>Attempts<select name="count" required><option value="">Choose 1–6</option>${[1, 2, 3, 4, 5, 6].map((n) => `<option>${n}</option>`).join("")}</select></label><label>Direction<select name="direction" required><option value="">Choose Direction</option><option value="fresh">Fresh</option><option value="follow">Follow selected direction</option></select></label></div><div class="optional"><details><summary>Direct requests · Level 1</summary><p class="hint">Intent for the next attempt. Current font, spacing and colors are not measured.</p><label>Request scope<select id="request-scope"><option value="">This page</option>${entries()
-    .map((e, i) => `<option value="${e.id}">Source ${i + 1}</option>`)
-    .join(
-      "",
-    )}</select></label><div class="controls">${controls(1)}</div></details><details><summary>Tune · Level 2</summary><p class="hint">Requested characteristics, not design quality or observations. Scales 1.0–10.0; no conversion from legacy 0–100.</p><div class="controls">${controls(2)}</div></details><details><summary>Brand · off</summary><label>Optional approved Brand<select name="brand"><option value="">Off · unbranded</option>${catalog.brands.map((b, i) => `<option value="${i}">${esc(b.label)}</option>`).join("")}</select></label><p class="hint">Brand and Direction are independent. Fresh still retains explicit Include/Exact requests.</p></details></div><p class="execution-note">Image execution is unavailable in this review slice. Preparation saves inputs and pending slots only.</p><button class="primary">Prepare next attempt</button></form>${prepared ? `<div class="prepared" role="status"><strong>${prepared.batch.payload.state.attempts.length} pending attempts prepared</strong><p>${esc(prepared.specification.payload.state.rawIntent)} · ${prepared.specification.payload.state.direction} · Brand ${prepared.specification.payload.state.brand.enabled ? "on" : "off"}</p><details><summary>Inspect exact frozen input</summary><pre>${esc(JSON.stringify(prepared.specification.payload.state, null, 2))}</pre></details></div>` : ""}</section>`;
+  const d = draft();
+  const option = (value: string, label: string, current: string) => `<option value="${value}" ${value === current ? "selected" : ""}>${label}</option>`;
+  return `<section class="prepare"><div class="section-head"><h2>Next variation</h2><span>Preparation only</span></div><form id="prepare"><label class="intent">Intent<textarea name="intent" rows="2" required placeholder="Describe the next visual direction…">${esc(d.intent)}</textarea></label><div class="prepare-core"><label>Operation<select name="operation">${[["refine","Refine selected sources"],["refresh","Refresh alternatives"],["create","Create direction"],["branch","Branch"]].map(([v,l])=>option(v!,l!,d.operation)).join("")}</select></label><label>Attempts<select name="count" required>${option("","Choose 1–6",d.count)}${[1,2,3,4,5,6].map(n=>option(String(n),String(n),d.count)).join("")}</select></label><label>Direction<select name="direction" required>${option("","Choose Direction",d.direction)}${option("fresh","Fresh",d.direction)}${option("follow","Follow selected direction",d.direction)}</select></label></div><div class="optional"><details id="tune-panel" ${d.open["tune-panel"] ? "open" : ""}><summary>Tune · Level 2 · ${d.scope === "" ? "This page" : "Selected source"}</summary><p class="hint">Requested characteristics only, not measurements. Scales 1.0–10.0. No request until changed; Clear restores unset. Current effect category/strength are unknown.</p><div class="controls">${controls(2)}</div></details><details id="brand-panel" ${d.open["brand-panel"] ? "open" : ""}><summary>Brand · ${d.brand === "" ? "off" : "on"}</summary><label>Optional approved Brand<select name="brand"><option value="">Off · unbranded</option>${catalog.brands.map((b,i) => `<option value="${i}" ${d.brand === String(i) ? "selected" : ""}>${esc(b.label)}</option>`).join("")}</select></label><p class="hint">Brand and Direction are independent.</p></details></div><p class="execution-note">Image execution is unavailable. Preparation saves canonical sources and pending slots only; save source notes explicitly before freezing.</p><p class="hint">Session drafts survive view and page/project switches. Reload closes this draft session. Successful preparation retains this editable draft for another explicit operation.</p><button class="primary">Prepare next attempt</button><button type="button" id="discard-draft">Discard this page's unsaved drafts</button></form>${prepared ? `<div class="prepared" role="status"><strong>${prepared.batch.payload.state.attempts.length} pending attempts prepared · draft retained</strong><p>${esc(prepared.specification.payload.state.rawIntent)} · ${prepared.specification.payload.state.direction} · Brand ${prepared.specification.payload.state.brand.enabled ? "on" : "off"}</p><details><summary>Inspect exact frozen input</summary><pre>${esc(JSON.stringify(prepared.specification.payload.state, null, 2))}</pre></details></div>` : ""}</section>`;
 }
 function historyView() {
   const batches = state!.records.filter(
@@ -279,8 +359,8 @@ function render() {
                 )
                 .join("")}</select></label>`
             : ""
-        }<details class="entry-extra" id="import-tools" ${state.candidates.length ? "" : "open"}><summary>Import raster</summary><form id="import"><label class="import-pick">Import PNG / JPEG / WebP<input name="file" type="file" accept="image/png,image/jpeg,image/webp" required></label><input name="permission" aria-label="Image use permission" placeholder="Permission / source" required><label>Import as<select name="previous"><option value="">New concept</option>${state.candidates.map((c, i) => `<option value="${key(c)}">Replace Concept ${i + 1} · v${c.version}</option>`).join("")}</select></label><button>Import raster</button></form></details><div class="deferred"><button disabled title="Library contract is deferred">Add to Library</button><button disabled title="Raster export contract is deferred">Export As</button><button disabled title="HTML reconstruction is a later process">Build as HTML</button></div></div><p class="hint">Library, raster export and HTML reconstruction are separate deferred operations.</p><div class="studio ${layout}"><div class="visual-area">${state.candidates.length ? (layout === "sheet" ? `<section class="contact-sheet" aria-label="Candidate contact sheet">${groups()}</section>${focusView()}` : `${focusView()}<section class="filmstrip" aria-label="Candidate filmstrip">${state.candidates.map((c, i) => card(c, i, true)).join("")}</section>`) : '<div class="empty-canvas"><h2>Your next direction starts here.</h2><p>Import raster concepts to compare, select and annotate.</p><p>No image generator is connected in this review slice.</p></div>'}</div>${selectionView()}</div>${prepareView()}${historyView()}`
-      : '<section class="welcome"><h2>A visual place to explore.</h2><p>Create a Website project and choose Homepage, About Us or a custom page. Brand setup and chat are optional.</p></section>'
+        }<details class="entry-extra" id="import-tools" ${state.candidates.length ? "" : "open"}><summary>Import raster</summary><form id="import"><label class="import-pick">Import PNG / JPEG / WebP<input name="file" type="file" accept="image/png,image/jpeg,image/webp" required></label><input name="permission" aria-label="Image use permission" placeholder="Permission / source" required><label>Import as<select name="previous"><option value="">New concept</option>${state.candidates.map((c, i) => `<option value="${key(c)}">Replace Concept ${i + 1} · v${c.version}</option>`).join("")}</select></label><button>Import raster</button></form></details><div class="deferred"><button disabled title="Library contract is deferred">Add to Library</button><button disabled title="Raster export contract is deferred">Export As</button><button disabled title="HTML reconstruction is a later process">Build as HTML</button></div></div><p class="hint">Library, raster export and HTML reconstruction are separate deferred operations.</p><div class="studio ${layout}"><div class="visual-area">${(state.candidates.length || state.selectedSources.length) ? (layout === "sheet" ? `<section class="contact-sheet" aria-label="Candidate contact sheet">${groups()}</section>${focusView()}` : `${focusView()}<section class="filmstrip" aria-label="Candidate filmstrip">${state.candidates.map((c, i) => card(c, i, true)).join("")}</section>`) : '<div class="empty-canvas"><h2>Your next direction starts here.</h2><p>Import raster concepts to compare, select and annotate.</p><p>No image generator is connected in this review slice.</p>${contextControls()}</div>'}</div>${selectionView()}</div>${prepareView()}${historyView()}`
+      : workspaceError ? `<section class="workspace-error" role="alert"><h2>Workspace unavailable</h2><p>${esc(workspaceError)}</p><p>Stored sources could not be validated. No records or drafts were changed.</p><button id="retry-open">Retry reopen</button></section>` : '<section class="welcome"> <h2>A visual place to explore.</h2><p>Create a Website project and choose Homepage, About Us or a custom page. Brand setup and chat are optional.</p></section>'
   }</main>`;
   bind();
   if (focusId) document.getElementById(focusId)?.focus();
@@ -321,6 +401,34 @@ function bind() {
   });
   const on = (id: string, event: string, fn: (e: Event) => void) =>
     document.getElementById(id)?.addEventListener(event, fn);
+  root.oninput = root.onchange = (event) => {
+    if (!state) return;
+    const target = event.target as HTMLInputElement;
+    const form = target.closest("form");
+    if (form?.id === "annotation") {
+      const e = entries().find(e => e.id === entry);
+      if (e) draft().notes[noteKey(e)] = { note: (form.querySelector("textarea") as HTMLTextAreaElement).value, intent: (form.querySelector("select") as HTMLSelectElement).value };
+    } else if (form?.id === "prepare" && ["intent","count","direction","brand","operation"].includes(target.name)) {
+      const name = target.name as "intent" | "count" | "direction" | "brand" | "operation";
+      draft()[name] = target.value;
+    }
+    const k = target.dataset["request"] ?? target.dataset["number"];
+    if (k) {
+      setRequest(k, target.value);
+      const slider = root.querySelector<HTMLInputElement>(`input[type=range][data-request="${k}"]`);
+      const number = root.querySelector<HTMLInputElement>(`[data-number="${k}"]`);
+      if (slider) { slider.value = target.value || "1"; slider.setAttribute("aria-valuetext", target.value || "No request"); slider.closest(".semantic-scale")!.classList.toggle("unset", !target.value); }
+      if (number) number.value = target.value;
+      const output = root.querySelector(`[data-output="${k}"]`); if (output) output.textContent = target.value || "No request";
+    }
+  };
+  root.querySelectorAll<HTMLDetailsElement>("details[id]").forEach(panel => panel.ontoggle = () => { if (state) draft().open[panel.id] = panel.open; });
+  root.querySelectorAll<HTMLButtonElement>("[data-clear]").forEach(b => b.onclick = () => { setRequest(b.dataset["clear"]!, ""); render(); });
+  on("request-scope", "change", e => { draft().scope = (e.target as HTMLSelectElement).value; render(); });
+  on("discard-draft", "click", () => { if (confirm("Discard all unsaved notes, operation fields and requests on this page? Saved records remain.")) { drafts.discard(pid, key(state!.unit)); pendingRemoval = []; render(); notice.textContent = "This page's session drafts discarded; saved records unchanged"; } });
+  on("confirm-remove", "click", () => void removeSources(pendingRemoval));
+  on("cancel-remove", "click", () => { pendingRemoval = []; render(); });
+  on("retry-open", "click", () => void run(() => errorUnit && units.some(u => key(u) === errorUnit) ? openUnit(errorUnit) : openProject(pid), "Workspace reopened"));
   on("selection-set", "change", (e) => {
     selectionId = (e.target as HTMLSelectElement).value;
     entry = "";
@@ -333,10 +441,12 @@ function bind() {
   on("project", "change", (e) => {
     const value = (e.target as HTMLSelectElement).value;
     if (value) void run(() => openProject(value), "Project reopened");
+    else { pid = ""; state = null; project = null; units = []; workspaceError = ""; prepared = null; pendingRemoval = []; render(); notice.textContent = "Choose a project; session drafts retained"; }
   });
   on("page", "change", (e) => {
     const value = (e.target as HTMLSelectElement).value;
     if (value) void run(() => openUnit(value), "Page reopened");
+    else { state = null; workspaceError = ""; prepared = null; pendingRemoval = []; render(); notice.textContent = "Choose a page; session drafts retained"; }
   });
   on("new-project", "submit", (e) => {
     e.preventDefault();
@@ -396,27 +506,16 @@ function bind() {
   root.querySelectorAll<HTMLButtonElement>("[data-open]").forEach(
     (b) =>
       (b.onclick = () => {
-        focused = b.dataset["open"]!;
+        focusSource(b.dataset["open"]!);
         compared = [];
         render();
       }),
   );
-  root.querySelectorAll<HTMLButtonElement>("[data-whole]").forEach(
-    (b) =>
-      (b.onclick = () =>
-        void run(async () => {
-          const c = state!.candidates.find(
-            (c) => key(c) === b.dataset["whole"],
-          )!;
-          if (selected(c).some((e) => e.anchor.kind === "whole"))
-            await saveEntries(
-              entries().filter(
-                (e) => key(e.candidate) !== key(c) || e.anchor.kind !== "whole",
-              ),
-            );
-          else await add(c, { kind: "whole" });
-        }, "Whole source saved")),
-  );
+  root.querySelectorAll<HTMLButtonElement>("[data-whole]").forEach(b => b.onclick = () => {
+    const c = allCandidates().find(c => key(c) === b.dataset["whole"])!;
+    const ids = selected(c).filter(e => e.anchor.kind === "whole").map(e => e.id);
+    if (ids.length) requestRemoval(ids); else void run(() => add(c, { kind: "whole" }), "Whole source saved");
+  });
   root.querySelectorAll<HTMLButtonElement>("[data-compare]").forEach(
     (b) =>
       (b.onclick = () => {
@@ -424,7 +523,7 @@ function bind() {
         compared = compared.includes(k)
           ? compared.filter((x) => x !== k)
           : [...compared, k];
-        focused = k;
+        focusSource(k);
         render();
       }),
   );
@@ -433,6 +532,7 @@ function bind() {
       (b.onclick = () => {
         entry = b.dataset["entry"]!;
         focused = key(entries().find((e) => e.id === entry)!.candidate);
+        draft().scope = entry;
         render();
       }),
   );
@@ -469,9 +569,9 @@ function bind() {
       intent,
       preservation:
         intent === "exact"
-          ? {
+          ? current.preservation ?? {
               predicate: "retained-bytes" as const,
-              target: current.preservation?.target ?? "asset-" + current.id,
+              target: "asset-" + current.id,
             }
           : null,
       notes: text
@@ -486,20 +586,11 @@ function bind() {
         : current.notes.slice(1),
     };
     void run(
-      () => saveEntries(entries().map((e) => (e.id === entry ? next : e))),
+      async () => { await saveEntries(entries().map((e) => (e.id === entry ? next : e))); delete draft().notes[noteKey(current)]; render(); },
       "Source note saved",
     );
   });
-  on(
-    "remove-entry",
-    "click",
-    () =>
-      void run(async () => {
-        await saveEntries(entries().filter((e) => e.id !== entry));
-        entry = "";
-        render();
-      }, "Selection removed"),
-  );
+  on("remove-entry", "click", () => requestRemoval([entry]));
   const brandSelect = root.querySelector<HTMLSelectElement>(
     "#prepare [name=brand]",
   );
@@ -512,28 +603,18 @@ function bind() {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
     const f = new FormData(form);
-    const scope =
-      (form.querySelector("#request-scope") as HTMLSelectElement).value || null;
-    const values = (level: 1 | 2) =>
-      requestControls
-        .filter((c) => c.level === level && !c.unavailable)
-        .flatMap((c) => {
-          const v = (
-            form.querySelector(`[data-request="${c.key}"]`) as HTMLInputElement
-          ).value.trim();
-          return v
-            ? [
-                {
-                  key: c.key,
-                  value: ["scale", "count", "px"].includes(c.type)
-                    ? Number(v)
-                    : v,
-                  entryId: scope,
-                },
-              ]
-            : [];
-        });
+    const values = (level: 1 | 2) => Object.entries(draft().requests).flatMap(([k, r]) => {
+      if (r.entryId !== null && !entries().some(e => noteKey(e) === k)) {
+        if (Object.keys(r.values).length) throw Error("A request belongs to another or removed source. Restore its saved set or explicitly discard the page drafts.");
+        return [];
+      }
+      return requestFields.filter(c => c.level === level && !c.unavailable).flatMap(c => {
+        const value = r.values[c.key];
+        return value ? [{ key: c.key, value: ["scale","count","px"].includes(c.type) ? Number(value) : value, entryId: r.entryId }] : [];
+      });
+    });
     void run(async () => {
+      const requests = values(2), level1 = values(1);
       prepared = await post("prepare", {
         expectedProject: project,
         unit: ref(state!.unit),
@@ -546,8 +627,8 @@ function bind() {
             ? null
             : catalog.brands[Number(f.get("brand"))]!.ref,
         operation: f.get("operation"),
-        requests: values(2),
-        level1: values(1),
+        requests,
+        level1,
       });
       await reload();
     }, "Prepared pending attempts only. Image execution is unavailable.");
@@ -584,7 +665,7 @@ function bind() {
         }, "Manual retry prepared; execution remains unavailable")),
   );
   root.querySelectorAll<HTMLElement>(".image-plane").forEach((plane) => {
-    const candidate = state!.candidates.find(
+    const candidate = allCandidates().find(
       (c) => key(c) === plane.parentElement!.dataset["canvas"],
     )!;
     const image = candidate.payload.state.image;
@@ -642,7 +723,7 @@ function bind() {
       const k = plane.parentElement!.dataset["canvas"]!;
       void run(
         () =>
-          add(state!.candidates.find((c) => key(c) === k)!, {
+          add(allCandidates().find((c) => key(c) === k)!, {
             kind: tool,
             ...box,
           }),

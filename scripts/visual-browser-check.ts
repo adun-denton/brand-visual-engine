@@ -1,4 +1,5 @@
 import sharp from "sharp";
+import { checkVisualRepairs } from "./visual-repair-browser-check.ts";
 import { chromium, expect } from "@playwright/test";
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -201,8 +202,8 @@ try {
   await expect(page.locator("#prepare [name=direction]")).toHaveValue("");
   await page.locator("#prepare [name=count]").selectOption("1");
   await page.locator("#prepare [name=direction]").selectOption("fresh");
-  await page.getByText("Tune · Level 2", { exact: true }).click();
-  await page.locator("[data-request=visual-density]").fill("4.5");
+  await page.locator("#tune-panel > summary").click();
+  await page.locator("[data-number=visual-density]").fill("4.5");
   await page.locator("#prepare button.primary").click();
   await idle();
   await expect(page.locator(".prepared")).toContainText(
@@ -417,3 +418,4 @@ try {
   await app.close();
   rmSync(root, { recursive: true, force: true });
 }
+await checkVisualRepairs();

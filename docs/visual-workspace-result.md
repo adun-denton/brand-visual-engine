@@ -15,6 +15,7 @@ The PR body supplies the exact result head/tree and CI; this file cannot contain
 | `src/service/visual-workspace.ts`, `src/service/server.ts` | Narrow owned projections/commands, session protection, plain-text and scope checks; separate `/visual` entry and exact raster reads |
 | `src/service/exploration.ts` | Atomic frozen-spec/pending-batch preparation via existing `putMany`; optional post-decode expected-project check |
 | `src/web/visual.ts`, `visual.html`, `visual.css`, `visual-geometry.ts` | Two review layouts over one backend, comparison/selection/notes, region geometry, optional controls, explicit preparation and history |
+| `src/web/visual-drafts.ts`, `scripts/visual-repair-browser-check.ts` | R1–R3: session-only draft isolation and browser assertions for navigation, requests, exact cross-page closures and explicit failures |
 | `src/modules/website/visual-controls.ts` | Approved descriptor inventory expressed as typed future requests, five dynamic controls unavailable |
 | `src/web/index.html`, `scripts/build.ts`, `package.json` | Separate browser bundle and link; existing workspace preserved; no dependency addition |
 | `scripts/visual-fixture.ts`, `visual-review.ts` | Six hand-authored synthetic raster compositions and safe fresh-root review launch; explicit disabled provider configuration |
@@ -35,7 +36,7 @@ CI uses the workflow's pinned Playwright Chromium and is separately checked at t
 | Requirement / actual command | Result / evidence |
 |---|---|
 | `npm run typecheck` | Passed strict TypeScript |
-| `npm test` | 191 passed, 0 failed, 0 skipped; ten new adverse/recovery tests |
+| `npm test` | 194 passed, 0 failed, 0 skipped; thirteen visual adverse/recovery tests |
 | `npm run build` | Both legacy and visual bundles built |
 | `npm run smoke`, `npm run smoke:design-os` | Pass: outside-channel difference 0, accepted state survives reopen; both modes, nine candidates per mode |
 | `node scripts/serialize-design-fixtures.ts`; `git diff --exit-code -- fixtures/design-os.json` | Byte-identical legacy fixture |
@@ -64,6 +65,44 @@ when diagnostic browser reads fail. Production services and persistence contract
 by this repair. The PR body records the updated exact head/tree and actual platform results;
 the earlier timed-out jobs remain historical evidence, not a Windows pass.
 
+## Bounded R1–R3 repair return
+
+Review authority: `678336627c9e2a71415bcd67710d653833babb77`; reviewed parent
+`bb8423aec7d8cb863ec2b11d81c4c975fa8e5a4c`, tree `92522b35cc5b8793c7878d3ffe3d38320309a665`.
+No source drift at repair start; PR12 retains its V01 target and both review layouts.
+
+R1 keeps operation/request and exact entry-note drafts in per-project/page session memory. Ordinary
+view actions and another annotation save preserve input. Rejection retains input; preparation
+success explicitly retains the editable draft. Page/project navigation restores isolated drafts;
+reload ends the draft session. Explicit discard changes no records. Dirty-source removal requires
+explicit scoped discard and cannot promote its requests into page-wide requests.
+
+R2 resolves selected closures independently of page membership, displays origin/pinned revision and
+allows valid same-project source edits/freezes under V01 rules. Membership and old anchors remain
+independent after replacement. Existing mask-preservation predicates survive note edits. Invalid,
+foreign and corrupt sources still reject; corrupt reopen shows an explicit unavailable view.
+
+R3 uses unset semantic sliders with numeric/keyboard access, contextual six-control Level1 near
+the canvas and separate optional Tune/Brand. Visual Effects adds independent category/strength
+request keys; historical `visual-effects` values retain their meaning. No SQL/contract migration,
+scale conversion, current-property inference, actual pixel edit or provider call.
+
+The pinned diagnostic probe was replayed privately with browser/import paths adapted to this
+isolated checkout. On the parent it reported four empty draft fields, density `type=number` and
+cross-page reopen failure with zero cards. After repair it reports the original note/intent,
+count `6`, direction `follow`, density `type=range`, distinct effect category/strength controls,
+six page cards and no reopen error. Its original behavior is now covered by passing browser
+assertions; private probe source is not published.
+
+`npm run test:browser:visual` includes both the original geometry/persistence walkthrough and
+`visual-r123` assertions. Additional screenshots: `08-r123-b-desktop`, `09-r123-a-desktop`,
+`10-r123-b-narrow`, `11-r123-a-narrow`. `repairs.json` records exact head, platform/browser,
+draft/rejection/isolation/discard, cross-page cold recovery, pin/membership, semantic control/scope,
+independent effects and explicit corrupt-workspace results. The PR body supplies final exact
+head/tree and actual Windows/Linux CI/artifact links. Independent effect controls also have
+desktop/narrow evidence in `12-r3-effects-desktop` and `13-r3-effects-narrow`. Roll back only this repair on a new branch,
+or use the reviewed parent in a separate checkout with matching closed roots; no in-place downgrade.
+
 ## Review, remaining constraints and rollback
 
 See [workspace rationale](visual-workspace.md) for keys/units/scopes, walkthrough and concrete A/B
@@ -71,7 +110,8 @@ tradeoffs. Final layout/count default remain unselected; actual image generation
 No model/account/image-provider/GPU calls, provider installation, PR10 merge/integration, paid
 fallback, user-runtime migration, merge or deployment. Browser installation is test tooling only.
 Additional notes are retained; only a primary note is editable here. Existing ambiguous selection
-sets require an explicit choice. Unprepared form inputs and view choices are disposable.
+sets require an explicit choice. Unsaved input is session-only and retained across view/page/project
+navigation; browser reload ends that draft session. Source notes require explicit save before freeze.
 
 Revert this implementation on a new branch or use accepted V01 in a separate checkout. Close owned
 processes before any full-root copy/restore; use matching code with complete closed roots and never

@@ -7,6 +7,7 @@ export interface RequestControl {
   type: "scale" | "count" | "px" | "color" | "text" | "category";
   options?: string[];
   unavailable?: string;
+  fields?: RequestControl[];
 }
 export const requestControls: RequestControl[] = [
   ...[
@@ -99,6 +100,12 @@ export const requestControls: RequestControl[] = [
     family: "Styling",
     type: "category",
     options: ["none", "subtle", "pronounced"],
+    // Keep the legacy field's original strength labels valid for stored requests.
+    // New authoring uses independent category and bounded strength fields.
+    fields: [
+      { key: "visual-effects-category", label: "Visual Effects category", level: 2, family: "Styling", type: "category", options: ["none", "blur", "glow", "grain"] },
+      { key: "visual-effects-strength", label: "Visual Effects strength", level: 2, family: "Styling", type: "scale" },
+    ],
   },
   ...[
     ["motion-amount", "Motion Amount"],
@@ -116,3 +123,4 @@ export const requestControls: RequestControl[] = [
       "Requires motion or interaction; unavailable for static raster requests.",
   })),
 ];
+export const requestFields = requestControls.flatMap((c) => c.fields ?? [c]);

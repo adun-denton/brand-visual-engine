@@ -31,6 +31,23 @@ Compare opens selected concepts side by side. Layout and focused/comparison view
 browser state. Canonical selections, notes, versions and batches are identical across both layouts.
 Existing multiple selection sets require an explicit saved-set choice; no active pointer is invented.
 
+Operation fields, independent source-note drafts and requested controls are kept in session memory,
+keyed by project/page and exact selection identity (set, entry, candidate version and anchor).
+Layout/focus/compare/zoom and saving another note retain drafts. Page/project navigation restores
+that page's draft without leaking it elsewhere. Rejection retains editable input; successful
+preparation explicitly retains it for another operation. Save notes explicitly to include them in
+canonical frozen input. Reload/closing the browser ends the unsaved draft session.
+“Discard this page's unsaved drafts” is explicit and leaves saved records intact. Dirty-source
+removal requires a separate discard action; it removes only that source's drafts. Requests tied to
+an unavailable source/set block preparation until restored or explicitly discarded, never silently
+becoming page requests.
+
+Page candidate grouping follows membership only. Selected-source closures are resolved separately
+under V01's same-project rules. A Homepage selection can keep an About Us source, with its origin
+page and pinned revision displayed in the source list/focus. Editing or freezing this source never
+adds it to Homepage membership. Unavailable/corrupt closure reads show an explicit unavailable
+workspace with retry, removing stale actions; foreign projects remain inaccessible.
+
 Preparation requires intent, an explicit 1–6 count and Fresh/Follow Direction. Brand starts off;
 an existing approved VisualOS may be chosen independently. Fresh excludes source style but does not
 remove Include/Exact content requirements. The action freezes inputs and prepares pending slots in
@@ -55,8 +72,9 @@ never become Brand rules.
 Keys are `<scope>--<descriptor>`, with scope `page` or an exact selection-entry ID. The snapshot pins
 that entry's raster version and original anchor. Level1 uses constraint path `request.<key>`;
 Level2 uses `metricRequests` with `status: requested`, declared scale and user-request provenance.
-These fields express intent, not extracted properties. Unprepared form values are disposable;
-saved specifications are canonical. There is no local-storage memory/database.
+These fields express intent, not extracted properties. Unsaved values remain editable session
+drafts across ordinary navigation; only explicit saves/preparations create canonical records.
+There is no local-storage memory/database.
 
 | Level / family | Descriptor keys | Request type / unit |
 |---|---|---|
@@ -71,11 +89,21 @@ saved specifications are canonical. There is no local-storage memory/database.
 | 2 Structural | `content-width`, `section-height` | Integer px 1–8192 |
 | 2 Styling | `color-intensity`, `typography-expression`, `shadow-depth`, `accent-usage` | Semantic continuous 1.0–10.0 |
 | 2 Styling | `surface-style` | Category: flat / textured / layered |
-| 2 Styling | `visual-effects` | Category expressing effect strength: none / subtle / pronounced |
+| 2 Styling | `visual-effects-category` | Independent category request: none / blur / glow / grain |
+| 2 Styling | `visual-effects-strength` | Independent semantic continuous 1.0–10.0 |
+| 2 Styling, historical compatibility | `visual-effects` | Original none / subtle / pronounced strength labels remain valid and unchanged |
 | 2 Dynamics | `motion-amount`, `motion-speed`, `scroll-choreography`, `interaction-feedback`, `micro-interactions` | Retained inventory, unavailable for this static raster slice |
 
 This retains six Level1 and 21 Level2 concepts, rather than 21 permanent sliders. Tune and Brand
-are optional disclosures. Semantic 1.0–10.0 units are authored intent, not empirical scores;
+are optional disclosures. All six Level1 requests are contextual near the canvas, with visible page
+or exact source scope. Continuous controls use semantic sliders plus numeric and keyboard access.
+An unset slider is visibly dimmed and labeled “No request”; its placeholder thumb position is not
+a submitted value. Opening panels creates no request; moving/typing creates explicit requested
+intent, and Clear restores unset. Counts/dimensions/categories retain their appropriate controls.
+Visual Effects remains one concept with two independent request fields. The minimal category
+vocabulary above adds no observed/current effect or execution claim. Existing `visual-effects`
+records retain their original semantics; no stored values are renamed, converted or migrated.
+Semantic 1.0–10.0 units are authored intent, not empirical scores;
 no conversion from legacy 0–100 occurs. Category vocabulary is a bounded request interface, not
 an approved brand, page template or new metric family. Contextual navigation/easing/transitions/loading
 and dynamics previews remain outside this static slice.
@@ -87,7 +115,9 @@ selections/prepare/cancel/retry and owned exact-image/state reads. There is no g
 synthetic-success intake, provider submit, arbitrary URL fetch, HTML/SVG intake or acceptance route
 under `/api/v1/visual`. All mutations retain existing host/origin/session-token, JSON/body-size and
 strict input validation. Imports fully decode and recheck project/page/source freshness after await.
-Selection revisions use exact saved-set compare-and-swap; foreign-page/project sources reject.
+Selection revisions use exact saved-set compare-and-swap. Selection sets belong to their page;
+exact sources may come from another page in that same project. Foreign projects reject.
+Existing valid mask-preservation predicates survive note edits; new mask authoring is unavailable.
 Plain text rejects markup/control characters and all projections are escaped in the DOM. Domain
 conflicts report useful 409 errors; storage/integrity failures retain their existing protections.
 
@@ -110,6 +140,10 @@ closed-process restart and truthful partial/uncertain/cancelled outcomes. Set `B
 an external evidence directory; optional `BVE_CHROMIUM_EXECUTABLE` selects a installed Chromium.
 CI runs this and all eight existing browser workflows on Windows/Linux and uploads screenshots
 plus `walkthrough.json` in its browser artifacts. Fixtures prove interaction only.
+The same command also runs the R1–R3 repair browser assertions, writing `repairs.json` and four
+additional desktop/narrow screenshots. These cover draft retention/isolation/discard/rejection,
+cross-page closure editing/freezing/cold reopen, original-version pins, scope-preserving removal,
+semantic slider keyboard/unset behavior, category/strength independence and corrupt-workspace UI.
 
 Known limits: no image inference, masks/compositing, pixel-edit engine, measured style/dynamics,
 Brand compiler, chat, Library/raster export or HTML reconstruction. An entry edits its primary note;
