@@ -10,6 +10,11 @@ export const chatTools = [
   "prepare_image",
 ] as const;
 export type ChatTool = (typeof chatTools)[number];
+export function chatCompletionDetail(candidateCount: number) {
+  return candidateCount
+    ? `Protocol completed. ${candidateCount} design candidates are available for review; no automatic acceptance.`
+    : 'Protocol completed. No design candidates were created.';
+}
 export interface ImageTarget {
   page: VersionRef;
   slot: string;

@@ -58,6 +58,23 @@ const screen = async (name: string) => {
   });
 };
 try {
+  const textOnly = await startApp(mkdtempSync(join(tmpdir(), 'bve-old-completion-')), 0, undefined, undefined, {
+    chatDriver: {kind: 'test-fixture', close: async () => {}, run: async () => ({status: 'completed', model: null, usage: null})},
+  });
+  const historyPage = await context.newPage();
+  try {
+    const sent = textOnly.chat.send({projectId: null, clientId: 'old-text-only', text: 'Synthetic historical text-only completion', focus: {view: 'studio', page: null, resources: [], target: null}});
+    await Promise.all([...textOnly.chat.pending]);
+    const saved = textOnly.chat.store.get(sent.projectId);
+    saved.turns[0]!.detail = 'Protocol completed. Candidates remain unaccepted.';
+    textOnly.chat.store.save(saved);
+    const bodyBefore = textOnly.chat.store.db.prepare('SELECT body FROM sessions WHERE pid=?').get(sent.projectId)!['body'];
+    await historyPage.goto(textOnly.origin);
+    await historyPage.locator(`[data-action=open][data-id="${sent.projectId}"]`).click();
+    await expect(historyPage.locator('.chat-reply')).toContainText('Protocol completed. No design candidates were created.');
+    await expect(historyPage.locator('[data-chat-candidate]')).toHaveCount(0);
+    expect(textOnly.chat.store.db.prepare('SELECT body FROM sessions WHERE pid=?').get(sent.projectId)!['body']).toBe(bodyBefore);
+  } finally { await historyPage.close(); await textOnly.close(); }
   // Initial workspace has no project to poll. Stored sign-in is local evidence,
   // distinct from account health and from a configured/synthetic driver.
   const originalDriver = app.chat.driver, originalStatus = app.chat.accountStatus;

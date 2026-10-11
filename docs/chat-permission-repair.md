@@ -74,6 +74,8 @@ inference occurs during polling. Driver configuration alone no longer displays a
 Injected fixture transport remains visibly a fixture. Status contains no tokens, identity or
 policy data. OAuth completion says sign-in saved. A completed text-only turn explicitly says
 no design candidates were created; turns with candidates report their reviewable count.
+Historical completed turns use their recorded candidate count in this display without
+rewriting the saved transcript or turn evidence.
 
 HTTP tests cover protected synthetic credential storage and initial status, plus completed
 text without candidates. Browser controls cover all three sign-in labels before a project

@@ -13,7 +13,7 @@ import { ChatStore } from "./chat-store.ts";
 import type { ImageJob } from "./chat-store.ts";
 import type { Workspace } from "./workspace.ts";
 import type { Pages } from "./pages.ts";
-import { chatTools } from "./chat-contracts.ts";
+import { chatTools, chatCompletionDetail } from "./chat-contracts.ts";
 import type {
   ChatDriver,
   ChatImageDriver,
@@ -292,9 +292,7 @@ export class Chat {
         }
         now.detail =
           now.status === "completed"
-            ? now.candidates.length
-              ? `Protocol completed. ${now.candidates.length} design candidates are available for review; no automatic acceptance.`
-              : 'Protocol completed. No design candidates were created.'
+            ? chatCompletionDetail(now.candidates.length)
             : "Turn did not complete; receipts retained.";
         this.persist(now);
       }
