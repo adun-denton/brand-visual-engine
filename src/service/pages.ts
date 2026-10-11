@@ -1,3 +1,4 @@
+import { StyleError, styleGuidance } from "../modules/website/style-contracts.ts";
 import { randomUUID } from "node:crypto";
 import { posix } from "node:path";
 import type {
@@ -391,8 +392,9 @@ export class Pages {
         image: r.state.image,
       })),
       outputSchema: inferenceOutputSchema,
+      styleGuidance,
       contract:
-        "Return bve.inference-result v1, exact requestId/requestHash, candidates and findings. A candidate has label,rationale,page,mediaRequirements[{slot,instruction}],proposedActions[strings]. Page: version=1,title,language,root,media,responsive,unresolved. See schema. Containers/sections own children; heading/text/link own text; heading owns level 1–6; link owns href; list owns items; media owns slot/alt/decorative. Style is safe flow/flex/grid CSS properties. No fixed sections, image counts or breakpoint. Place only included placeable handles; new files use separately supplied upload handles. Critique can have no candidates. Keep exact preservation locks. Proposed actions are never executed. No IDs, acceptance, HTML/scripts or external resource URLs.",
+        "Return bve.inference-result v1, exact requestId/requestHash, candidates and findings. A candidate has label,rationale,page,mediaRequirements[{slot,instruction}],proposedActions[strings]. Page: version=1,title,language,root,media,responsive,unresolved. See schema. Containers/sections own children; heading/text/link own text; heading owns level 1–6; link owns href; list owns items; media owns slot/alt/decorative. For node and responsive styles, use property-specific outputSchema constraints and styleGuidance (including a valid style-only example). Dimensions are scalar; numeric-only fields need JSON numbers. No compound shorthand, repeat(), calc() or external fonts. No fixed sections, image counts or breakpoint. Place only included placeable handles; new files use separately supplied upload handles. Critique can have no candidates. Keep exact preservation locks. Proposed actions are never executed. No IDs, acceptance, HTML/scripts or external resource URLs.",
       metadata: { model: null, settings: null, usage: null },
       policy: { paidExecution: false, humanAcceptance: false },
     };
@@ -517,6 +519,7 @@ export class Pages {
         };
       throw new InputError("Unknown or invented media handle");
     };
+    let candidateIndex = 0;
     const candidates = list(
       response["candidates"],
       (v) => {
@@ -528,7 +531,13 @@ export class Pages {
           "proposedActions",
         ]);
         string(c["label"], 200);
-        const page = parsePage(c["page"], resolve);
+        const index = candidateIndex++;
+        let page: Page;
+        try { page = parsePage(c["page"], resolve); }
+        catch (error) {
+          if (error instanceof StyleError) throw new InputError(`Candidate ${index + 1}: ${error.message}`, error.status);
+          throw error;
+        }
         preservation(page, s.locks);
         const needs = list(
           c["mediaRequirements"],

@@ -1,3 +1,5 @@
+import { parseStyle, numericStyles } from "./style-contracts.ts";
+export { parseStyle, styleProperties } from "./style-contracts.ts";
 import type { VersionRef, Value } from "../../kernel/contracts.ts";
 import {
   record,
@@ -76,142 +78,6 @@ export interface Lock {
   field: "text" | "subtree" | "style";
   value: Value;
 }
-export const styleProperties = [
-  "display",
-  "flexDirection",
-  "flexWrap",
-  "justifyContent",
-  "alignItems",
-  "gap",
-  "gridTemplateColumns",
-  "gridColumn",
-  "gridRow",
-  "padding",
-  "margin",
-  "width",
-  "maxWidth",
-  "minHeight",
-  "background",
-  "color",
-  "fontFamily",
-  "fontSize",
-  "fontWeight",
-  "lineHeight",
-  "letterSpacing",
-  "textAlign",
-  "border",
-  "borderRadius",
-  "objectFit",
-  "aspectRatio",
-  "opacity",
-] as const;
-const numericStyles = new Set([
-  "gap",
-  "padding",
-  "margin",
-  "width",
-  "maxWidth",
-  "minHeight",
-  "fontSize",
-  "letterSpacing",
-  "borderRadius",
-]);
-const enumStyles: Record<string, readonly string[]> = {
-  display: ["block", "flex", "grid", "inline", "inline-block", "none"],
-  flexDirection: ["row", "column", "row-reverse", "column-reverse"],
-  flexWrap: ["wrap", "nowrap"],
-  justifyContent: [
-    "start",
-    "end",
-    "center",
-    "space-between",
-    "space-around",
-    "space-evenly",
-  ],
-  alignItems: ["start", "end", "center", "stretch", "baseline"],
-  textAlign: ["left", "right", "center", "start", "end"],
-  objectFit: ["cover", "contain"],
-};
-export function parseStyle(input: unknown): Record<string, string | number> {
-  const r = record(input, [...styleProperties]);
-  for (const [k, v] of Object.entries(r)) {
-    if (enumStyles[k]) choice(v, enumStyles[k]!);
-    else if (numericStyles.has(k)) {
-      if (typeof v === "number") {
-        if (
-          !Number.isFinite(v) ||
-          v < (k === "letterSpacing" ? -10 : 0) ||
-          v > 4096
-        )
-          throw new InputError("Style dimension exceeds bounds");
-      } else if (
-        typeof v !== "string" ||
-        !/^(auto|[0-9]+(?:\.[0-9]+)?(?:px|rem|em|ch|%|vw|vh))$/.test(v) ||
-        parseFloat(v) > 4096
-      )
-        throw new InputError("Use a bounded dimension or auto");
-    } else if (k === "background" || k === "color") {
-      if (
-        typeof v !== "string" ||
-        !/^(#(?:[a-fA-F0-9]{3}|[a-fA-F0-9]{4}|[a-fA-F0-9]{6}|[a-fA-F0-9]{8})|transparent|currentColor)$/.test(
-          v,
-        )
-      )
-        throw new InputError("Use a hex color");
-    } else if (k === "fontFamily") {
-      if (
-        typeof v !== "string" ||
-        v.length > 150 ||
-        !/^[A-Za-z0-9 ,'-]+$/.test(v)
-      )
-        throw new InputError("Use local font families");
-    } else if (k === "gridTemplateColumns") {
-      if (
-        typeof v !== "string" ||
-        v.length > 200 ||
-        !/^(?:minmax\(0,[0-9.]+fr\)|[0-9.]+(?:fr|px|%|rem)|auto)(?: (?:minmax\(0,[0-9.]+fr\)|[0-9.]+(?:fr|px|%|rem)|auto))*$/.test(
-          v,
-        )
-      )
-        throw new InputError("Invalid grid columns");
-    } else if (k === "gridColumn" || k === "gridRow") {
-      if (
-        typeof v !== "string" ||
-        !/^(auto|[1-9][0-9]?(?: \/ (?:[1-9][0-9]?|span [1-9][0-9]?))?)$/.test(v)
-      )
-        throw new InputError("Invalid grid placement");
-    } else if (k === "border") {
-      if (
-        typeof v !== "string" ||
-        !/^(none|[0-9]{1,2}px (?:solid|dashed|dotted) (?:#(?:[a-fA-F0-9]{3}|[a-fA-F0-9]{4}|[a-fA-F0-9]{6}|[a-fA-F0-9]{8})|currentColor))$/.test(
-          v,
-        )
-      )
-        throw new InputError("Invalid border");
-    } else if (k === "aspectRatio") {
-      if (
-        typeof v !== "string" ||
-        !/^[1-9][0-9]{0,2} \/ [1-9][0-9]{0,2}$/.test(v)
-      )
-        throw new InputError("Invalid aspect ratio");
-    } else {
-      const bounds: Record<string, [number, number]> = {
-        fontWeight: [100, 900],
-        lineHeight: [0.8, 4],
-        opacity: [0, 1],
-      };
-      const range = bounds[k]!;
-      if (
-        typeof v !== "number" ||
-        !Number.isFinite(v) ||
-        v < range[0] ||
-        v > range[1]
-      )
-        throw new InputError("Invalid numeric style");
-    }
-  }
-  return r as Record<string, string | number>;
-}
 export function parsePage(
   input: unknown,
   resolveMedia?: (handle: string) => MediaBinding,
@@ -233,7 +99,7 @@ export function parsePage(
   let count = 0;
   const slots = new Set<string>();
   const anchors: string[] = [];
-  const element = (input: unknown, depth = 0): Element => {
+  const element = (input: unknown, depth = 0, path = "page.root"): Element => {
     if (depth > 12 || ++count > 400)
       throw new InputError("Page element resource bound exceeded");
     const x = record(input, [
@@ -264,7 +130,7 @@ export function parsePage(
     if (ids.has(node.id))
       throw new InputError("Duplicate local element identity");
     ids.add(node.id);
-    if (x["style"] !== undefined) node.style = parseStyle(x["style"]);
+    if (x["style"] !== undefined) node.style = parseStyle(x["style"], {path: path + ".style", nodeId: node.id});
     if (["heading", "text", "link"].includes(node.kind))
       node.text = string(x["text"], 8000);
     else if (x["text"] !== undefined)
@@ -305,8 +171,10 @@ export function parsePage(
         throw new InputError("Decorative media must use empty alt text");
     } else if (["slot", "alt", "decorative"].some((k) => x[k] !== undefined))
       throw new InputError("Media fields belong to media elements");
-    if (["container", "section"].includes(node.kind))
-      node.children = list(x["children"], (v) => element(v, depth + 1), 100);
+    if (["container", "section"].includes(node.kind)) {
+      let childIndex = 0;
+      node.children = list(x["children"], (v) => element(v, depth + 1, `${path}.children[${childIndex++}]`), 100);
+    }
     else if (x["children"] !== undefined)
       throw new InputError("Children belong to containers");
     return node;
@@ -330,9 +198,11 @@ export function parsePage(
       media[slot] = { asset, image: parseImageInfo(b["image"]) };
     }
   }
+  let responsiveIndex = 0;
   const responsive = list(
     r["responsive"],
     (v) => {
+      const index = responsiveIndex++;
       const x = record(v, ["maxWidth", "nodeId", "style"]);
       if (
         !Number.isInteger(x["maxWidth"]) ||
@@ -345,7 +215,7 @@ export function parsePage(
       return {
         maxWidth: Number(x["maxWidth"]),
         nodeId,
-        style: parseStyle(x["style"]),
+        style: parseStyle(x["style"], {path: `page.responsive[${index}].style`, nodeId}),
       };
     },
     100,

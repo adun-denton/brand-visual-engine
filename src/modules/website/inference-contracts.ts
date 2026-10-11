@@ -1,6 +1,7 @@
+import { styleObjectSchema, styleValueDefinitions } from "./style-contracts.ts";
 import type { VersionRef, Value } from "../../kernel/contracts.ts";
 import type { PageState, MediaState, Lock } from "./page.ts";
-import { parsePage, parseStyle, styleProperties } from "./page.ts";
+import { parsePage, parseStyle } from "./page.ts";
 import { canonical } from "../../kernel/packets.ts";
 import {
   record,
@@ -267,13 +268,8 @@ export const inferenceOutputSchema = {
     },
   },
   $defs: {
-    style: {
-      type: "object",
-      additionalProperties: false,
-      properties: Object.fromEntries(
-        styleProperties.map((p) => [p, { type: ["string", "number"] }]),
-      ),
-    },
+    ...styleValueDefinitions,
+    style: styleObjectSchema,
     node: nodeSchema,
     page: {
       type: "object",
