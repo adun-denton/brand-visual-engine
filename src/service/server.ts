@@ -8,7 +8,7 @@ import { AIDirections } from './ai-directions.ts';
 import { Providers } from './providers.ts';
 import { Regions } from './regions.ts';
 import type { ProviderConfig } from './providers.ts';
-import { createServer } from 'node:http';
+import { createDrainingServer } from './http-drain.ts';
 import type { Server } from 'node:http';
 import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -53,7 +53,7 @@ export async function startApp(
   const grants = new Map<string,{pid:string;tid:string}>();
   const account = new AccountChatDriver(root,auth,()=>origin,(pid,tid)=>{const token=randomBytes(32).toString('hex');grants.set(token,{pid,tid});return {token,release:()=>{grants.delete(token);}};},async(pid,refs)=>Promise.all(refs.map(async r=>{const m=await pages.mediaBytes(pid,r);return {type:'image' as const,url:'data:image/'+m.info.format+';base64,'+m.bytes.toString('base64')};})));
   const chat = new Chat(root,workspace,pages,workspaceOptions?.chatDriver ?? (process.env['BVE_CHAT_POLICY_FILE'] ? account : undefined),workspaceOptions?.chatImageDriver);
-  const server = createServer(async (req, res) => {
+  const http = createDrainingServer(async (req, res) => {
     if (closing) {
       res.writeHead(503, { 'Content-Type': 'text/plain; charset=utf-8', Connection: 'close' });
       res.end('Local workspace is stopping. Saved work is retained.');
@@ -475,6 +475,7 @@ export async function startApp(
       }, false); // Error responses never repeat fallible workspace/provider projection.
     }
   });
+  const server = http.server;
   server.requestTimeout = 15000;
   server.headersTimeout = 10000;
   await new Promise<void>((resolve, reject) => {
@@ -498,10 +499,7 @@ export async function startApp(
       if (closePromise) return closePromise;
       closing = true;
       // Stop HTTP admission/drain readers before closing private chat persistence.
-      const drained = new Promise<void>((resolve, reject) =>
-        server.close((e) => (e ? reject(e) : resolve())),
-      );
-      server.closeIdleConnections();
+      const drained = http.close();
       closePromise = (async () => {
         await providers.close();
         await drained;

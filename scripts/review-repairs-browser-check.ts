@@ -3,6 +3,8 @@ import { chromium, expect } from '@playwright/test';
 import { mkdtempSync, mkdirSync, writeFileSync, cpSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { once } from 'node:events';
+import { connect } from 'node:net';
 import { startApp } from '../src/service/server.ts';
 import type { RunningApp } from '../src/service/server.ts';
 import { reference } from '../src/kernel/packets.ts';
@@ -22,6 +24,19 @@ const submit=async(selector:string,text:string)=>{console.log('Review submit:',s
 const open=async(pid:string)=>{console.log('Review open:',pid);await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
   await page.goto(app!.origin);await page.locator(`[data-action=open][data-id="${pid}"]`).click();await expect(page.locator('#studio-prepare')).toBeVisible();};
 const active=async()=>JSON.parse(await page.locator('#studio-active').inputValue()).id as string;
+// Keep a deliberately unused accepted connection through each retained close/reopen
+// control. The runtime must settle without depending on the client to disconnect.
+const closeRuntime=async()=>{
+ const runtime=app!, accepted=once(runtime.server,'connection');
+ const socket=connect({host:'127.0.0.1',port:Number(new URL(runtime.origin).port),allowHalfOpen:true});
+ socket.on('error',()=>{});await Promise.all([accepted,once(socket,'connect')]);
+ let timer:ReturnType<typeof setTimeout>|undefined;
+ try {
+  await Promise.race([runtime.close(),new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(Error('Review shutdown retained an unused TCP connection')),3000);})]);
+  expect(socket.bytesRead).toBe(0);expect(socket.bytesWritten).toBe(0);
+  receipts.push({scenario:'unused-tcp-shutdown',clientBytesRead:socket.bytesRead,clientBytesWritten:socket.bytesWritten,settledBeforeClientDisconnect:true});
+ } finally {clearTimeout(timer);socket.destroy();}
+};
 try {
  if(process.argv[2]!=='selection') for(const scenario of ['cancelled','base-stale','project-stale']) {
   const p=app!.workspace.create({title:'Historical '+scenario,mode:'freeroam',visualOS:null,palette:null}).project!;
@@ -64,7 +79,7 @@ try {
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.setViewportSize({width:1440,height:1000});
   const port=Number(new URL(app!.origin).port);await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
-  await page.goto('about:blank');console.log('Review closing runtime');await app!.close();app=null;console.log('Review runtime closed');
+  await page.goto('about:blank');console.log('Review closing runtime');await closeRuntime();app=null;console.log('Review runtime closed');
   const copy=root+'-closed-copy';cpSync(root,copy,{recursive:true});root=copy;
   app=await startApp(root,port,undefined,undefined,{aiResponseFixture:true});
   await open(p.id);expect(await active()).toBe(current.id);
@@ -121,7 +136,7 @@ try {
   await open(p.id);await check();
   expect(app!.workspace.state(p.id).accepted).toEqual(acceptanceBefore);
   const port=Number(new URL(app!.origin).port);await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
-  await page.goto('about:blank');console.log('Review closing runtime');await app!.close();app=null;console.log('Review runtime closed');
+  await page.goto('about:blank');console.log('Review closing runtime');await closeRuntime();app=null;console.log('Review runtime closed');
   app=await startApp(root,port,undefined,undefined,{aiResponseFixture:true});await open(p.id);await check();
   receipts.push({scenario:'legacy-direction-selection',expected,placementTarget:a.payload.candidates[1],acceptanceUnchanged:true,nativeAndAPIDefaultsPreserved:true});
  }
