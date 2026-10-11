@@ -37,13 +37,23 @@ const browser = await chromium.launch({
     : {}),
   args: ['--no-sandbox', '--disable-dev-shm-usage'],
 });
-const context = await browser.newContext({
+let context = await browser.newContext({
   viewport: { width: 1440, height: 1000 },
   acceptDownloads: true,
 });
-const page = await context.newPage();
+let page = await context.newPage();
 const errors: string[] = [];
-page.on('pageerror', (e) => errors.push(e.message));
+const configurePage = () => {
+  context.setDefaultTimeout(15000);
+  context.setDefaultNavigationTimeout(30000);
+  page.on('pageerror', (e) => errors.push(e.message));
+};
+configurePage();
+let stage = 'start';
+const checkpoint = (name: string) => {
+  stage = name;
+  console.log(JSON.stringify({ check: 'ai-assets-stage', stage }));
+};
 const view = async (name: string) => {
   await page.getByRole('button', { name, exact: true }).click();
 };
@@ -74,7 +84,8 @@ const download = async (selector: string, name: string) => {
   return readFileSync(p);
 };
 try {
-  await page.goto(app.origin);
+  checkpoint('initial entry');
+  await page.goto(app.origin, { waitUntil: 'domcontentloaded' });
   await page.locator('#create [name=title]').fill('AI asset loop rehearsal');
   await page.locator('#create button[type=submit]').click();
   await expect(page.locator('.workspace-title h1')).toHaveText(
@@ -329,7 +340,8 @@ try {
     await overflow();
     await page.screenshot({ path: join(evidence, `composition-${width}.png`) });
   }
-  await page.reload();
+  checkpoint('visible reload');
+  await page.reload({ waitUntil: 'domcontentloaded' });
   await page
     .getByRole('button', { name: 'AI asset loop rehearsal', exact: true })
     .click();
@@ -337,14 +349,27 @@ try {
   await expect(page.locator('#composition-editor [name=title]')).toHaveValue(
     'Visible AI page edit survives reopen',
   );
+  // Close the browser's live previews before closing/copying the owned store.
+  // Reopening in a fresh context also proves recovery without cached UI state.
+  checkpoint('close browser context');
+  await context.close();
+  checkpoint('close owned app');
   await app.close();
   app = null;
+  checkpoint('copy closed root');
   const copy = root + '-closed-copy';
   cpSync(root, copy, { recursive: true });
   app = await startApp(copy, 0, undefined, undefined, {
     aiResponseFixture: true,
   });
-  await page.goto(app.origin);
+  checkpoint('fresh-context reopen');
+  context = await browser.newContext({
+    viewport: { width: 1440, height: 1000 },
+    acceptDownloads: true,
+  });
+  page = await context.newPage();
+  configurePage();
+  await page.goto(app.origin, { waitUntil: 'domcontentloaded' });
   await page
     .getByRole('button', { name: 'AI asset loop rehearsal', exact: true })
     .click();
@@ -407,11 +432,12 @@ try {
   );
   console.log(JSON.stringify(receipt));
 } catch (error) {
+  console.error({ stage, error });
   console.error({
-    notice: await page.locator('#notice').textContent(),
+    notice: await page.locator('#notice').textContent({ timeout: 1000 }).catch(() => null),
     errors,
   });
-  await page.screenshot({ path: join(evidence, 'ai-assets-failure.png') });
+  await page.screenshot({ path: join(evidence, 'ai-assets-failure.png'), timeout: 3000 }).catch(() => {});
   throw error;
 } finally {
   await browser.close();

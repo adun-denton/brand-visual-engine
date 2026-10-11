@@ -19,6 +19,7 @@ The PR body supplies the exact result head/tree and CI; this file cannot contain
 | `src/web/index.html`, `scripts/build.ts`, `package.json` | Separate browser bundle and link; existing workspace preserved; no dependency addition |
 | `scripts/visual-fixture.ts`, `visual-review.ts` | Six hand-authored synthetic raster compositions and safe fresh-root review launch; explicit disabled provider configuration |
 | `tests/visual-workspace.test.ts`, `scripts/visual-browser-check.ts`, `.github/workflows/verify.yml` | Adverse HTTP/service/recovery tests and actual geometry/persistence walkthrough; new CI browser step/artifact |
+| `scripts/ai-assets-browser-check.ts` | Continuation repair: bounded navigation/action waits, original failure diagnostics and fresh browser context before closed-root copy/reopen |
 | `docs/visual-workspace.md`, `visual-workspace-result.md` | Sanitized rationale, request keys/units/scopes, results, limitations and rollback |
 
 No SQL/schema change, parallel database or user-data migration. No private planning files, client
@@ -47,12 +48,21 @@ CI uses the workflow's pinned Playwright Chromium and is separately checked at t
 | Recovery / conflict | Final-packet failure rolls back spec and batch; exact-lock conflicts are useful 409s; manual retry keeps lineage; partial/uncertain/cancelled outcomes never auto-adopt or accept |
 | Multiple saved sets | Exact choice required; updating one set preserves the other; no canonical active pointer invented |
 | `npm run test:browser:pages`, `npm run test:browser:regions` | Existing relevant browser workflows pass locally; all eight are retained in platform CI |
+| `npm run test:browser:ai-assets` | Pass locally after harness repair; same accepted export bytes survive fresh-context closed-root recovery, zero provider calls |
 | `git diff --check` | Pass before publication |
 
 Source evidence is the named service tests, the browser script's assertions and its screenshots /
 `walkthrough.json`. Screens: `01-a-desktop`, `02-a-focus`, `03-b-comparison`, `04-b-narrow`,
 `05-a-narrow`, `06-prepared`, `07-b-desktop`. Desktop 1440×900; narrow 390×844. CI artifacts
 are exact-head evidence; screenshots are not substitutes for geometry/persistence assertions.
+
+Continuation: the first published V02 head passed Linux CI but two Windows attempts timed out
+inside the inherited asset browser harness before reaching V02. That harness now closes its
+browser context before app/store closure, copies only the closed root and reopens in a fresh
+context. Navigation waits are bounded and failures retain the original error and stage even
+when diagnostic browser reads fail. Production services and persistence contracts are unchanged
+by this repair. The PR body records the updated exact head/tree and actual platform results;
+the earlier timed-out jobs remain historical evidence, not a Windows pass.
 
 ## Review, remaining constraints and rollback
 
