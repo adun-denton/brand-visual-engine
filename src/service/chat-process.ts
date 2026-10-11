@@ -1,7 +1,8 @@
 import { spawn, execFileSync } from "node:child_process";
 import type { ChildProcessWithoutNullStreams } from "node:child_process";
 import { createInterface } from "node:readline";
-import { mkdirSync, writeFileSync, chmodSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
+import { ensurePrivateDirectory, writePrivateJson } from './private-storage.ts';
 import { join, resolve } from "node:path";
 import { CHAT_PROTOCOL } from "./chat-contracts.ts";
 import type { ChatDriver } from "./chat-contracts.ts";
@@ -208,17 +209,16 @@ export class AccountChatDriver implements ChatDriver {
     checkSignal(c.signal);
     const token = await abortable(c.signal, this.auth.token());
     checkSignal(c.signal);
-    const dir = join(this.root, "chat-process-private", c.turn.projectId);
-    mkdirSync(dir, { recursive: true, mode: 0o700 });
-    chmodSync(dir, 0o700);
+    const dir = resolve(this.root, "chat-process-private", c.turn.projectId);
+    ensurePrivateDirectory(resolve(this.root, 'chat-process-private'));
+    ensurePrivateDirectory(dir);
     let rpc: Rpc | undefined;
     const grant = this.grant(c.turn.projectId, c.turn.id);
     try {
       const catalog = join(dir, "restricted-model-catalog.json");
-      writeFileSync(
+      writePrivateJson(
         catalog,
-        readFileSync(join(import.meta.dirname, "chat-model-catalog.json")),
-        { mode: 0o600 },
+        JSON.parse(readFileSync(join(import.meta.dirname, "chat-model-catalog.json"), 'utf8')),
       );
       const config = {
         ...restrictedConfig,

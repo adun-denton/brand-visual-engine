@@ -40,12 +40,14 @@ credit purchase/reset, account switching, or unattended provider retry is implem
 Live eligibility and repository licensing have **not** been independently determined. The account path
 is disabled by default. Before login or a real turn, the coordinator must record supported local-use
 eligibility, license review, account selection, selected model, fresh bounded turn count and no-paid
-policy. Windows account use is additionally gated on a private ACL review; offline UI/tests run there.
+policy. Windows storage now uses native protected ACLs; see the
+[storage boundary and verification](chat-windows-storage.md). Unsafe storage still disables account use.
 The source currently supports only the restricted `gpt-6-luna` profile tested with Codex `0.162.1`.
 Another model requires its own effective capability probe; there is no model substitution.
 
-For an independently authorized POSIX trial, set `BVE_CODEX_BINARY` to the exact `codex-cli 0.162.1`
-binary and `BVE_CHAT_POLICY_FILE` to an absolute, protected file outside Git (mode 0600). Its fields are
+For an independently authorized local trial, set `BVE_CODEX_BINARY` to the exact `codex-cli 0.162.1`
+binary and `BVE_CHAT_POLICY_FILE` to an absolute, protected file outside Git. POSIX requires a private
+directory and mode0600 file; Windows requires the checked current-user-only protected ACL. Its fields are
 `version: 1`, `eligibleLocalUseReview`, `licenseReview`, `model`, `maxTurns`, `noPaid: true`,
 `allowLogin: true`, and `toolBoundaryReview`. Review fields reference real coordinator decisions;
 their presence is not a legal determination. The durable budget counts attempts and survives restart.

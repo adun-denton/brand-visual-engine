@@ -1,14 +1,7 @@
 import { randomBytes, randomUUID, createHash } from "node:crypto";
-import {
-  existsSync,
-  readFileSync,
-  writeFileSync,
-  renameSync,
-  mkdirSync,
-  chmodSync,
-  lstatSync,
-} from "node:fs";
-import { join, resolve, relative, isAbsolute } from "node:path";
+import { existsSync } from "node:fs";
+import { join, resolve, isAbsolute } from "node:path";
+import { assertOutsideGit, ensurePrivateDirectory, readPrivateJson, writePrivateJson } from './private-storage.ts';
 import { createRemoteJWKSet, jwtVerify, customFetch } from "jose";
 import { digest } from "../kernel/packets.ts";
 import { InputError, record, string, integer } from "./validation.ts";
@@ -41,54 +34,31 @@ export class ChatAuth {
     client: string;
     at: number;
   } | null = null;
-  private host: string;
+  private host: string | null = null;
   fetcher: typeof fetch;
   private credentials: Credentials | null;
   constructor(root: string, fetcher: typeof fetch = fetch) {
-    this.dir = join(root, "chat-account-private");
-    mkdirSync(this.dir, { recursive: true, mode: 0o700 });
-    chmodSync(this.dir, 0o700);
+    this.dir = join(resolve(root), "chat-account-private");
     this.fetcher = fetcher;
-    this.host = existsSync(join(this.dir, "host.json"))
-      ? JSON.parse(readFileSync(join(this.dir, "host.json"), "utf8")).id
-      : "urn:uuid:" + randomUUID();
-    this.write("host.json", { id: this.host });
     this.credentials = existsSync(join(this.dir, "credentials.json"))
-      ? this.readPrivate("credentials.json")
+      ? this.readPrivate<Credentials>("credentials.json")
       : null;
   }
-  private readPrivate(name: string) {
-    const p = join(this.dir, name),
-      s = lstatSync(p);
-    if (
-      s.isSymbolicLink() ||
-      !s.isFile() ||
-      (process.platform !== "win32" && s.mode & 0o077)
-    )
-      throw new InputError("Account storage must be protected");
-    return JSON.parse(readFileSync(p, "utf8"));
+  private readPrivate<T = Record<string, unknown>>(name: string): T {
+    return readPrivateJson(join(this.dir, name)) as T;
   }
   private write(name: string, data: unknown) {
-    const p = join(this.dir, name),
-      tmp = p + ".tmp";
-    writeFileSync(tmp, JSON.stringify(data) + "\n", { mode: 0o600 });
-    chmodSync(tmp, 0o600);
-    renameSync(tmp, p);
+    ensurePrivateDirectory(this.dir);
+    writePrivateJson(join(this.dir, name), data);
   }
   policy(): ChatPolicy {
-    if (process.platform === "win32")
-      throw new InputError(
-        "Account trial unavailable until private Windows ACL protection is reviewed",
-      );
     const path = process.env["BVE_CHAT_POLICY_FILE"];
     if (!path || !isAbsolute(path))
       throw new InputError(
         "Connection awaits coordinator account/eligibility and bounded-turn review",
       );
-    const p = lstatSync(path);
-    if (!p.isFile() || p.isSymbolicLink() || p.mode & 0o077)
-      throw new InputError("Use a protected coordinator policy outside Git");
-    const v = record(JSON.parse(readFileSync(path, "utf8")), [
+    assertOutsideGit(path);
+    const v = record(readPrivateJson(path), [
       "version",
       "eligibleLocalUseReview",
       "licenseReview",
@@ -122,6 +92,12 @@ export class ChatAuth {
   }
   begin(origin: string) {
     this.policy();
+    ensurePrivateDirectory(this.dir);
+    if (!this.host) {
+      this.host = existsSync(join(this.dir, "host.json"))
+        ? string(this.readPrivate('host.json')['id']) : 'urn:uuid:' + randomUUID();
+      this.write('host.json', {id: this.host});
+    }
     if (this.pending && Date.now() - this.pending.at < 300000)
       throw new InputError("A sign-in is already pending");
     const state = randomBytes(32).toString("base64url"),
@@ -151,6 +127,8 @@ export class ChatAuth {
     return { url: u.toString() };
   }
   async callback(query: URLSearchParams) {
+    this.policy();
+    ensurePrivateDirectory(this.dir);
     const p = this.pending;
     if (!p || Date.now() - p.at > 300000 || query.get("state") !== p.state)
       throw new InputError("Sign-in state is invalid or expired");
@@ -208,7 +186,7 @@ export class ChatAuth {
     const scope = string(v["scope"]);
     if (!scope.split(" ").includes("chatgpt.tokens.use.direct"))
       throw new InputError("ChatGPT plan permission was not granted");
-    this.credentials = {
+    const credentials = {
       client_id: client,
       subject: verified.payload.sub,
       id_token: token,
@@ -217,7 +195,8 @@ export class ChatAuth {
       scope,
       expiresAt: Date.now() + integer(v["expires_in"], 86400) * 1000,
     };
-    this.write("credentials.json", this.credentials);
+    this.write("credentials.json", credentials);
+    this.credentials = credentials;
     return { connected: true };
   }
   consumeTurn() {
@@ -233,6 +212,8 @@ export class ChatAuth {
   }
   async token() {
     this.policy();
+    ensurePrivateDirectory(this.dir);
+    if (this.credentials) this.readPrivate<Credentials>('credentials.json');
     const c = this.credentials;
     if (!c) throw new InputError("Continue with ChatGPT to connect");
     if (Date.now() < c.expiresAt - 60000) return c.access_token;
