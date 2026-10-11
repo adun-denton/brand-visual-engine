@@ -1,3 +1,4 @@
+import { VisualWorkspace } from './visual-workspace.ts';
 import { Compositions } from './compositions.ts';
 import { Pages } from './pages.ts';
 import { AIDirections } from './ai-directions.ts';
@@ -39,6 +40,7 @@ export async function startApp(
   const compositions = new Compositions(workspace);
   const pages = new Pages(workspace);
   const directions = new AIDirections(workspace);
+  const visual = new VisualWorkspace(workspace);
   let origin = '';
   const server = createServer(async (req, res) => {
     const json = (status: number, body: unknown, augment = true) => {
@@ -76,6 +78,30 @@ export async function startApp(
       const url = new URL(req.url ?? '/', origin);
       const path = url.pathname;
       if (req.method === 'GET') {
+        if (path === '/api/v1/visual/session') {
+          json(200, { token, ...visual.catalog() }, false);
+          return;
+        }
+        if (path === '/api/v1/visual/project') {
+          json(200, visual.project(id(url.searchParams.get('project'))), false);
+          return;
+        }
+        if (path === '/api/v1/visual/state' || path === '/api/v1/visual/image') {
+          const pid = id(url.searchParams.get('project'));
+          const pointer = ref({
+            id: url.searchParams.get('id'),
+            version: Number(url.searchParams.get('version')),
+            freshness: 'pinned',
+          });
+          if (path.endsWith('/state')) {
+            json(200, visual.state(pid, pointer), false);
+            return;
+          }
+          const raster = await visual.exploration.raster(pid, pointer);
+          res.writeHead(200, { 'Content-Type': 'image/' + raster.state.image.format });
+          res.end(raster.bytes);
+          return;
+        }
         if (path === '/api/v1/session') {
           json(200, { token, ...workspace.state() });
           return;
@@ -193,6 +219,9 @@ export async function startApp(
           return;
         }
         const files: Record<string, { file: string; type: string }> = {
+          '/visual': { file: 'visual.html', type: 'text/html; charset=utf-8' },
+          '/visual.js': { file: 'visual.js', type: 'text/javascript' },
+          '/visual.css': { file: 'visual.css', type: 'text/css' },
           '/': { file: 'index.html', type: 'text/html; charset=utf-8' },
           '/app.js': { file: 'app.js', type: 'text/javascript' },
           '/app.css': { file: 'app.css', type: 'text/css' },
@@ -233,6 +262,18 @@ export async function startApp(
         throw new InputError('Invalid JSON');
       }
       let result: unknown;
+      if (path === '/api/v1/visual/create') {
+        json(200, visual.create(input), false);
+        return;
+      }
+      if (path.startsWith('/api/v1/visual/')) {
+        const outer = record(input, ['projectId', 'input']);
+        result = await visual.command(
+          id(outer['projectId']), path.slice('/api/v1/visual/'.length), outer['input'],
+        );
+        json(200, result, false);
+        return;
+      }
       if (path === '/api/v1/projects') result = workspace.create(input);
       else if (path === '/api/v1/metadata')
         result = workspace.inspectMetadata(input);
