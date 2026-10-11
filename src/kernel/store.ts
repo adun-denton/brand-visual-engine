@@ -6,7 +6,7 @@ import type { IterationBundle, LedgerEvent, NodePacket, PortContract, ProjectLed
 import { contractGate, revalidatePacket, writePort } from './gate.ts';
 import type { GateEnvironment } from './gate.ts';
 import { digest, reference, revise } from './packets.ts';
-export type KernelServices = Pick<GateEnvironment, 'assetExists' | 'moduleExists' | 'validateArtifact' | 'grantedPermissions'>;
+export type KernelServices = Pick<GateEnvironment, 'assetExists' | 'imageMatches' | 'moduleExists' | 'validateArtifact' | 'grantedPermissions'>;
 
 /** Additive generic sidecar. Legacy workspace.sqlite and asset bytes are never migrated implicitly. */
 export class KernelStore {

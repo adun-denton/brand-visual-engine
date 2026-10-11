@@ -1,3 +1,6 @@
+import { explorationGate } from './exploration-gate.ts';
+import { explorationRoles } from '../modules/website/exploration-contracts.ts';
+import type { ImageInfo } from '../service/assets.ts';
 import type { LocalField, NodePacket, PacketType, PortContract, VersionRef, VisualOS } from './contracts.ts';
 import { atPath, canonical, digest } from './packets.ts';
 import { resolveContext } from './context.ts';
@@ -7,6 +10,7 @@ export interface GateEnvironment {
   currentVersion(id: string): number | null;
   assetExists(id: string, checksum: string): boolean;
   moduleExists(id: string): boolean;
+  imageMatches?(image: ImageInfo): boolean;
   validateArtifact(moduleId: string, payload: Record<string, unknown>): void;
   accepted?(projectId: string, ref: VersionRef): boolean;
   grantedPermissions: string[];
@@ -181,6 +185,7 @@ export function contractGate(input: unknown, port: PortContract, env: GateEnviro
     const before = atPath(previous.payload, path), after = atPath(p['payload'], path);
     if (before === undefined || after === undefined || canonical(before) !== canonical(after)) throw new Error('preservation contract failed');
   }
+  explorationGate(p as unknown as NodePacket<unknown>, previous, env);
   const refs = [...list(p['contextRefs']).map(versionRef), ...list(p['dependencies']).map(versionRef), ...payloadSchema(type, p['payload'], env)];
   const payload = object(p['payload']);
   if (type === 'artifact-metadata' && p['projectId'] !== null && p['projectId'] !== object(payload['project'])['id']) throw new Error('metadata envelope project mismatch');
@@ -190,7 +195,7 @@ export function contractGate(input: unknown, port: PortContract, env: GateEnviro
     const owner = ownerVersion === null ? null : env.lookup({ id: p['projectId'] as string, version: ownerVersion, freshness: 'pinned' });
     if (owner?.type !== 'module-project' || object(owner.payload)['moduleId'] !== payload['moduleId']) throw new Error('artifact owner mismatch');
   }
-  const expectedRole: Record<string, PacketType> = { 'website-page': 'design-artifact', 'page-media': 'media-asset', 'inference-request': 'work-record', 'inference-result': 'work-record', 'page-migration': 'work-record', 'page-media-origin': 'work-record', 'page-import':'work-record', 'website-assembly': 'website-assembly' };
+  const expectedRole: Record<string, PacketType> = { ...explorationRoles, 'website-page': 'design-artifact', 'page-media': 'media-asset', 'inference-request': 'work-record', 'inference-result': 'work-record', 'page-migration': 'work-record', 'page-media-origin': 'work-record', 'page-import':'work-record', 'website-assembly': 'website-assembly' };
   if (expectedRole[String(payload['kind'])] && expectedRole[String(payload['kind'])] !== type) throw new Error('semantic record role mismatch');
   if (['media-asset', 'work-record', 'website-assembly'].includes(type) && !expectedRole[String(payload['kind'])]) throw new Error('unsupported semantic record kind');
   if (payload['kind'] === 'website-page') {

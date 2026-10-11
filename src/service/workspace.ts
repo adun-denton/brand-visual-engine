@@ -1,3 +1,5 @@
+import { explorationRoles } from '../modules/website/exploration-contracts.ts';
+import { matchesImageHeader } from './image-descriptor.ts';
 import { validateCompositionLinks } from './compositions.ts';
 import { AIDirections, validateAILinks } from './ai-directions.ts';
 import type {
@@ -96,6 +98,12 @@ export class Workspace {
     this.kernel = new KernelStore(root, {
       moduleExists,
       validateArtifact,
+      imageMatches: image => {
+        try {
+          return this.assets.exists(image.id, image.checksum)
+            && matchesImageHeader(this.assets.read(image.id), image);
+        } catch { return false; }
+      },
       assetExists: (a, h) =>
         this.assets.exists(a, h) || this.legacy.exists(a, h),
       grantedPermissions: ['read', 'write', 'accept'],
@@ -129,6 +137,8 @@ export class Workspace {
     return p;
   }
   private validateLinks(p: NodePacket<DesignArtifact<unknown>>) {
+    if (Object.hasOwn(explorationRoles, p.payload.kind))
+      revalidatePacket(p, writePort(p.type), this.kernel.environment());
     validateAILinks(p, this.kernel, this.assets);
     validateRegionLinks(p, this.kernel, this.assets);
     validateCompositionLinks(p, this.kernel, this.assets);

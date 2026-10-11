@@ -1,3 +1,4 @@
+import { validateExplorationRecord } from './exploration-contracts.ts';
 import type { BundleTemplate, DesignArtifact, Dimension, IterationBundle, ModuleManifest, ModuleProject, NodePacket, Value } from '../../kernel/contracts.ts';
 import { effectiveValues } from '../../kernel/context.ts';
 import { object, text } from '../../kernel/gate.ts';
@@ -20,6 +21,7 @@ export const explorationTemplate: BundleTemplate = { name: 'Landing page broad e
     { family: 'Styling', key: 'edge-expression', relative: 0.5 }, { family: 'Dynamics', key: 'motion-intent', relative: 0.5 }],
   capabilityIds: ['design.explore'], variationStrategy: 'coherent-grid' };
 export function validateWebsiteArtifact(payload: Record<string, unknown>): void {
+  if (validateExplorationRecord(payload)) return;
   if (validatePageRecord(payload) || validateInferenceRecord(payload)) return;
   if (validateWorkspaceArtifact(payload)) return;
   if (payload['kind'] === 'legacy-snapshot') { object(payload['state']); return; }
