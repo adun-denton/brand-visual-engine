@@ -44,7 +44,7 @@ export const pageGuidance = {
     "media has exactly the set of slots used by media nodes; repeated use of one slot is allowed. Every slot maps to null or an exact supplied placeable/upload handle. Reference-only, foreign, unknown or invented handles cannot be placed. Uploads are a separately authorized intake, not model-created files.",
     "Media explicitly declares decorative. When true, alt must trim to empty. Informational empty alt is accepted as an unresolved finding, not silently treated as decorative.",
     "Each responsive nodeId must exist in the same page; maxWidth is an integer240–4096. At most100 responsive entries. Repeated targets/breakpoints remain permitted. Styles use the separate property-specific styleGuidance authority.",
-    "mediaRequirements target existing page slots (including currently resolved slots); at most100 entries. Proposed actions (at most32) remain unexecuted. candidates at most6; create/revise needs at least one, critique may have none. Keep the exact requestId/requestHash and all frozen preservation locks.",
+    "mediaRequirements must target an own property of the parsed page.media mapping (including null/unresolved or currently resolved slots), not an inherited name. Prototype-like names are eligible when explicitly declared as own slots; at most100 entries. Proposed actions (at most32) remain unexecuted. candidates at most6; create/revise needs at least one, critique may have none. Keep the exact requestId/requestHash and all frozen preservation locks.",
     "Text bounds apply before trimming and count UTF-16 units, not Unicode code points. Preserve exact locked text/style/subtrees and current ownership. Shape success does not imply semantic success, acceptance or execution authority.",
   ],
 };

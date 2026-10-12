@@ -106,13 +106,15 @@ test("service envelope boundaries remain accepted/rejected independently of sche
       else { await assert.rejects(apply(), InputError, name); assert.deepEqual(workspace.kernel.latestPackets(), before); }
       assert.ok(Object.values(pages.state(pid).accepted).every(value => value === null));
     }
-    // Retain and disclose this pre-existing envelope compatibility edge rather
-    // than silently tightening its accepted language: `in` includes prototypes.
+    // R8 intentionally rejects non-own media needs on new intake while leaving
+    // the page parser's accepted language and historical results unchanged.
     pages.prepare(pid, {expectedProject: reference(workspace.project(pid)), base: null, operation: "create", instruction: "Synthetic membership edge", resources: [], locks: []});
     const q = pages.state(pid).requests.at(-1)!;
     const out: any = repairResult(q); out.candidates[0].mediaRequirements = [{slot: "constructor", instruction: "Proposed only"}];
     assert.equal(schema(out), true);
-    await pages.apply(pid, {request: reference(q), response: out, source: "Synthetic compatibility edge", model: null, aiAuthorship: true});
+    const before = workspace.kernel.latestPackets();
+    await assert.rejects(pages.apply(pid, {request: reference(q), response: out, source: "Synthetic own-slot boundary", model: null, aiAuthorship: true}), /Candidate 1:.*candidate.mediaRequirements\[0\].slot.*own page.media property/);
+    assert.deepEqual(workspace.kernel.latestPackets(), before);
     assert.ok(Object.values(pages.state(pid).accepted).every(value => value === null));
   } finally {workspace.close(); rmSync(root, {recursive: true, force: true});}
 });

@@ -537,9 +537,9 @@ export class Pages {
           const needs = field("candidate.mediaRequirements", "array of at most100 media needs", () => list(c["mediaRequirements"], v => {
             const path = `candidate.mediaRequirements[${needIndex++}]`;
             const n = field(path, "slot,instruction only", () => record(v, ["slot", "instruction"]));
-            const slot = field(path + ".slot", "existing slot in this same page; max160 UTF-16 units", () => {
+            const slot = field(path + ".slot", "existing slot in this same page (own page.media property); max160 UTF-16 units", () => {
               const value = string(n["slot"], limits.identity);
-              if (!(value in page.media)) throw new InputError("Media need targets an unknown slot");
+              if (!Object.hasOwn(page.media, value)) throw new InputError("Media need targets an unknown slot");
               return value;
             });
             return slot + ": " + field(path + ".instruction", "nonblank instruction; max4000 UTF-16 units", () => string(n["instruction"]));

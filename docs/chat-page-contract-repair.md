@@ -12,6 +12,12 @@ restrictions and style-only example remain in `style-contracts.ts` without chang
 The inference response schema describes model-facing media **handles**; persisted pages
 still require exact pinned asset/image bindings through the existing semantic gates.
 
+R8 updates only new-intake media requirement membership from inherited-inclusive `in`
+to `Object.hasOwn(page.media, slot)`. Its base is `dfcdae62cf7594efc6f8fc38dab16ffce391021c`.
+The page parser grammar is unchanged. Existing persisted results, hashes, acceptance pointers
+and successful/error receipts retain their historical meaning and duplicate replay behavior.
+There is no retroactive validation, migration or name blacklist.
+
 ## Audited contract matrix
 
 | Family | Exported JSON Schema | Parser/service semantic gate and retained behavior |
@@ -28,7 +34,7 @@ still require exact pinned asset/image bindings through the existing semantic ga
 | Responsive | Required maxWidth/nodeId/style; integer240–4096, local identity grammar, shared style constraints,≤100 | Target must exist in this page. Repeated targets/viewports remain valid; no required breakpoint |
 | Preservation | Not independently provable from response shape | Exact frozen text/style/subtree locks, same ownership/currentness gates; no inferred preservation or coercion |
 | Candidate envelope | Label≤200/rationale≤4000;≤6 candidates; findings≤100×4000; actions≤32×4000; media needs≤100 with slot≤160/instruction≤4000; no unknown fields | Exact request/hash binding; create/revise needs candidates, critique may have none. All candidate validation precedes writes. Proposed actions stay unexecuted |
-| Media requirements | Nonblank bounded slot/instruction pairs | Existing membership uses JavaScript `in`. Ordinary unknown slots reject; inherited property names such as `constructor` remain a compatibility edge, explicitly tested and disclosed. Tightening to own-slot membership needs a separately reviewed grammar change |
+| Media requirements | Nonblank bounded slot/instruction pairs | R8 new intake requires an own parsed page.media property. Absent inherited names reject; explicitly declared own constructor/toString/hasOwnProperty slots remain eligible, including null or resolved bindings and repeated needs. Historical records/receipts are not revalidated or rewritten |
 
 The schema is a shape gate, not complete semantic validation. Relational checks, aggregate
 limits, UTF-16 limits, request binding, resource ownership/integrity and preservation remain
@@ -80,6 +86,11 @@ for13 page families and test adjacent envelope boundaries at schema and service 
 Adverse service/tool/HTTP checks reject malformed second candidates without candidate,
 result, selection, acceptance, ledger or image-job writes. A completed action receipt
 contains an error; duplicate action identity returns that exact error without re-execution.
+R8 synthetic controls additionally cover absent inherited names on empty/unrelated-slot pages,
+declared own names and valid supplied handles, whole-submission rejection through service/tool/HTTP,
+a later explicit corrected submission, and historical result/receipt replay. The historical
+fixture is produced by the exact R7 base in a disposable runtime, then read by the candidate;
+old packet integrity, accepted export bytes, original media bytes and receipts remain unchanged.
 
 Run all nine retained browser scripts from `verify.yml` plus
 `npm run test:browser:page-contract`. The added desktop/390px probe demonstrates actionable
