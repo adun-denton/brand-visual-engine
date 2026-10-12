@@ -12,7 +12,9 @@ import {
   lstatSync,
 } from 'node:fs';
 import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { InputError } from './validation.ts';
+import { canonical } from '../kernel/packets.ts';
 export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 export const MAX_PIXELS = 16_000_000;
 export interface ImageInfo {
@@ -22,6 +24,14 @@ export interface ImageInfo {
   height: number;
   format: 'png' | 'jpeg' | 'webp';
   bytes: number;
+}
+export interface RasterOrientation { coordinates:'encoded-top-left'; exif:number|null; displayWidth:number; displayHeight:number; }
+export interface RasterFacts { image:ImageInfo; orientation:RasterOrientation; }
+export async function inspectRaster(bytes:Buffer):Promise<RasterFacts> {
+  const image=await decode(bytes), meta=await sharp(bytes).metadata(), exif=meta.orientation??null;
+  if(exif!==null&&(!Number.isInteger(exif)||exif<1||exif>8))throw new InputError('Invalid raster orientation');
+  const swapped=exif!==null&&exif>=5;
+  return {image,orientation:{coordinates:'encoded-top-left',exif,displayWidth:swapped?image.height:image.width,displayHeight:swapped?image.width:image.height}};
 }
 const hash = (b: Buffer) => createHash('sha256').update(b).digest('hex');
 export async function decode(bytes: Buffer): Promise<ImageInfo> {
@@ -74,6 +84,7 @@ export async function decode(bytes: Buffer): Promise<ImageInfo> {
 }
 export class Assets {
   root: string;
+  private decoded=new Map<string,RasterFacts>();
   constructor(root: string) {
     this.root = join(root, 'native-assets');
     mkdirSync(this.root, { recursive: true });
@@ -96,6 +107,29 @@ export class Assets {
     const bytes = readFileSync(path);
     if (hash(bytes) !== id) throw new InputError('Asset checksum mismatch');
     return bytes;
+  }
+  /** Cache only fully decoded facts under content hash; each use still verifies exact stored bytes. */
+  async inspect(image:ImageInfo):Promise<RasterFacts> {
+    const facts=await inspectRaster(this.read(image.id));
+    if(canonical(facts.image)!==canonical(image))throw new InputError('Raster descriptor mismatch');
+    this.remember(facts);return facts;
+  }
+  private remember(facts:RasterFacts) {
+    if(this.decoded.size>=128)this.decoded.delete(this.decoded.keys().next().value!);
+    this.decoded.set(facts.image.checksum,facts);
+  }
+  facts(image:ImageInfo):RasterFacts|null {
+    try {
+      const bytes=this.read(image.id);
+      let facts=this.decoded.get(image.checksum);
+      if(!facts){
+        const r=spawnSync(process.execPath,[join(import.meta.dirname,'raster-inspect-worker.ts')],{input:bytes,maxBuffer:1024*1024,timeout:10000,windowsHide:true});
+        if(r.status!==0)return null;
+        facts=JSON.parse(r.stdout.toString()) as RasterFacts;
+        this.remember(facts);
+      }
+      return canonical(facts.image)===canonical(image)?structuredClone(facts):null;
+    }catch{return null;}
   }
   save(bytes: Buffer, info: Pick<ImageInfo, 'id' | 'checksum'>): void {
     if (

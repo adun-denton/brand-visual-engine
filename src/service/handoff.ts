@@ -1,6 +1,7 @@
 import { InputError } from './validation.ts';
 /** Bounded deterministic ustar: generated names only, no links, timestamps or source paths. */
-export function tar(files: Map<string, Buffer>, mode: 'legacy' | 'page' | 'website' | 'request' = 'legacy'): Buffer {
+export function tar(files: Map<string, Buffer>, mode: 'legacy' | 'page' | 'website' | 'request' | 'raster' = 'legacy'): Buffer {
+  if(mode==='raster'&&(files.size!==2||!files.has('manifest.json')||files.get('manifest.json')!.length>65536||[...files].some(([name,bytes])=>name!=='manifest.json'&&(!/^assets\/[a-f0-9]{64}\.(png|jpg|webp)$/.test(name)||bytes.length>8*1024*1024))))throw new InputError('Raster package requires one bounded original and manifest');
   const chunks: Buffer[] = [];
   let size = 1024;
   for (const [name, data] of [...files].sort(([a], [b]) =>

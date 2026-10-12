@@ -24,6 +24,7 @@
     "test:browser:pages": "node scripts/pages-browser-check.ts",
     "test:browser:review-repairs": "node scripts/review-repairs-browser-check.ts",
     "test:browser:memory": "node scripts/memory-browser-check.ts",
+    "test:browser:library": "node scripts/library-browser-check.ts",
     "test:browser:execution": "node scripts/execution-browser-check.ts"
   },
   "devDependencies": {

@@ -267,6 +267,8 @@ const fullKinds = new Set([
   "raster-execution",
   "raster-execution-receipt",
   "project-handoff-note",
+  "project-raster-library-item",
+  "project-raster-library-reuse",
 ]);
 /** Whitelisted public continuation projection. Never serialize runtime objects, raw exports or grants. */
 export function evidenceSummary(p: NodePacket<unknown>): Value | null {

@@ -834,3 +834,13 @@ pre {
 .execution input[type="checkbox"] { width:auto; }
 
 .project-memory {margin:24px 0;padding:18px;border:1px solid var(--line,#d6d8d2);border-radius:12px;background:#f5f6ef} .project-memory>summary {font-weight:650;cursor:pointer} .project-memory article {padding:12px;border-bottom:1px solid #d6d8d2} .memory-columns {display:grid;grid-template-columns:1fr 1fr;gap:24px} .project-memory label {display:block} .project-memory textarea {width:100%} .project-memory button,.project-memory a {margin:5px 5px 5px 0} .project-memory pre {white-space:pre-wrap;overflow-wrap:anywhere;max-height:420px;overflow:auto} .project-memory li {overflow-wrap:anywhere} .project-memory li button {text-align:left;white-space:normal;max-width:100%} @media(max-width:700px){.memory-columns{grid-template-columns:1fr}.project-memory{padding:12px}}
+/* Optional project-local whole-raster Library, shared by both workspace alternatives. */
+.library-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:16px;margin:16px 0; }
+.library-card { min-width:0;border:1px solid var(--line,#ccd5cc);border-radius:12px;padding:12px; }
+.library-card button { width:100%;display:flex;flex-direction:column;gap:10px;text-align:left; }
+.library-card img { width:100%;height:150px;object-fit:contain; }
+.library-image { display:block;width:100%;max-height:420px;object-fit:contain;background:#e8ede5;margin:12px 0; }
+.library-preview { border-top:1px solid var(--line,#ccd5cc);margin-top:20px;padding-top:16px;min-width:0; }
+.library-preview p { overflow-wrap:anywhere; }
+.library-downloads { display:flex;flex-wrap:wrap;gap:16px;margin:16px 0; }
+.library-preview pre { max-width:100%;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere; }

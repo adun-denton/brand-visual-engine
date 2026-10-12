@@ -68,6 +68,10 @@ jobs:
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-memory-browser-evidence
           BVE_CANDIDATE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      - run: npm run test:browser:library
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-library-browser-evidence
+          BVE_CANDIDATE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
@@ -84,4 +88,5 @@ jobs:
             ${{ runner.temp }}/bve-visual-browser-evidence
             ${{ runner.temp }}/bve-execution-browser-evidence
             ${{ runner.temp }}/bve-memory-browser-evidence
+            ${{ runner.temp }}/bve-library-browser-evidence
           if-no-files-found: error
