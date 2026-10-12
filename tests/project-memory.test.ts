@@ -433,7 +433,7 @@ test("missing and corrupt canonical records and media are explicit; no latest fa
   db.prepare("INSERT INTO kernel_packets VALUES(?,?,?)").run(
     foreignId,
     1,
-    JSON.stringify({ ...n, id: foreignId, projectId: "other-project" }),
+    JSON.stringify({ ...n, id: foreignId, projectId: pid }),
   );
   assert.throws(
     () => m.evidence(pid, { id: foreignId, version: 1, freshness: "pinned" }),

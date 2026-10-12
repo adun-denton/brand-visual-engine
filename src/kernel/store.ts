@@ -79,9 +79,9 @@ export class KernelStore {
     return this.db.prepare('SELECT id, MAX(version) AS version FROM kernel_packets GROUP BY id ORDER BY id').all()
       .map(row => this.lookup({ id: row['id'] as string, version: row['version'] as number, freshness: 'pinned' })!);
   }
-  /** Owner-scoped bounded version discovery; unrelated projects are never decoded. */
+  /** Bounded ownership comes from canonical revision events, including damaged packet bodies. */
   projectRefs(projectId:string, max=4096, excludeCapsules=false): VersionRef[] {
-    const rows=this.db.prepare("SELECT id,version FROM kernel_packets WHERE ((CASE WHEN json_valid(body) THEN json_extract(body,'$.projectId') END)=? OR id=? OR id IN (SELECT json_extract(body,'$.subject.id') FROM kernel_events WHERE project_id=?)) AND (?=0 OR coalesce(CASE WHEN json_valid(body) THEN json_extract(body,'$.payload.kind') END,'')!='project-continuation-capsule') ORDER BY id,version LIMIT ?").all(projectId,projectId,projectId,excludeCapsules?1:0,max+1);
+    const rows=this.db.prepare("SELECT id,version FROM kernel_packets WHERE (id=? OR id IN (SELECT json_extract(body,'$.subject.id') FROM kernel_events WHERE project_id=?)) AND (?=0 OR coalesce(CASE WHEN json_valid(body) THEN json_extract(body,'$.payload.kind') END,'')!='project-continuation-capsule') ORDER BY id,version LIMIT ?").all(projectId,projectId,excludeCapsules?1:0,max+1);
     if(rows.length>max)throw new Error("Project memory inventory limit exceeded (4096 versions); no snapshot created");
     return rows.map(r=>({id:r['id'] as string,version:r['version'] as number,freshness:'pinned'}));
   }
