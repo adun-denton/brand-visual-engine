@@ -1,4 +1,5 @@
 import type { MemoryIndex, HandoffNote, EvidenceEntry, EvidenceLink } from "../modules/website/memory-contracts.ts";
+import type { LibraryItem, RasterManifest } from '../modules/website/library-contracts.ts';
 import type { Execution, Grant, ExecutionRequest } from '../modules/website/execution-contracts.ts';
 import type {
   VersionRef,
@@ -156,7 +157,7 @@ function executionFocus() {
   const n=document.activeElement as HTMLInputElement|HTMLTextAreaElement|HTMLButtonElement|null;
   if(!n||!root.contains(n))return ()=>{};
   let selector=n.id?"#"+CSS.escape(n.id):n.getAttribute("name")&&n.closest("form")?.id?"#"+CSS.escape(n.closest("form")!.id)+` [name="${CSS.escape(n.getAttribute("name")!)}"]`:"";
-  if(!selector)for(const a of ["data-execution-cancel","data-execution-revoke","data-execution-run","data-execution-reconcile","data-execution-delivery"]){const value=n.getAttribute(a);if(value){selector=`[${a}^="${CSS.escape(value.split(":")[0]+":")}"]`;break;}}
+  if(!selector)for(const a of ["data-execution-cancel","data-execution-revoke","data-execution-run","data-execution-reconcile","data-execution-delivery","data-library-inspect"]){const value=n.getAttribute(a);if(value){selector=`[${a}^="${CSS.escape(value.split(":")[0]+":")}"]`;break;}}
   const start="selectionStart" in n?n.selectionStart:null,end="selectionEnd" in n?n.selectionEnd:null;
   return ()=>{const target=selector?root.querySelector<HTMLInputElement|HTMLTextAreaElement>(selector):null;target?.focus({preventScroll:true});if(target&&start!==null&&end!==null&&"setSelectionRange" in target)try{target.setSelectionRange(start,end);}catch{}};
 }
@@ -508,6 +509,259 @@ async function loadMemory(
   v.status =
     "Stored evidence loaded. Unsaved drafts are separate; no execution or adoption occurred.";
 }
+type LibraryView = {
+  open: boolean;
+  pending: boolean;
+  status: string;
+  target: string;
+  data: {
+    entries: {
+      ref: VersionRef;
+      integrity: string;
+      state: LibraryItem | null;
+      status: string;
+    }[];
+    coverage: { total: number; omitted: number; unknownPrimary: number };
+    next: number | null;
+  } | null;
+  preview: {
+    manifest: RasterManifest;
+    pointer: VersionRef;
+    integrity: string;
+    unit: VersionRef | null;
+  } | null;
+};
+const libraryViews = new Map<string, LibraryView>();
+const libraryOwner = () => ({
+  projectId: pid,
+  project: project!,
+  unit: ref(state!.unit),
+});
+const libraryKey = (o: ReturnType<typeof libraryOwner>) =>
+  o.projectId + ":" + key(o.unit);
+function libraryView() {
+  const k = libraryKey(libraryOwner());
+  if (!libraryViews.has(k))
+    libraryViews.set(k, {
+      open: false,
+      pending: false,
+      status: "Load project Library to browse saved rasters.",
+      target: key(state!.unit),
+      data: null,
+      preview: null,
+    });
+  return libraryViews.get(k)!;
+}
+const libraryQuery = (
+  pid: string,
+  r: VersionRef,
+  integrity: string,
+  unit: VersionRef | null = null,
+) =>
+  new URLSearchParams({
+    project: pid,
+    id: r.id,
+    version: String(r.version),
+    integrity,
+    ...(unit ? { unit: unit.id, unitVersion: String(unit.version) } : {}),
+  }).toString();
+async function libraryAction(
+  action: (v: LibraryView, o: ReturnType<typeof libraryOwner>) => Promise<void>,
+) {
+  const o = libraryOwner(),
+    v = libraryView();
+  if (v.pending) return;
+  v.pending = true;
+  v.open = true;
+  v.status = "Reading or saving this whole raster…";
+  const restore = executionFocus();
+  render();
+  restore();
+  try {
+    await action(v, o);
+  } catch (e) {
+    v.status =
+      e instanceof Error
+        ? e.message
+        : "Library unavailable; no selection or acceptance changed";
+  } finally {
+    v.pending = false;
+    if (state && libraryKey(libraryOwner()) === libraryKey(o)) {
+      const focus = root.contains(document.activeElement)
+        ? executionFocus()
+        : restore;
+      render();
+      focus();
+    }
+  }
+}
+function libraryPanel() {
+  const v = libraryView(),
+    preview = v.preview,
+    m = preview?.manifest;
+  const rows = (v.data?.entries ?? [])
+    .map(
+      (e, i) =>
+        `<article class="library-card"><button data-library-inspect="${key(e.ref)}" ${v.pending ? "disabled" : ""}>${e.state ? `<img src="/api/v1/visual/library/original?${esc(libraryQuery(pid, e.ref, e.integrity))}" alt="Saved whole raster ${i + 1}">` : ""}<span>Saved raster ${i + 1} · v${e.ref.version}</span></button><p>${e.state ? `${esc(e.state.origin)} · source v${e.state.candidate.version} · ${e.state.image.width} × ${e.state.image.height} encoded px` : "Exact source or media unavailable; inspect to retry."}</p><p>${esc(e.status)}</p></article>`,
+    )
+    .join("");
+  const exportQuery = preview
+      ? libraryQuery(pid, preview.pointer, preview.integrity, preview.unit)
+      : "",
+    prefix = preview?.unit ? "candidate-" : "";
+  return `<details id="project-library" class="project-memory" ${v.open ? "open" : ""}><summary>Project Library / Raster export</summary><p>Save one whole raster or reuse it on a named page in this project. Selection, acceptance, Brand and execution stay separate.</p><button id="library-load" ${v.pending ? "disabled" : ""}>Load project Library</button><p id="library-status" role="status">${esc(v.status)}</p>${v.data ? `<p>${v.data.coverage.total} saved rasters · ${v.data.coverage.omitted} outside this list · ${v.data.coverage.unknownPrimary} canonical versions with unknown content. Project memory exposes that unresolved evidence.</p>${v.data.coverage.total === 0 ? '<p id="library-empty">No rasters saved in this project yet.</p>' : ""}<div class="library-grid">${rows}</div>${v.data.next !== null ? `<button id="library-more" data-offset="${v.data.next}" ${v.pending ? "disabled" : ""}>Next Library items</button>` : ""}` : ""}${m ? `<article class="library-preview"><h3>Whole raster · source v${m.source.candidate.version}</h3><img class="library-image" src="/api/v1/visual/library/${prefix}original?${esc(exportQuery)}" alt="Preview of exact whole raster to reuse or export"><p>${esc(m.provenance.origin)} · ${m.raster.image.width} × ${m.raster.image.height} stored pixels · ${m.raster.orientation.displayWidth} × ${m.raster.orientation.displayHeight} displayed pixels · EXIF orientation ${m.raster.orientation.exif ?? "absent"}</p><p id="library-rights">Rights / provenance: ${esc(m.provenance.rights)}</p><p>Whole image only. Region selections are not exported; crop and batch export are unavailable. Original metadata and bytes are preserved.</p>${m.library ? `<label>Reuse on page<select id="library-target">${units.map((u) => `<option value="${key(u)}" ${v.target === key(u) ? "selected" : ""}>${esc(u.payload.state.label)}</option>`).join("")}</select></label><button id="library-reuse" ${v.pending ? "disabled" : ""}>Use whole raster on named page</button><p>Creates a new candidate; explicitly select it afterward. Repeating this item/page action retains the same candidate.</p>` : "<p>This focused raster can be exported without saving or accepting it.</p>"}<div class="library-downloads"><a id="library-original" download href="/api/v1/visual/library/${prefix}original?${esc(exportQuery)}">Download original ${esc(m.raster.extension.toUpperCase())}</a><a id="library-package" download href="/api/v1/visual/library/${prefix}package?${esc(exportQuery)}">Download raster + manifest package</a></div><details><summary>Exact identity and export manifest</summary><pre id="library-manifest">${esc(JSON.stringify(m, null, 2))}</pre></details></article>` : ""}</details>`;
+}
+function bindLibrary() {
+  if (!state) return;
+  const boundView = libraryView();
+  root
+    .querySelector<HTMLDetailsElement>("#project-library")
+    ?.addEventListener("toggle", (e) => {
+      boundView.open = (e.target as HTMLDetailsElement).open;
+    });
+  const on = (id: string, action: () => void) =>
+    root.querySelector("#" + id)?.addEventListener("click", action);
+  const load = (
+    v: LibraryView,
+    o: ReturnType<typeof libraryOwner>,
+    offset = 0,
+  ) =>
+    get(
+      "library/state?" +
+        new URLSearchParams({ project: o.projectId, offset: String(offset) }),
+    ).then((x) => {
+      v.data = x;
+    });
+  on(
+    "library-load",
+    () =>
+      void libraryAction(async (v, o) => {
+        await load(v, o);
+        v.status =
+          "Saved project rasters loaded. No selection or execution changed.";
+      }),
+  );
+  on(
+    "library-more",
+    () =>
+      void libraryAction(async (v, o) => {
+        await load(
+          v,
+          o,
+          Number(
+            root.querySelector<HTMLElement>("#library-more")?.dataset["offset"],
+          ),
+        );
+        v.status = "Next saved rasters loaded.";
+      }),
+  );
+  on("library-save", () => {
+    const c = active();
+    if (!c) return;
+    void libraryAction(async (v, o) => {
+      const result = await post(
+        "library/save",
+        {
+          expectedProject: o.project,
+          unit: o.unit,
+          candidate: ref(c),
+          integrity: c.integrity,
+          extent: "whole",
+        },
+        o.projectId,
+      );
+      await load(v, o);
+      const inspected = await get(
+        "library/item?" +
+          libraryQuery(o.projectId, ref(result.item), result.item.integrity),
+      );
+      v.preview = {
+        manifest: inspected.manifest,
+        pointer: ref(result.item),
+        integrity: result.item.integrity,
+        unit: null,
+      };
+      v.status = result.duplicate
+        ? "This exact whole raster is already saved; no duplicate created."
+        : "Whole raster saved to project Library. No selection or acceptance changed.";
+    });
+  });
+  on("raster-export", () => {
+    const c = active();
+    if (!c) return;
+    void libraryAction(async (v, o) => {
+      const p = await get(
+        "library/candidate-preview?" +
+          libraryQuery(o.projectId, ref(c), c.integrity, o.unit),
+      );
+      v.preview = {
+        manifest: p.manifest,
+        pointer: ref(c),
+        integrity: c.integrity,
+        unit: o.unit,
+      };
+      v.status =
+        "Preview the focused whole raster before downloading. No Library save or acceptance required.";
+    });
+  });
+  root
+    .querySelectorAll<HTMLButtonElement>("[data-library-inspect]")
+    .forEach((b) =>
+      b.addEventListener(
+        "click",
+        () =>
+          void libraryAction(async (v, o) => {
+            const e = v.data?.entries.find(
+              (e) => key(e.ref) === b.dataset["libraryInspect"],
+            );
+            if (!e) throw Error("Reload project Library");
+            const p = await get(
+              "library/item?" + libraryQuery(o.projectId, e.ref, e.integrity),
+            );
+            v.preview = {
+              manifest: p.manifest,
+              pointer: e.ref,
+              integrity: e.integrity,
+              unit: null,
+            };
+            v.status =
+              "Exact saved source previewed; source replacements cannot substitute its bytes.";
+          }),
+      ),
+    );
+  root.querySelector("#library-target")?.addEventListener("change", (e) => {
+    libraryView().target = (e.target as HTMLSelectElement).value;
+  });
+  on(
+    "library-reuse",
+    () =>
+      void libraryAction(async (v, o) => {
+        const p = v.preview,
+          target = units.find((u) => key(u) === v.target);
+        if (!p || !p.manifest.library || !target)
+          throw Error("Choose a saved item and named project page");
+        const result = await post(
+          "library/reuse",
+          {
+            expectedProject: o.project,
+            unit: ref(target),
+            item: p.pointer,
+            integrity: p.integrity,
+          },
+          o.projectId,
+        );
+        v.status =
+          (result.duplicate
+            ? "Existing reused candidate retained"
+            : "New candidate added") +
+          " on " +
+          target.payload.state.label +
+          ". Choose it explicitly to select or annotate.";
+        if (state && libraryKey(libraryOwner()) === libraryKey(o))
+          await reload(true);
+      }),
+  );
+}
 function memoryPanel() {
   const v = memoryView(),
     scope = memoryScope,
@@ -728,7 +982,7 @@ function render() {
                 )
                 .join("")}</select></label>`
             : ""
-        }<details class="entry-extra" id="import-tools" ${state.candidates.length ? "" : "open"}><summary>Import raster</summary><form id="import"><label class="import-pick">Import PNG / JPEG / WebP<input name="file" type="file" accept="image/png,image/jpeg,image/webp" required></label><input name="permission" aria-label="Image use permission" placeholder="Permission / source" required><label>Import as<select name="previous"><option value="">New concept</option>${state.candidates.map((c, i) => `<option value="${key(c)}">Replace Concept ${i + 1} · v${c.version}</option>`).join("")}</select></label><button>Import raster</button></form></details><div class="deferred"><button disabled title="Library contract is deferred">Add to Library</button><button disabled title="Raster export contract is deferred">Export As</button><button disabled title="HTML reconstruction is a later process">Build as HTML</button></div></div><p class="hint">Library, raster export and HTML reconstruction are separate deferred operations.</p><div class="studio ${layout}"><div class="visual-area">${(state.candidates.length || state.selectedSources.length) ? (layout === "sheet" ? `<section class="contact-sheet" aria-label="Candidate contact sheet">${groups()}</section>${focusView()}` : `${focusView()}<section class="filmstrip" aria-label="Candidate filmstrip">${state.candidates.map((c, i) => card(c, i, true)).join("")}</section>`) : `<div class="empty-canvas"><h2>Your next direction starts here.</h2><p>Import raster concepts to compare, select and annotate.</p><p>No image generator is connected in this review slice.</p>${contextControls()}</div>`}</div>${selectionView()}</div>${memoryPanel()}${prepareView()}${executionView()}${historyView()}`
+        }<details class="entry-extra" id="import-tools" ${state.candidates.length ? "" : "open"}><summary>Import raster</summary><form id="import"><label class="import-pick">Import PNG / JPEG / WebP<input name="file" type="file" accept="image/png,image/jpeg,image/webp" required></label><input name="permission" aria-label="Image use permission" placeholder="Permission / source" required><label>Import as<select name="previous"><option value="">New concept</option>${state.candidates.map((c, i) => `<option value="${key(c)}">Replace Concept ${i + 1} · v${c.version}</option>`).join("")}</select></label><button>Import raster</button></form></details><div class="deferred"><button id="library-save" ${active()&&!libraryView().pending?"":"disabled"}>Add whole raster to Library</button><button id="raster-export" ${active()&&!libraryView().pending?"":"disabled"}>Export whole raster</button><button disabled title="HTML reconstruction is a later process">Build as HTML</button></div></div><p class="hint">Library save, raster export and later HTML reconstruction are separate operations.</p><div class="studio ${layout}"><div class="visual-area">${(state.candidates.length || state.selectedSources.length) ? (layout === "sheet" ? `<section class="contact-sheet" aria-label="Candidate contact sheet">${groups()}</section>${focusView()}` : `${focusView()}<section class="filmstrip" aria-label="Candidate filmstrip">${state.candidates.map((c, i) => card(c, i, true)).join("")}</section>`) : `<div class="empty-canvas"><h2>Your next direction starts here.</h2><p>Import raster concepts to compare, select and annotate.</p><p>No image generator is connected in this review slice.</p>${contextControls()}</div>`}</div>${selectionView()}</div>${libraryPanel()}${memoryPanel()}${prepareView()}${executionView()}${historyView()}`
       : workspaceError ? `<section class="workspace-error" role="alert"><h2>Workspace unavailable</h2><p>${esc(workspaceError)}</p><p>Stored sources could not be validated. No records or drafts were changed.</p><button id="retry-open">Retry reopen</button></section>` : '<section class="welcome"> <h2>A visual place to explore.</h2><p>Create a Website project and choose Homepage, About Us or a custom page. Brand setup and chat are optional.</p></section>'
   }</main>`;
   bind();
@@ -763,6 +1017,7 @@ function groups() {
   );
 }
 function bind() {
+  bindLibrary();
   bindMemory();
   observers.forEach((o) => o.disconnect());
   observers = [];

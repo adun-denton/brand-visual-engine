@@ -1,4 +1,6 @@
 import { memoryGate } from "./memory-gate.ts";
+import { libraryGate } from './library-gate.ts';
+import { libraryRoles } from '../modules/website/library-contracts.ts';
 import { memoryRoles } from "../modules/website/memory-contracts.ts";
 import { executionGate } from './execution-gate.ts';
 import { executionRoles } from '../modules/website/execution-contracts.ts';
@@ -18,6 +20,7 @@ export interface GateEnvironment {
   assetExists(id: string, checksum: string): boolean;
   moduleExists(id: string): boolean;
   imageMatches?(image: ImageInfo): boolean;
+  rasterFacts?(image:ImageInfo):import('../service/assets.ts').RasterFacts|null;
   validateArtifact(moduleId: string, payload: Record<string, unknown>): void;
   accepted?(projectId: string, ref: VersionRef): boolean;
   grantedPermissions: string[];
@@ -192,6 +195,7 @@ export function contractGate(input: unknown, port: PortContract, env: GateEnviro
     const before = atPath(previous.payload, path), after = atPath(p['payload'], path);
     if (before === undefined || after === undefined || canonical(before) !== canonical(after)) throw new Error('preservation contract failed');
   }
+  libraryGate(p as unknown as NodePacket<unknown>, previous, env);
   memoryGate(p as unknown as NodePacket<unknown>, previous, env);
   executionGate(p as unknown as NodePacket<unknown>, previous, env);
   explorationGate(p as unknown as NodePacket<unknown>, previous, env);
@@ -204,7 +208,7 @@ export function contractGate(input: unknown, port: PortContract, env: GateEnviro
     const owner = ownerVersion === null ? null : env.lookup({ id: p['projectId'] as string, version: ownerVersion, freshness: 'pinned' });
     if (owner?.type !== 'module-project' || object(owner.payload)['moduleId'] !== payload['moduleId']) throw new Error('artifact owner mismatch');
   }
-  const expectedRole: Record<string, PacketType> = { ...memoryRoles, ...executionRoles, ...explorationRoles, 'website-page': 'design-artifact', 'page-media': 'media-asset', 'inference-request': 'work-record', 'inference-result': 'work-record', 'page-migration': 'work-record', 'page-media-origin': 'work-record', 'page-import':'work-record', 'website-assembly': 'website-assembly' };
+  const expectedRole: Record<string, PacketType> = { ...libraryRoles, ...memoryRoles, ...executionRoles, ...explorationRoles, 'website-page': 'design-artifact', 'page-media': 'media-asset', 'inference-request': 'work-record', 'inference-result': 'work-record', 'page-migration': 'work-record', 'page-media-origin': 'work-record', 'page-import':'work-record', 'website-assembly': 'website-assembly' };
   if (expectedRole[String(payload['kind'])] && expectedRole[String(payload['kind'])] !== type) throw new Error('semantic record role mismatch');
   if (['media-asset', 'work-record', 'website-assembly'].includes(type) && !expectedRole[String(payload['kind'])]) throw new Error('unsupported semantic record kind');
   if (payload['kind'] === 'website-page') {

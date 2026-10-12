@@ -1,4 +1,5 @@
 import { ProjectMemory } from "./project-memory.ts";
+import { RasterLibrary } from './raster-library.ts';
 import { exactRef, hash } from "../modules/website/exploration-contracts.ts";
 import type { OfflineExecutionInjection } from './execution.ts';
 import { VisualWorkspace } from './visual-workspace.ts';
@@ -25,6 +26,7 @@ export interface RunningApp {
   pages: Pages;
   visual: VisualWorkspace;
   memory: ProjectMemory;
+  library: RasterLibrary;
   origin: string;
   close: () => Promise<void>;
 }
@@ -48,6 +50,7 @@ export async function startApp(
   const directions = new AIDirections(workspace);
   const visual = new VisualWorkspace(workspace,workspaceOptions?.executionFixture);
   const memory = new ProjectMemory(workspace);
+  const library = new RasterLibrary(workspace);
   let origin = '';
   const server = createServer(async (req, res) => {
     const json = (status: number, body: unknown, augment = true) => {
@@ -85,6 +88,19 @@ export async function startApp(
       const url = new URL(req.url ?? '/', origin);
       const path = url.pathname;
       if (req.method === 'GET') {
+        if(path.startsWith('/api/v1/visual/library/')){
+          const pid=id(url.searchParams.get('project')),action=path.slice('/api/v1/visual/library/'.length);
+          if(action==='state'){json(200,await library.state(pid,Number(url.searchParams.get('offset')??0),Number(url.searchParams.get('limit')??20)),false);return;}
+          const pointer=exactRef({id:url.searchParams.get('id'),version:Number(url.searchParams.get('version')),freshness:'pinned'}),integrity=hash(url.searchParams.get('integrity'));
+          const unit=action.startsWith('candidate-')?exactRef({id:url.searchParams.get('unit'),version:Number(url.searchParams.get('unitVersion')),freshness:'pinned'}):undefined;
+          if(action==='item')json(200,await library.preview(pid,pointer,integrity),false);
+          else if(action==='candidate-preview')json(200,await library.candidatePreview(pid,unit!,pointer,integrity),false);
+          else if(['original','package','candidate-original','candidate-package'].includes(action)){
+            const output=await library.export(pid,action.endsWith('original')?'original':'package',pointer,integrity,unit);
+            res.writeHead(200,{'Content-Type':output.mime,'Content-Length':output.bytes.length,'Content-Disposition':'attachment; filename="'+output.filename+'"','X-Content-SHA256':(await import('../kernel/raster.ts')).checksum(output.bytes)});res.end(output.bytes);
+          }else throw new InputError('Not found',404);
+          return;
+        }
         if (path.startsWith('/api/v1/visual/memory/')) {
           const pid=id(url.searchParams.get('project'));
           const pointer=()=>exactRef({id:url.searchParams.get('id'),version:Number(url.searchParams.get('version')),freshness:'pinned'});
@@ -285,6 +301,10 @@ export async function startApp(
       if (path === '/api/v1/visual/create') {
         json(200, visual.create(input), false);
         return;
+      }
+      if(path==='/api/v1/visual/library/save'||path==='/api/v1/visual/library/reuse'){
+        const outer=record(input,['projectId','input']),pid=id(outer['projectId']);
+        json(200,path.endsWith('/save')?await library.save(pid,outer['input']):await library.reuse(pid,outer['input']),false);return;
       }
       if (path==='/api/v1/visual/memory/note'||path==='/api/v1/visual/memory/create') {
         const outer=record(input,['projectId','input']),pid=id(outer['projectId']);
@@ -519,6 +539,7 @@ export async function startApp(
     pages,
     visual,
     memory,
+    library,
     origin,
     close: async () => {
       await providers.close();

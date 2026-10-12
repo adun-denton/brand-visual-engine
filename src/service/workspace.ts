@@ -98,6 +98,7 @@ export class Workspace {
     this.kernel = new KernelStore(root, {
       moduleExists,
       validateArtifact,
+      rasterFacts: image => this.assets.facts(image),
       imageMatches: image => {
         try {
           return this.assets.exists(image.id, image.checksum)
