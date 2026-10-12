@@ -1,3 +1,4 @@
+import { CanonicalMemory } from "./memory-index.ts";
 import type {
   NodePacket,
   DesignArtifact,
@@ -162,6 +163,9 @@ export function memoryGate(
         throw new Error("Snapshot event is not canonical");
     }
     const stored = env.lookup(reference(p))?.integrity === p.integrity;
+    // Creation alone must cover the independently derived canonical scope. Stored history never
+    // compares against today's inventory; immutable snapshot evidence retains its original meaning.
+    if(!stored&&canonical(new CanonicalMemory(env).index(p.projectId!,s.scope))!==canonical(s.snapshot))throw new Error('Capsule scoped completeness/coverage mismatch');
     const expectedEvents = actualEvents
       .filter((e) =>
         s.snapshot.entries.some(

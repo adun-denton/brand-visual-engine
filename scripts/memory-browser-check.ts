@@ -1,3 +1,4 @@
+import { checkMemoryRepairs } from "./memory-repair-browser-check.ts";
 /** Explicitly offline interaction proof. No accounts, models, executors or image generation. */
 import { chromium, expect } from "@playwright/test";
 import {
@@ -402,6 +403,7 @@ try {
   );
   console.log(JSON.stringify(receipt));
   await freshContext.close();
+  await checkMemoryRepairs(browser,evidence);
 } finally {
   await app.close();
   await browser.close();

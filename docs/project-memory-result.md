@@ -62,3 +62,26 @@ Rollback: use an isolated prior checkout with a complete closed matching runtime
 an evolved root in place or delete selected records/media/history. Independent review and canonical
 completion remain pending with the coordinator. No live account/model/GPU/image call, provider install,
 paid fallback, PR10 integration, merge or deployment occurred.
+
+## R1–R2 repair evidence
+
+Repair authority: `eaa87191c5a1742a7019dac1ea9781fbae4ff78b`; reviewed repair base:
+`9416e3d06d6c1f704606b4540c6fb57c75e14f51`. Original planning provenance and draft target remain unchanged.
+The original isolated loss probe changed from ledger-retained/indexed=false/missing0/current to
+indexed=true/missing1/incomplete. The original mutually consistent omission changed from accepted to
+atomic rejection (`Capsule scoped completeness/coverage mismatch`). Diagnostics lived outside Git.
+
+The projection is now shared by service reads and the transactional memory gate. Revision discovery
+includes missing exact versions without relying on surviving packet rows or inbound references.
+Primary loss is explicit with unknown scope/type and no invented text/hash. Missing standalone/historical
+notes and another independent primary record survive fresh reads and closed reopen; foreign loss stays
+isolated. Coverage validation rejects omitted notes, selected source closure, events/acceptance,
+falsified unsupported/omitted counts and unrelated scope additions, including coherent digests/dependencies.
+Historical capsules/refresh and ordinary non-self-staling creation/export remain intact.
+
+Repair verification: 235 tests (230 retained + five focused repair groups), strict typecheck/build,
+both smokes, fixture/diff checks, original V02/V03/V04 browser cases and three added missing-primary
+screenshots. Exact-head Windows/Linux evidence is returned with the PR/coordinator report; independent
+acceptance is pending. No local session, live generation, provider installation, migration, PR10
+integration, merge or deployment is performed by these repairs. Rollback remains the isolated accepted
+V03 checkout with a complete closed matching runtime, never in-place downgrade or selective deletion.

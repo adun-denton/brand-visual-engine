@@ -1,29 +1,19 @@
+import { CanonicalMemory, memoryAvailability } from "../kernel/memory-index.ts";
 import { randomUUID } from "node:crypto";
 import type {
   DesignArtifact,
   NodePacket,
-  ModuleProject,
   VersionRef,
-  Value,
 } from "../kernel/contracts.ts";
-import {
-  canonical,
-  digest,
-  packet,
-  reference,
-  revise,
-} from "../kernel/packets.ts";
+import { canonical, packet, reference, revise } from "../kernel/packets.ts";
 import { record, integer, InputError } from "./validation.ts";
 import { exactRef } from "../modules/website/exploration-contracts.ts";
 import {
   MEMORY_LIMITS,
   memoryKind,
-  evidenceSummary,
   parseNote,
   parseCapsule,
   evidenceKey,
-  compare,
-  indexDigest,
   type MemoryIndex,
   type HandoffNote,
   type Capsule,
@@ -35,20 +25,9 @@ const repack = <T>(p: NodePacket<T>, deps: VersionRef[]) => {
   const { integrity: _, ...body } = p;
   return packet({ ...body, dependencies: unique(deps) });
 };
-const pin = (r: VersionRef): VersionRef => ({ ...r, freshness: "pinned" });
-const sameRef = (a: VersionRef | null | undefined, b: VersionRef) =>
-  a?.id === b.id && a.version === b.version;
 const unique = (refs: VersionRef[]) => [
   ...new Map(refs.map((r) => [evidenceKey(r), r])).values(),
 ];
-const corruptRecord = (e: unknown) =>
-  e instanceof SyntaxError ||
-  (e instanceof Error && e.message === "stored packet integrity mismatch");
-const storageReadFailure = () =>
-  new InputError(
-    "Canonical memory storage read failed; no corruption outcome inferred",
-    503,
-  );
 const offset = (x: unknown) => {
   if (
     !Number.isSafeInteger(x) ||
@@ -64,245 +43,28 @@ export class ProjectMemory {
   constructor(w: Workspace) {
     this.w = w;
   }
-  private scope(pid: string, x: unknown): VersionRef | null {
+  private canonical() {
+    return new CanonicalMemory(this.w.kernel.environment());
+  }
+  private scope(pid: string, x: unknown) {
     this.w.project(pid);
-    if (x === null) return null;
-    const r = exactRef(x),
-      p = this.w.kernel.lookup(r);
-    if (!p || p.projectId !== pid || memoryKind(p) !== "page-work-unit")
-      throw new InputError("Foreign or missing memory page");
-    return r;
+    return this.canonical().scope(pid, x);
   }
   private inventory(pid: string, excludeCapsules = true) {
     this.w.project(pid);
-    const refs = this.w.kernel.projectRefs(
-      pid,
-      MEMORY_LIMITS.inventory,
-      excludeCapsules,
-    );
-    return refs.map((r) => {
-      try {
-        return { ref: r, packet: this.w.kernel.lookup(r), corrupt: false };
-      } catch (e) {
-        if (!corruptRecord(e)) throw storageReadFailure();
-        return { ref: r, packet: null, corrupt: true };
-      }
-    });
-  }
-  private boundBrand(
-    r: VersionRef,
-    rows: ReturnType<ProjectMemory["inventory"]>,
-  ) {
-    return rows.some(
-      ({ packet: p }) =>
-        p &&
-        ((p.type === "module-project" &&
-          sameRef((p.payload as ModuleProject).visualOSRef, r)) ||
-          (memoryKind(p) === "raster-specification" &&
-            sameRef(
-              (p.payload as Work<{ brand: { source?: VersionRef } }>["payload"])
-                .state.brand?.source,
-              r,
-            ))),
-    );
-  }
-  private authorized(
-    pid: string,
-    r: VersionRef,
-    rows: ReturnType<ProjectMemory["inventory"]>,
-  ) {
-    const p = this.w.kernel.lookup(r);
-    if (!p) {
-      if (
-        this.w.kernel.currentVersion(r.id) !== null &&
-        !rows.some((row) => row.ref.id === r.id) &&
-        !this.boundBrand(r, rows)
-      )
-        throw new InputError("Foreign memory evidence", 403);
-      return null;
-    }
-    if (p.projectId === pid) return p;
-    if (p.type !== "visual-os" || p.approval !== "accepted")
-      throw new InputError("Foreign memory evidence", 403);
-    const attached = this.boundBrand(r, rows);
-    if (!attached)
-      throw new InputError("Brand outside approved project context", 403);
-    return p;
+    return this.canonical().inventory(pid, excludeCapsules);
   }
   private entry(
     pid: string,
     r: VersionRef,
-    rows: ReturnType<ProjectMemory["inventory"]>,
+    rows: ReturnType<CanonicalMemory["inventory"]>,
     expected: string | null = null,
-  ): EvidenceEntry {
-    let p: NodePacket<unknown> | null;
-    try {
-      p = this.authorized(pid, r, rows);
-    } catch (e) {
-      if (e instanceof InputError) throw e;
-      if (!corruptRecord(e)) throw storageReadFailure();
-      if (!rows.some((row) => row.ref.id === r.id) && !this.boundBrand(r, rows))
-        throw new InputError("Foreign memory evidence", 403);
-      return {
-        ref: r,
-        integrity: expected,
-        latestVersion: this.w.kernel.currentVersion(r.id),
-        type: "unknown",
-        kind: "unknown",
-        status: "corrupt",
-        summary: null,
-        media: "not-applicable",
-      };
-    }
-    if (!p)
-      return {
-        ref: r,
-        integrity: expected,
-        latestVersion: this.w.kernel.currentVersion(r.id),
-        type: "unknown",
-        kind: "unknown",
-        status: "missing",
-        summary: null,
-        media: "not-applicable",
-      };
-    if (expected && expected !== p.integrity)
-      return {
-        ref: r,
-        integrity: expected,
-        latestVersion: this.w.kernel.currentVersion(r.id),
-        type: p.type,
-        kind: memoryKind(p),
-        status: "corrupt",
-        summary: null,
-        media: "not-applicable",
-      };
-    const summary = evidenceSummary(p);
-    if (summary === null)
-      throw new InputError("Unsupported primary memory evidence");
-    let media: EvidenceEntry["media"] = "not-applicable";
-    if (p.assets.length)
-      media = p.assets.every(
-        (a) =>
-          this.w.assets.exists(a.id, a.checksum) ||
-          this.w.legacy.exists(a.id, a.checksum),
-      )
-        ? "available"
-        : "unavailable";
-    return {
-      ref: r,
-      integrity: p.integrity,
-      latestVersion: this.w.kernel.currentVersion(r.id),
-      type: p.type,
-      kind: memoryKind(p),
-      status: "available",
-      summary,
-      media,
-    };
+  ) {
+    return this.canonical().entry(pid, r, rows, expected);
   }
   index(pid: string, scopeInput: unknown = null): MemoryIndex {
-    const scope = this.scope(pid, scopeInput),
-      rows = this.inventory(pid),
-      entries = new Map<string, EvidenceEntry>();
-    const unsupported = new Set<string>();
-    const related = (p: NodePacket<unknown>) => {
-      if (!scope) return true;
-      const k = memoryKind(p),
-        s = (p.payload as DesignArtifact<Record<string, unknown>>).state;
-      return (
-        p.type === "module-project" ||
-        (k === "page-work-unit" && p.id === scope.id) ||
-        (k === "project-handoff-note" &&
-          (!s["scope"] || (s["scope"] as VersionRef).id === scope.id)) ||
-        (s &&
-          typeof s === "object" &&
-          (s["workUnit"] as VersionRef | undefined)?.id === scope.id)
-      );
-    };
-    const add = (r: VersionRef, expected: string | null = null) => {
-      r = pin(r);
-      const key = evidenceKey(r);
-      if (entries.has(key)) return;
-      if (entries.size >= MEMORY_LIMITS.inventory)
-        throw new InputError(
-          "Memory exact closure exceeds inventory bound",
-          413,
-        );
-      const e = this.entry(pid, r, rows, expected);
-      entries.set(key, e);
-      if (e.status !== "available") return;
-      const p = this.w.kernel.lookup(r)!;
-      for (const dep of [...p.dependencies, ...p.contextRefs]) {
-        let n: NodePacket<unknown> | null = null;
-        try {
-          n = this.w.kernel.lookup(dep);
-        } catch {
-          add(dep);
-          continue;
-        }
-        if (n && memoryKind(n) === "project-continuation-capsule") continue;
-        if (n && evidenceSummary(n) === null) {
-          unsupported.add(evidenceKey(dep));
-          continue;
-        }
-        add(dep);
-      }
-      if (e.kind === "module-project") {
-        const b = (p.payload as ModuleProject).visualOSRef;
-        if (b) add(b);
-      }
-      if (e.kind === "raster-specification") {
-        const b = (
-          p as Work<{ brand: { enabled: boolean; source?: VersionRef } }>
-        ).payload.state.brand;
-        if (b.enabled && b.source) add(b.source);
-      }
-    };
-    for (const row of rows) {
-      const p = row.packet;
-      if (!p) {
-        add(row.ref); // Owner is known; damaged primary evidence has unknown page scope.
-        continue;
-      }
-      if (memoryKind(p) === "project-continuation-capsule") continue;
-      if (evidenceSummary(p) === null) {
-        if (related(p)) unsupported.add(evidenceKey(row.ref));
-        continue;
-      }
-      if (related(p)) add(row.ref);
-    }
-    const events = this.w.kernel
-      .ledger(pid)
-      .events.filter((e) => entries.has(evidenceKey(e.subject)))
-      .map((e) => ({
-        sequence: e.sequence,
-        kind: e.kind,
-        subject: pin(e.subject),
-        related: e.related.filter((r) => entries.has(evidenceKey(r))).map(pin),
-      }));
-    if (events.length > MEMORY_LIMITS.inventory)
-      throw new InputError("Memory event bound exceeded", 413);
-    const body = {
-      version: 1 as const,
-      authority: "navigation-only" as const,
-      project: reference(this.w.project(pid)),
-      scope,
-      entries: [...entries.values()].sort(compare),
-      events,
-      acceptance: this.w.kernel
-        .acceptedSelections(pid)
-        .filter((a) => entries.has(evidenceKey(a.ref)))
-        .map((a) => ({ ...a, ref: pin(a.ref) })),
-      coverage: {
-        entries: entries.size,
-        events: events.length,
-        unsupported: unsupported.size,
-        omitted: 0,
-        mediaIncluded: false as const,
-        context:
-          "supported canonical records only; no chat, account or process cache" as const,
-      },
-    };
-    return { ...body, digest: indexDigest(body) };
+    this.w.project(pid);
+    return this.canonical().index(pid, scopeInput);
   }
   page(pid: string, scope: unknown, from: unknown = 0, limit: unknown = 20) {
     const i = this.index(pid, scope),
@@ -311,6 +73,7 @@ export class ProjectMemory {
       entries = i.entries.slice(start, start + size);
     const output = {
       ...i,
+      availability: memoryAvailability(i),
       entries,
       events: [],
       coverage: {
@@ -479,16 +242,22 @@ export class ProjectMemory {
                   : "current",
         };
       });
+    const availability = memoryAvailability(latest ?? s.snapshot);
     return {
       ref: reference(p),
       integrity: p.integrity,
       snapshot: s.snapshot,
       previous: s.previous,
       currency: {
+        availability,
         status: unavailable
           ? "unavailable"
           : latest!.digest === s.snapshot.digest
-            ? "current"
+            ? availability.missing ||
+              availability.corrupt ||
+              availability.mediaUnavailable
+              ? "incomplete"
+              : "current"
             : "changed",
         details,
         added: latest

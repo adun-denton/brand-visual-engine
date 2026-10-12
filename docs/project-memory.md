@@ -94,3 +94,22 @@ Rollback uses an isolated prior checkout and a complete, closed matching runtime
 an evolved runtime root in place or selectively delete note/capsule history or media. Revert code only
 within a separately authorized review/repair. Canonical task status and independent acceptance remain
 with the coordinator; local image binding/generation stays deferred until cycle end.
+
+## Canonical loss and complete creation
+
+Revision-event identities drive discovery, including versions whose packet row is absent. An absent
+standalone note or historical revision remains an explicit `missing` entry; its text, original kind,
+integrity and page scope are unknown unless exact canonical evidence is available. Unknown-scope
+project evidence appears as unresolved coverage in scoped views without acquiring page membership.
+`omitted:0` means no indexed version was clipped, not that every source is available. Capsule currency
+is `incomplete` when the unchanged snapshot's sources are missing/corrupt or media is unavailable.
+The UI also reports missing, corrupt, unavailable-media and unknown-scope counts. Frozen downloads
+retain each unavailable exact reference/status and never substitute a later revision or prior summary.
+
+New capsule writes independently derive the complete scoped index inside the KernelStore transaction
+through the same bounded canonical projection as service reads. Entries, exact cross-page closure,
+events, accepted pointers, unsupported/omitted counts and digest must match. Internally coherent
+omissions or unrelated additions reject atomically. Already stored historical snapshots do not compare
+against today's inventory; newer notes, outcomes or acceptance can change currency without mutating
+or invalidating the frozen snapshot. Valid capsule bookkeeping remains outside primary evidence.
+No schema migration, recovery/delete product feature or second authoritative store is added.

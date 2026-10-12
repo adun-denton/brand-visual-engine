@@ -46,7 +46,7 @@ export class KernelStore {
     return value as NodePacket<T>; // Consumers still validate their port before crossing a boundary.
   }
   environment(): GateEnvironment {
-    return { ...this.services, projectEvents:pid=>this.ledger(pid).events, projectSelections:pid=>this.acceptedSelections(pid), lookup: ref => this.lookup(ref), currentVersion: id => this.currentVersion(id),
+    return { ...this.services, projectRefs:(pid,max,exclude)=>this.projectRefs(pid,max,exclude), projectEvents:pid=>this.ledger(pid).events, projectSelections:pid=>this.acceptedSelections(pid), lookup: ref => this.lookup(ref), currentVersion: id => this.currentVersion(id),
       accepted: (pid, ref) => this.ledger(pid).events.some(e => e.kind === 'acceptance' && e.subject.id === ref.id && e.subject.version === ref.version) };
   }
   private event(projectId: string, subject: VersionRef, kind: LedgerEvent['kind'], actor: string,
@@ -81,9 +81,13 @@ export class KernelStore {
   }
   /** Bounded ownership comes from canonical revision events, including damaged packet bodies. */
   projectRefs(projectId:string, max=4096, excludeCapsules=false): VersionRef[] {
-    const rows=this.db.prepare("SELECT id,version FROM kernel_packets WHERE (id=? OR id IN (SELECT json_extract(body,'$.subject.id') FROM kernel_events WHERE project_id=?)) AND (?=0 OR coalesce(CASE WHEN json_valid(body) THEN json_extract(body,'$.payload.kind') END,'')!='project-continuation-capsule') ORDER BY id,version LIMIT ?").all(projectId,projectId,excludeCapsules?1:0,max+1);
-    if(rows.length>max)throw new Error("Project memory inventory limit exceeded (4096 versions); no snapshot created");
-    return rows.map(r=>({id:r['id'] as string,version:r['version'] as number,freshness:'pinned'}));
+    const refs:VersionRef[]=[];
+    const rows=this.db.prepare("SELECT DISTINCT json_extract(body,'$.subject.id') AS id,json_extract(body,'$.subject.version') AS version FROM kernel_events WHERE project_id=? AND json_extract(body,'$.kind')='revision' ORDER BY id,version").iterate(projectId);
+    for(const row of rows){const ref:VersionRef={id:row['id'] as string,version:row['version'] as number,freshness:'pinned'};
+      if(excludeCapsules){try{const p=this.lookup(ref);if(p?.type==='work-record'&&(p.payload as {kind?:string}).kind==='project-continuation-capsule')continue;}catch(e){if(!(e instanceof SyntaxError)&&!(e instanceof Error&&e.message==='stored packet integrity mismatch'))throw e;}}
+      refs.push(ref);if(refs.length>max)throw new Error('Project memory inventory limit exceeded (4096 versions); no snapshot created');
+    }
+    return refs;
   }
   importSnapshot(projectId: string, packets: NodePacket<unknown>[], actor: string, reason: string): void {
     this.transaction(() => {

@@ -10,6 +10,7 @@ import { atPath, canonical, digest } from './packets.ts';
 import { resolveContext } from './context.ts';
 import { validateMetadata } from './metadata.ts';
 export interface GateEnvironment {
+  projectRefs?: (projectId:string,max:number,excludeCapsules:boolean)=>VersionRef[];
   projectEvents?: (projectId:string) => import("./contracts.ts").LedgerEvent[];
   projectSelections?: (projectId:string) => {slot:string;ref:VersionRef}[];
   lookup(ref: VersionRef): NodePacket<unknown> | null;
