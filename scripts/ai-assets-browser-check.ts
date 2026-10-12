@@ -45,9 +45,11 @@ const page = await context.newPage();
 const errors: string[] = [];
 page.on('pageerror', (e) => errors.push(e.message));
 const view = async (name: string) => {
+  console.log("AI-assets view:", name);
   await page.getByRole('button', { name, exact: true }).click();
 };
 const submit = async (selector: string, message: string) => {
+  console.log("AI-assets submit:", selector);
   await page
     .locator(selector + ' button')
     .last()
@@ -74,6 +76,7 @@ const download = async (selector: string, name: string) => {
   return readFileSync(p);
 };
 try {
+  await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
   await page.goto(app.origin);
   await page.locator('#create [name=title]').fill('AI asset loop rehearsal');
   await page.locator('#create button[type=submit]').click();
@@ -337,13 +340,16 @@ try {
   await expect(page.locator('#composition-editor [name=title]')).toHaveValue(
     'Visible AI page edit survives reopen',
   );
+  console.log("AI-assets closing original runtime");
   await app.close();
+  console.log("AI-assets original runtime closed");
   app = null;
   const copy = root + '-closed-copy';
   cpSync(root, copy, { recursive: true });
   app = await startApp(copy, 0, undefined, undefined, {
     aiResponseFixture: true,
   });
+  await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
   await page.goto(app.origin);
   await page
     .getByRole('button', { name: 'AI asset loop rehearsal', exact: true })

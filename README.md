@@ -17,8 +17,11 @@ provider checks validate integrations; a later website/designer pilot evaluates 
 
 The inference workspace adds independent full-snapshot pages with arbitrary internal sections,
 responsive flow/flex/grid styling, separate exact media resources, scoped AI request/result exchange,
-and independently accepted Website route assemblies. Opening or creating a workspace starts with
-paired page preview and instructions. Existing tools and historical records remain available.
+and independently accepted Website route assemblies. The default entry is now a persistent project
+conversation and exact design canvas, with form-free draft intake and guarded candidate review.
+Advanced controls and manual exchange remain optional. The account adapter awaits eligibility and
+bounded live verification; disconnected messages retain drafts without generated alternatives.
+See [chat setup and recovery](docs/chat-workspace.md) and [offline evidence](docs/chat-workspace-result.md).
 
 **Paid API execution is disabled in this build**, including when an old private policy or key is present.
 Injected offline transports remain test-only. Use the session handoff for reasoning and permitted native

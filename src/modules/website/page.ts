@@ -1,3 +1,5 @@
+import { parseStyle, numericStyles, StyleError } from "./style-contracts.ts";
+export { parseStyle, styleProperties } from "./style-contracts.ts";
 import type { VersionRef, Value } from "../../kernel/contracts.ts";
 import {
   record,
@@ -13,6 +15,18 @@ import type { ImageInfo } from "../../service/assets.ts";
 import { canonical, digest } from "../../kernel/packets.ts";
 import { escapeHtml } from "./composition.ts";
 
+import { pageLimits as limits, pageKinds, hrefPattern, languagePattern } from "./page-contracts.ts";
+
+export class PageError extends InputError {}
+export function pageAt<T>(path: string, nodeId: string | undefined, expected: string, parse: () => T): T {
+  try { return parse(); }
+  catch (error) {
+    if (error instanceof InputError && !(error instanceof PageError) && !(error instanceof StyleError))
+      throw new PageError(`${error.message}; at ${path}${nodeId ? ` (node ${nodeId})` : ""}; expected ${expected}`, error.status);
+    throw error;
+  }
+}
+const fail = (message: string): never => { throw new InputError(message); };
 export interface MediaBinding {
   asset: VersionRef;
   image: ImageInfo;
@@ -76,147 +90,11 @@ export interface Lock {
   field: "text" | "subtree" | "style";
   value: Value;
 }
-export const styleProperties = [
-  "display",
-  "flexDirection",
-  "flexWrap",
-  "justifyContent",
-  "alignItems",
-  "gap",
-  "gridTemplateColumns",
-  "gridColumn",
-  "gridRow",
-  "padding",
-  "margin",
-  "width",
-  "maxWidth",
-  "minHeight",
-  "background",
-  "color",
-  "fontFamily",
-  "fontSize",
-  "fontWeight",
-  "lineHeight",
-  "letterSpacing",
-  "textAlign",
-  "border",
-  "borderRadius",
-  "objectFit",
-  "aspectRatio",
-  "opacity",
-] as const;
-const numericStyles = new Set([
-  "gap",
-  "padding",
-  "margin",
-  "width",
-  "maxWidth",
-  "minHeight",
-  "fontSize",
-  "letterSpacing",
-  "borderRadius",
-]);
-const enumStyles: Record<string, readonly string[]> = {
-  display: ["block", "flex", "grid", "inline", "inline-block", "none"],
-  flexDirection: ["row", "column", "row-reverse", "column-reverse"],
-  flexWrap: ["wrap", "nowrap"],
-  justifyContent: [
-    "start",
-    "end",
-    "center",
-    "space-between",
-    "space-around",
-    "space-evenly",
-  ],
-  alignItems: ["start", "end", "center", "stretch", "baseline"],
-  textAlign: ["left", "right", "center", "start", "end"],
-  objectFit: ["cover", "contain"],
-};
-export function parseStyle(input: unknown): Record<string, string | number> {
-  const r = record(input, [...styleProperties]);
-  for (const [k, v] of Object.entries(r)) {
-    if (enumStyles[k]) choice(v, enumStyles[k]!);
-    else if (numericStyles.has(k)) {
-      if (typeof v === "number") {
-        if (
-          !Number.isFinite(v) ||
-          v < (k === "letterSpacing" ? -10 : 0) ||
-          v > 4096
-        )
-          throw new InputError("Style dimension exceeds bounds");
-      } else if (
-        typeof v !== "string" ||
-        !/^(auto|[0-9]+(?:\.[0-9]+)?(?:px|rem|em|ch|%|vw|vh))$/.test(v) ||
-        parseFloat(v) > 4096
-      )
-        throw new InputError("Use a bounded dimension or auto");
-    } else if (k === "background" || k === "color") {
-      if (
-        typeof v !== "string" ||
-        !/^(#(?:[a-fA-F0-9]{3}|[a-fA-F0-9]{4}|[a-fA-F0-9]{6}|[a-fA-F0-9]{8})|transparent|currentColor)$/.test(
-          v,
-        )
-      )
-        throw new InputError("Use a hex color");
-    } else if (k === "fontFamily") {
-      if (
-        typeof v !== "string" ||
-        v.length > 150 ||
-        !/^[A-Za-z0-9 ,'-]+$/.test(v)
-      )
-        throw new InputError("Use local font families");
-    } else if (k === "gridTemplateColumns") {
-      if (
-        typeof v !== "string" ||
-        v.length > 200 ||
-        !/^(?:minmax\(0,[0-9.]+fr\)|[0-9.]+(?:fr|px|%|rem)|auto)(?: (?:minmax\(0,[0-9.]+fr\)|[0-9.]+(?:fr|px|%|rem)|auto))*$/.test(
-          v,
-        )
-      )
-        throw new InputError("Invalid grid columns");
-    } else if (k === "gridColumn" || k === "gridRow") {
-      if (
-        typeof v !== "string" ||
-        !/^(auto|[1-9][0-9]?(?: \/ (?:[1-9][0-9]?|span [1-9][0-9]?))?)$/.test(v)
-      )
-        throw new InputError("Invalid grid placement");
-    } else if (k === "border") {
-      if (
-        typeof v !== "string" ||
-        !/^(none|[0-9]{1,2}px (?:solid|dashed|dotted) (?:#(?:[a-fA-F0-9]{3}|[a-fA-F0-9]{4}|[a-fA-F0-9]{6}|[a-fA-F0-9]{8})|currentColor))$/.test(
-          v,
-        )
-      )
-        throw new InputError("Invalid border");
-    } else if (k === "aspectRatio") {
-      if (
-        typeof v !== "string" ||
-        !/^[1-9][0-9]{0,2} \/ [1-9][0-9]{0,2}$/.test(v)
-      )
-        throw new InputError("Invalid aspect ratio");
-    } else {
-      const bounds: Record<string, [number, number]> = {
-        fontWeight: [100, 900],
-        lineHeight: [0.8, 4],
-        opacity: [0, 1],
-      };
-      const range = bounds[k]!;
-      if (
-        typeof v !== "number" ||
-        !Number.isFinite(v) ||
-        v < range[0] ||
-        v > range[1]
-      )
-        throw new InputError("Invalid numeric style");
-    }
-  }
-  return r as Record<string, string | number>;
-}
 export function parsePage(
   input: unknown,
   resolveMedia?: (handle: string) => MediaBinding,
 ): Page {
-  const r = record(input, [
+  const r = pageAt("page", undefined, "page fields version,title,language,root,media,responsive,unresolved only", () => record(input, [
     "version",
     "title",
     "language",
@@ -224,19 +102,26 @@ export function parsePage(
     "media",
     "responsive",
     "unresolved",
-  ]);
-  if (r["version"] !== 1) throw new InputError("Unsupported page grammar");
-  const language = string(r["language"], 30);
-  if (!/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(language))
-    throw new InputError("Invalid language tag");
+  ]));
+  pageAt("page.version", undefined, "page grammar version1", () => {
+    if (r["version"] !== 1) fail("Unsupported page grammar");
+  });
+  const language = pageAt("page.language", undefined, "language tag of 2–3 ASCII letters and optional 2–8 alphanumeric subtags; max30 UTF-16 units", () => {
+    const value = string(r["language"], limits.language);
+    if (!new RegExp(languagePattern).test(value)) fail("Invalid language tag");
+    return value;
+  });
   const ids = new Set<string>();
   let count = 0;
   const slots = new Set<string>();
-  const anchors: string[] = [];
-  const element = (input: unknown, depth = 0): Element => {
-    if (depth > 12 || ++count > 400)
-      throw new InputError("Page element resource bound exceeded");
-    const x = record(input, [
+  const slotNodes = new Map<string, string>();
+  const anchors: { target: string; nodeId: string; path: string }[] = [];
+  const identityPaths = new Map<string, string>();
+  const element = (input: unknown, depth = 0, path = "page.root"): Element => {
+    pageAt(path, undefined, `maximum depth${limits.depth} (root0) and ${limits.nodes} total nodes`, () => {
+      if (depth > limits.depth || ++count > limits.nodes) fail("Page element resource bound exceeded");
+    });
+    const x = pageAt(path, undefined, "only declared node fields for its kind", () => record(input, [
       "id",
       "kind",
       "text",
@@ -248,116 +133,125 @@ export function parsePage(
       "decorative",
       "style",
       "children",
-    ]);
+    ]));
+    const localId = pageAt(path + ".id", undefined, "local id with ASCII letters/digits/underscore/hyphen; max160 UTF-16 units", () => id(x["id"]));
     const node: Element = {
-      id: id(x["id"]),
-      kind: choice(x["kind"], [
-        "container",
-        "section",
-        "heading",
-        "text",
-        "link",
-        "list",
-        "media",
-      ]),
+      id: localId,
+      kind: pageAt(path + ".kind", localId, pageKinds.join("/"), () => choice(x["kind"], pageKinds)),
     };
-    if (ids.has(node.id))
-      throw new InputError("Duplicate local element identity");
+    const field = <T>(name: string, expected: string, parse: () => T) => pageAt(path + "." + name, node.id, expected, parse);
+    field("id", "unique local identity within this same page", () => {
+      if (ids.has(node.id)) fail("Duplicate local element identity; first declared at " + identityPaths.get(node.id));
+    });
     ids.add(node.id);
-    if (x["style"] !== undefined) node.style = parseStyle(x["style"]);
+    identityPaths.set(node.id, path);
+    if (x["style"] !== undefined) node.style = parseStyle(x["style"], {path: path + ".style", nodeId: node.id});
     if (["heading", "text", "link"].includes(node.kind))
-      node.text = string(x["text"], 8000);
+      node.text = field("text", "nonblank text; max8000 UTF-16 units", () => string(x["text"], limits.text));
     else if (x["text"] !== undefined)
-      throw new InputError("Text belongs to text elements");
+      field("text", "text only on heading/text/link", () => fail("Text belongs to text elements"));
     if (node.kind === "heading") {
-      if (
+      field("level", "explicit integer heading level1–6", () => { if (
         !Number.isInteger(x["level"]) ||
         Number(x["level"]) < 1 ||
         Number(x["level"]) > 6
       )
-        throw new InputError("Heading level must be explicit");
+        fail("Heading level must be explicit"); });
       node.level = Number(x["level"]);
     } else if (x["level"] !== undefined)
-      throw new InputError("Level belongs to headings");
+      field("level", "level only on heading", () => fail("Level belongs to headings"));
     if (node.kind === "link") {
-      node.href = string(x["href"], 500);
-      if (
-        !/^(#[a-zA-Z0-9_-]+|\/(?:[a-zA-Z0-9_-]+\/?)*|https:\/\/[^\s<>"'\\]+|mailto:[a-zA-Z0-9._+@-]+|tel:[+0-9()-]+)$/.test(
-          node.href,
-        )
-      )
-        throw new InputError("Invalid link target");
-      if (node.href.startsWith("#")) anchors.push(node.href.slice(1));
+      node.href = field("href", "#local-id, slash path, https://, mailto: or tel: under the page href grammar; max500 UTF-16 units", () => {
+        const value = string(x["href"], limits.href);
+        if (!new RegExp(hrefPattern).test(value)) fail("Invalid link target");
+        return value;
+      });
+      if (node.href.startsWith("#")) anchors.push({target: node.href.slice(1), nodeId: node.id, path: path + ".href"});
     } else if (x["href"] !== undefined)
-      throw new InputError("Href belongs to links");
+      field("href", "href only on link", () => fail("Href belongs to links"));
     if (node.kind === "list")
-      node.items = list(x["items"], (v) => string(v, 2000), 100);
+      node.items = field("items", "list of at most100 nonblank strings", () => {
+        let index = 0;
+        return list(x["items"], v => field(`items[${index++}]`, "nonblank list text; max2000 UTF-16 units", () => string(v, limits.item)), limits.entries);
+      });
     else if (x["items"] !== undefined)
-      throw new InputError("Items belong to lists");
+      field("items", "items only on list", () => fail("Items belong to lists"));
     if (node.kind === "media") {
-      node.slot = id(x["slot"]);
+      node.slot = field("slot", "local slot id; max160 UTF-16 units", () => id(x["slot"]));
       slots.add(node.slot);
-      node.alt = string(x["alt"], 1000, true);
-      if (typeof x["decorative"] !== "boolean")
-        throw new InputError("Declare decorative media explicitly");
-      node.decorative = x["decorative"];
+      if (!slotNodes.has(node.slot)) slotNodes.set(node.slot, node.id);
+      node.alt = field("alt", "alt string (may be empty); max1000 UTF-16 units", () => string(x["alt"], limits.alt, true));
+      node.decorative = field("decorative", "explicit boolean", () => {
+        if (typeof x["decorative"] !== "boolean") fail("Declare decorative media explicitly");
+        return x["decorative"] as boolean;
+      });
       if (node.decorative && node.alt)
-        throw new InputError("Decorative media must use empty alt text");
+        field("alt", "empty trimmed alt when decorative=true", () => fail("Decorative media must use empty alt text"));
     } else if (["slot", "alt", "decorative"].some((k) => x[k] !== undefined))
-      throw new InputError("Media fields belong to media elements");
-    if (["container", "section"].includes(node.kind))
-      node.children = list(x["children"], (v) => element(v, depth + 1), 100);
+      pageAt(path, node.id, "slot/alt/decorative only on media", () => fail("Media fields belong to media elements"));
+    if (["container", "section"].includes(node.kind)) {
+      let childIndex = 0;
+      node.children = field("children", "container/section children array with at most100 entries", () => list(x["children"], (v) => element(v, depth + 1, `${path}.children[${childIndex++}]`), limits.entries));
+    }
     else if (x["children"] !== undefined)
-      throw new InputError("Children belong to containers");
+      field("children", "children only on container/section", () => fail("Children belong to containers"));
     return node;
   };
   const root = element(r["root"]);
   if (!["container", "section"].includes(root.kind))
-    throw new InputError("Page root must contain elements");
+    pageAt("page.root.kind", root.id, "container or section root", () => fail("Page root must contain elements"));
   for (const a of anchors)
-    if (!ids.has(a)) throw new InputError("Unknown local anchor");
-  const mediaInput = record(r["media"], [...slots]);
+    if (!ids.has(a.target)) pageAt(a.path, a.nodeId, "#target matching an existing local node id in this SAME candidate page (case-sensitive)", () => fail("Unknown local anchor #" + a.target.slice(0, limits.identity)));
+  const mediaInput = pageAt("page.media", undefined, "exactly the slots used by this page's media nodes", () => record(r["media"], [...slots]));
   const media: Page["media"] = {};
   for (const slot of slots) {
     const v = mediaInput[slot];
     if (v === null) media[slot] = null;
-    else if (resolveMedia) media[slot] = resolveMedia(string(v, 100));
-    else {
+    else if (resolveMedia) media[slot] = pageAt(`page.media["${slot}"]`, slotNodes.get(slot), "null or an exact supplied placeable/upload handle owned by this request/project; max100 UTF-16 units", () => resolveMedia(string(v, limits.handle)));
+    else media[slot] = pageAt(`page.media["${slot}"]`, slotNodes.get(slot), "null or an exact pinned media binding", () => {
       const b = record(v, ["asset", "image"]);
       const asset = ref(b["asset"]);
       if (asset.freshness !== "pinned")
         throw new InputError("Media requires an exact pinned version");
-      media[slot] = { asset, image: parseImageInfo(b["image"]) };
-    }
+      return { asset, image: parseImageInfo(b["image"]) };
+    });
   }
-  const responsive = list(
+  let responsiveIndex = 0;
+  const responsive = pageAt("page.responsive", undefined, "array of at most100 responsive rules", () => list(
     r["responsive"],
     (v) => {
-      const x = record(v, ["maxWidth", "nodeId", "style"]);
-      if (
+      const index = responsiveIndex++;
+      const path = `page.responsive[${index}]`;
+      const x = pageAt(path, undefined, "maxWidth,nodeId,style only", () => record(v, ["maxWidth", "nodeId", "style"]));
+      pageAt(path + ".maxWidth", undefined, "integer viewport240–4096", () => { if (
         !Number.isInteger(x["maxWidth"]) ||
-        Number(x["maxWidth"]) < 240 ||
-        Number(x["maxWidth"]) > 4096
+        Number(x["maxWidth"]) < limits.viewportMin ||
+        Number(x["maxWidth"]) > limits.viewportMax
       )
-        throw new InputError("Invalid responsive viewport");
-      const nodeId = id(x["nodeId"]);
-      if (!ids.has(nodeId)) throw new InputError("Unknown responsive node");
+        fail("Invalid responsive viewport"); });
+      const nodeId = pageAt(path + ".nodeId", undefined, "local node id; max160 UTF-16 units", () => id(x["nodeId"]));
+      pageAt(path + ".nodeId", nodeId, "existing local node id in this SAME candidate page", () => {
+        if (!ids.has(nodeId)) fail("Unknown responsive node");
+      });
       return {
         maxWidth: Number(x["maxWidth"]),
         nodeId,
-        style: parseStyle(x["style"]),
+        style: parseStyle(x["style"], {path: `page.responsive[${index}].style`, nodeId}),
       };
     },
-    100,
-  );
+    limits.entries,
+  ));
   return {
     version: 1,
-    title: string(r["title"], 200),
+    title: pageAt("page.title", undefined, "nonblank title; max200 UTF-16 units", () => string(r["title"], limits.title)),
     language,
     root,
     media,
     responsive,
-    unresolved: list(r["unresolved"], (v) => string(v, 1000), 100),
+    unresolved: pageAt("page.unresolved", undefined, "array of at most100 nonblank findings; each max1000 UTF-16 units", () => {
+      let index = 0;
+      return list(r["unresolved"], v => pageAt(`page.unresolved[${index++}]`, undefined, "nonblank finding; max1000 UTF-16 units", () => string(v, limits.alt)), limits.entries);
+    }),
   };
 }
 export function nodes(page: Page): Element[] {
@@ -370,13 +264,11 @@ export function nodes(page: Page): Element[] {
   return all;
 }
 export function preservation(page: Page, locks: Lock[]): void {
-  for (const lock of locks) {
+  for (const [index, lock] of locks.entries()) {
     const node = nodes(page).find((n) => n.id === lock.nodeId);
     const actual = lock.field === "subtree" ? node : node?.[lock.field];
     if (actual === undefined || canonical(actual) !== canonical(lock.value))
-      throw new InputError(
-        "Preservation failed for " + lock.nodeId + "/" + lock.field,
-      );
+      pageAt(`preservation[${index}].value`, lock.nodeId, `exact frozen ${lock.field} value on the locked node`, () => fail("Preservation failed for " + lock.nodeId + "/" + lock.field));
   }
 }
 export function pageFindings(page: Page): string[] {

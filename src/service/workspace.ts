@@ -488,7 +488,7 @@ export class Workspace {
     };
   }
   create(input: unknown) {
-    const r = record(input, ['title', 'mode', 'visualOS', 'palette']);
+    const r = record(input, ['title', 'mode', 'visualOS', 'palette', 'intake']);
     const title = string(r['title'], 100),
       mode = choice(r['mode'], ['branded', 'freeroam']);
     const projectId = 'website-' + randomUUID();
@@ -566,6 +566,13 @@ export class Workspace {
       references: localField({ hasOverride: true, override: [] }),
       comparison: localField({ hasOverride: true, override: [] }),
     };
+    if (r['intake'] !== undefined) {
+      const intake = string(r['intake'], 12000);
+      Object.assign(local, {intent: localField({hasOverride:true,override:intake}),
+        audience:localField({hasOverride:true,override:''}),offer:localField({hasOverride:true,override:''}),
+        response:localField({hasOverride:true,override:''}),content:localField({hasOverride:true,override:[]}),
+        density:localField({}),unresolved:localField({hasOverride:true,override:['Audience, offer details and desired action remain unknown until clarified.']})});
+    }
     const p = packet<ModuleProject>({
       type: 'module-project',
       id: projectId,

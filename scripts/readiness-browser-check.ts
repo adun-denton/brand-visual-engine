@@ -270,6 +270,7 @@ const sameUnchangedSections = (before: Snapshot, after: Snapshot) => {
     expect(after.accepted![id]).toEqual(before.accepted![id]);
 };
 try {
+  await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
   await page.goto(origin);
   await page.keyboard.press('Tab');
   await expect(
@@ -784,6 +785,7 @@ try {
   });
   page = await context.newPage();
   listen();
+  await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
   await page.goto(origin);
   await page.locator(`[data-action=open][data-id="${pid}"]`).click();
   await view('01 Brief & references');

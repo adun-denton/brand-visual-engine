@@ -224,6 +224,7 @@ const screen = async (name: string) => {
 let nativeOperation: NodePacket<DesignArtifact<RegionOperation>>,
   apiOperation: NodePacket<DesignArtifact<RegionOperation>>;
 try {
+  await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
   await page.goto(origin);
   await page.locator(`[data-action=open][data-id="${pid}"]`).click();
   await region();
@@ -570,6 +571,7 @@ try {
   });
   page = await context.newPage();
   listen();
+  await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
   await page.goto(origin);
   await page.locator(`[data-action=open][data-id="${pid}"]`).click();
   await region();
@@ -618,6 +620,7 @@ try {
   context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   page = await context.newPage();
   listen();
+  await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
   await page.goto(origin);
   await page.locator(`[data-action=open][data-id="${pid}"]`).click();
   await region();
