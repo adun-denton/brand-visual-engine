@@ -530,7 +530,7 @@ function memoryPanel() {
     entries
       .map(
         (e) =>
-          `<li><button data-memory-evidence="${esc(key(e.ref))}" data-memory-integrity="${esc(e.integrity ?? "")}">${esc(e.kind)} · v${e.ref.version}</button> <span>${esc(e.status)}${e.media === "unavailable" ? " · media unavailable" : ""}</span>${esc(outcome(e))}${e.kind === "raster-concept" ? ` · ${esc((e.summary as { origin?: string } | null)?.origin ?? "unknown provenance")} · selection is not acceptance` : ""}</li>`,
+          `<li><button data-memory-evidence="${esc(key(e.ref))}" data-memory-integrity="${esc(e.integrity ?? "")}">${esc(e.kind)} · v${e.ref.version}</button> <span>${esc(e.status)}${e.media === "unavailable" ? " · media unavailable" : ""}</span>${e.kind==="unknown"?" · page scope unknown; scoped damaged evidence":""}${esc(outcome(e))}${e.kind === "raster-concept" ? ` · ${esc((e.summary as { origin?: string } | null)?.origin ?? "unknown provenance")} · selection is not acceptance` : ""}</li>`,
       )
       .join("");
   return `<details id="memory-panel" class="project-memory" ${draft().open["memory-panel"] ? "open" : ""}><summary>Project memory / Continue</summary><p>Saved canonical evidence and human notes. Chat is optional. This index grants no execution and approves no design or Brand rule.</p><label>Continuation scope<select id="memory-scope"><option value="page" ${scope === "page" ? "selected" : ""}>This page + exact source closure</option><option value="project" ${scope === "project" ? "selected" : ""}>Whole project</option></select></label><button id="memory-load" ${v.pending ? "disabled" : ""}>Load / refresh stored evidence</button><p id="memory-status" role="status">${esc(v.status)}</p>

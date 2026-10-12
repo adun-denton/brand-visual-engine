@@ -288,6 +288,20 @@ test("owner-checked routes reject foreign, forged, unsupported and latest pointe
   assert.throws(() => m.index(pid, reference(foreign)), /Foreign/);
   assert.throws(() => m.evidence(pid, reference(foreign)), /Foreign/);
   assert.throws(
+    () => m.evidence(pid, { ...reference(foreign), version: 99 }),
+    /Foreign/,
+  );
+  const lookup = s.app.workspace.kernel.lookup.bind(s.app.workspace.kernel);
+  s.app.workspace.kernel.lookup = (r) => {
+    if (r.id === s.u.id) throw new Error("Injected storage read failure");
+    return lookup(r);
+  };
+  assert.throws(
+    () => m.evidence(pid, reference(s.u)),
+    /storage read failed; no corruption/,
+  );
+  s.app.workspace.kernel.lookup = lookup;
+  assert.throws(
     () => m.evidence(pid, { ...reference(s.u), freshness: "current" }),
     /pinned/,
   );
@@ -390,6 +404,40 @@ test("missing and corrupt canonical records and media are explicit; no latest fa
     m
       .index(pid, reference(s.u))
       .entries.some((e) => e.ref.id === c.id && e.status === "missing"),
+  );
+  const saved = m.saveNote(pid, {
+    expected: null,
+    note: note(reference(s.u), "Saved scoped note before injected corruption"),
+  });
+  const n = JSON.parse(
+    db
+      .prepare("SELECT body FROM kernel_packets WHERE id=? AND version=1")
+      .get(saved.id)!["body"] as string,
+  );
+  n.payload.state.text = "Damaged scope note";
+  db.prepare("UPDATE kernel_packets SET body=? WHERE id=? AND version=1").run(
+    JSON.stringify(n),
+    saved.id,
+  );
+  assert.ok(
+    m
+      .index(pid, reference(s.u))
+      .entries.some(
+        (e) =>
+          e.ref.id === saved.id &&
+          e.status === "corrupt" &&
+          e.kind === "unknown",
+      ),
+  );
+  const foreignId = "foreign-corrupt-memory-source";
+  db.prepare("INSERT INTO kernel_packets VALUES(?,?,?)").run(
+    foreignId,
+    1,
+    JSON.stringify({ ...n, id: foreignId, projectId: "other-project" }),
+  );
+  assert.throws(
+    () => m.evidence(pid, { id: foreignId, version: 1, freshness: "pinned" }),
+    /Foreign/,
   );
   db.close();
 });
@@ -679,6 +727,24 @@ test("approved brand boundary and per-spec influence stay separate; unrelated ac
   assert.equal((spec.summary as any).direction, "fresh");
   assert.equal((spec.summary as any).brand.enabled, true);
   assert.equal(m.evidence(pid, reference(brand)).status, "available");
+  const fault = new DatabaseSync(join(s.root, "kernel.sqlite")),
+    damaged = structuredClone(brand);
+  damaged.approval = "proposal";
+  fault
+    .prepare("UPDATE kernel_packets SET body=? WHERE id=? AND version=1")
+    .run(JSON.stringify(damaged), brand.id);
+  assert.equal(
+    m.evidence(pid, reference(brand), brand.integrity).status,
+    "corrupt",
+  );
+  assert.ok(
+    m
+      .capsule(pid, reference(cap))
+      .currency.details.some(
+        (e) => e.ref.id === brand.id && e.status === "corrupt",
+      ),
+  );
+  fault.close();
 });
 test("actually delivered late historical evidence survives fresh index/reopen; process-only active/cache is excluded and grants never resurrect", async (t) => {
   const s = await setup(t),

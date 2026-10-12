@@ -66,6 +66,9 @@ require an actual attachment or a frozen specification in that project. Arbitrar
 Offsets are stable for an unchanged index; compare its digest before combining pages across concurrent
 writes. Histories include all supported relevant versions, not only latest heads. Unsupported canonical
 kinds are counted explicitly. JSON summaries omit unsupported payloads rather than dumping raw records.
+Damaged project-owned primary records remain visible with unknown page scope; their identity is not
+assigned to the active page. Corrupt or missing-version foreign identities reject. Storage read
+failures remain unavailable read errors, not fabricated corruption outcomes.
 Index responses retain the whole-source digest and therefore are pagination envelopes, not standalone
 `MemoryIndex` snapshots; only a complete saved/downloaded snapshot round-trips that schema.
 

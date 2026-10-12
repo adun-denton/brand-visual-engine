@@ -41,6 +41,14 @@ const sameRef = (a: VersionRef | null | undefined, b: VersionRef) =>
 const unique = (refs: VersionRef[]) => [
   ...new Map(refs.map((r) => [evidenceKey(r), r])).values(),
 ];
+const corruptRecord = (e: unknown) =>
+  e instanceof SyntaxError ||
+  (e instanceof Error && e.message === "stored packet integrity mismatch");
+const storageReadFailure = () =>
+  new InputError(
+    "Canonical memory storage read failed; no corruption outcome inferred",
+    503,
+  );
 const offset = (x: unknown) => {
   if (
     !Number.isSafeInteger(x) ||
@@ -75,22 +83,17 @@ export class ProjectMemory {
     return refs.map((r) => {
       try {
         return { ref: r, packet: this.w.kernel.lookup(r), corrupt: false };
-      } catch {
+      } catch (e) {
+        if (!corruptRecord(e)) throw storageReadFailure();
         return { ref: r, packet: null, corrupt: true };
       }
     });
   }
-  private authorized(
-    pid: string,
+  private boundBrand(
     r: VersionRef,
     rows: ReturnType<ProjectMemory["inventory"]>,
   ) {
-    const p = this.w.kernel.lookup(r);
-    if (!p) return null;
-    if (p.projectId === pid) return p;
-    if (p.type !== "visual-os" || p.approval !== "accepted")
-      throw new InputError("Foreign memory evidence", 403);
-    const attached = rows.some(
+    return rows.some(
       ({ packet: p }) =>
         p &&
         ((p.type === "module-project" &&
@@ -102,6 +105,26 @@ export class ProjectMemory {
               r,
             ))),
     );
+  }
+  private authorized(
+    pid: string,
+    r: VersionRef,
+    rows: ReturnType<ProjectMemory["inventory"]>,
+  ) {
+    const p = this.w.kernel.lookup(r);
+    if (!p) {
+      if (
+        this.w.kernel.currentVersion(r.id) !== null &&
+        !rows.some((row) => row.ref.id === r.id) &&
+        !this.boundBrand(r, rows)
+      )
+        throw new InputError("Foreign memory evidence", 403);
+      return null;
+    }
+    if (p.projectId === pid) return p;
+    if (p.type !== "visual-os" || p.approval !== "accepted")
+      throw new InputError("Foreign memory evidence", 403);
+    const attached = this.boundBrand(r, rows);
     if (!attached)
       throw new InputError("Brand outside approved project context", 403);
     return p;
@@ -117,6 +140,9 @@ export class ProjectMemory {
       p = this.authorized(pid, r, rows);
     } catch (e) {
       if (e instanceof InputError) throw e;
+      if (!corruptRecord(e)) throw storageReadFailure();
+      if (!rows.some((row) => row.ref.id === r.id) && !this.boundBrand(r, rows))
+        throw new InputError("Foreign memory evidence", 403);
       return {
         ref: r,
         integrity: expected,
@@ -234,7 +260,7 @@ export class ProjectMemory {
     for (const row of rows) {
       const p = row.packet;
       if (!p) {
-        if (!scope) add(row.ref);
+        add(row.ref); // Owner is known; damaged primary evidence has unknown page scope.
         continue;
       }
       if (memoryKind(p) === "project-continuation-capsule") continue;

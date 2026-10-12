@@ -36,7 +36,10 @@ CI at the intermediate head passed all inherited gates, but failed V04 screensho
 inspection action replaced the DOM during Playwright's stable-element scroll. The evidence helper
 now waits for that memory action to finish before capture and scrolls the current node synchronously;
 ordinary Cancel/Revoke probes retain their original 250 ms bound. Final exact-head platform outcomes
-are reported separately. Final currency compares source heads observed at snapshot creation, so a
+are reported separately. A later Windows run failed opening the inherited V02 repair fixture
+(connection failure before V03/V04); that platform history is retained. Final corruption probes also
+cover damaged scoped-note visibility, corrupt approved-context links, foreign corrupt/missing-version
+rejection and storage-read errors without invented corruption outcomes. Final currency compares source heads observed at snapshot creation, so a
 historical version already included in a fresh capsule is not labelled a newly changed source.
 
 The deterministic fresh consumer follows saved selections from an About capsule to exact imported
