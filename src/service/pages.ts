@@ -1,4 +1,5 @@
-import { StyleError, styleGuidance } from "../modules/website/style-contracts.ts";
+import { pageGuidance, pageLimits as limits } from "../modules/website/page-contracts.ts";
+import { styleGuidance } from "../modules/website/style-contracts.ts";
 import { randomUUID } from "node:crypto";
 import { posix } from "node:path";
 import type {
@@ -26,6 +27,7 @@ import type {
 } from "../modules/website/page.ts";
 import {
   parsePage,
+  pageAt,
   parseWebsite,
   nodes,
   preservation,
@@ -393,8 +395,9 @@ export class Pages {
       })),
       outputSchema: inferenceOutputSchema,
       styleGuidance,
+      pageGuidance,
       contract:
-        "Return bve.inference-result v1, exact requestId/requestHash, candidates and findings. A candidate has label,rationale,page,mediaRequirements[{slot,instruction}],proposedActions[strings]. Page: version=1,title,language,root,media,responsive,unresolved. See schema. Containers/sections own children; heading/text/link own text; heading owns level 1–6; link owns href; list owns items; media owns slot/alt/decorative. For node and responsive styles, use property-specific outputSchema constraints and styleGuidance (including a valid style-only example). Dimensions are scalar; numeric-only fields need JSON numbers. No compound shorthand, repeat(), calc() or external fonts. No fixed sections, image counts or breakpoint. Place only included placeable handles; new files use separately supplied upload handles. Critique can have no candidates. Keep exact preservation locks. Proposed actions are never executed. No IDs, acceptance, HTML/scripts or external resource URLs.",
+        "Return bve.inference-result v1, exact requestId/requestHash, candidates and findings. A candidate has label,rationale,page,mediaRequirements[{slot,instruction}],proposedActions[strings]. Page: version=1,title,language,root,media,responsive,unresolved. See schema. Containers/sections own children; heading/text/link own text; heading owns level 1–6; link owns href; list owns items; media owns slot/alt/decorative. For node and responsive styles, use property-specific outputSchema constraints and styleGuidance (including a valid style-only example). Dimensions are scalar; numeric-only fields need JSON numbers. No compound shorthand, repeat(), calc() or external fonts. No fixed sections, image counts or breakpoint. Place only included placeable handles; new files use separately supplied upload handles. Critique can have no candidates. Keep exact preservation locks. Proposed actions are never executed. Local node IDs are required; do not invent kernel/artifact IDs. Local #targets must exist in this same candidate page. Read pageGuidance for semantic relationships and aggregate limits; schema success is not semantic acceptance. No acceptance, HTML/scripts or external resource URLs.",
       metadata: { model: null, settings: null, usage: null },
       policy: { paidExecution: false, humanAcceptance: false },
     };
@@ -523,47 +526,38 @@ export class Pages {
     const candidates = list(
       response["candidates"],
       (v) => {
-        const c = record(v, [
-          "label",
-          "rationale",
-          "page",
-          "mediaRequirements",
-          "proposedActions",
-        ]);
-        string(c["label"], 200);
         const index = candidateIndex++;
-        let page: Page;
-        try { page = parsePage(c["page"], resolve); }
-        catch (error) {
-          if (error instanceof StyleError) throw new InputError(`Candidate ${index + 1}: ${error.message}`, error.status);
+        const field = <T>(path: string, expected: string, parse: () => T) => pageAt(path, undefined, expected, parse);
+        try {
+          const c = field("candidate", "label,rationale,page,mediaRequirements,proposedActions only", () => record(v, ["label", "rationale", "page", "mediaRequirements", "proposedActions"]));
+          field("candidate.label", "nonblank label; max200 UTF-16 units", () => string(c["label"], limits.title));
+          const page = parsePage(c["page"], resolve);
+          preservation(page, s.locks);
+          let needIndex = 0;
+          const needs = field("candidate.mediaRequirements", "array of at most100 media needs", () => list(c["mediaRequirements"], v => {
+            const path = `candidate.mediaRequirements[${needIndex++}]`;
+            const n = field(path, "slot,instruction only", () => record(v, ["slot", "instruction"]));
+            const slot = field(path + ".slot", "existing slot in this same page; max160 UTF-16 units", () => {
+              const value = string(n["slot"], limits.identity);
+              if (!(value in page.media)) throw new InputError("Media need targets an unknown slot");
+              return value;
+            });
+            return slot + ": " + field(path + ".instruction", "nonblank instruction; max4000 UTF-16 units", () => string(n["instruction"]));
+          }, limits.entries));
+          let actionIndex = 0;
+          const actions = field("candidate.proposedActions", "array of at most32 proposed-only actions", () => list(c["proposedActions"], v =>
+            "Proposed only: " + field(`candidate.proposedActions[${actionIndex++}]`, "nonblank action; max4000 UTF-16 units", () => string(v)), limits.actions));
+          return {
+            page, context: s.context, locks: s.locks,
+            rationale: field("candidate.rationale", "nonblank rationale; max4000 UTF-16 units", () => string(c["rationale"])),
+            notes: [...needs, ...actions],
+          };
+        } catch (error) {
+          if (error instanceof InputError) throw new InputError(`Candidate ${index + 1}: ${error.message}`, error.status);
           throw error;
         }
-        preservation(page, s.locks);
-        const needs = list(
-          c["mediaRequirements"],
-          (v) => {
-            const n = record(v, ["slot", "instruction"]);
-            const slot = string(n["slot"], 160);
-            if (!(slot in page.media))
-              throw new InputError("Media need targets an unknown slot");
-            return slot + ": " + string(n["instruction"]);
-          },
-          100,
-        );
-        const actions = list(
-          c["proposedActions"],
-          (v) => "Proposed only: " + string(v),
-          32,
-        );
-        return {
-          page,
-          context: s.context,
-          locks: s.locks,
-          rationale: string(c["rationale"]),
-          notes: [...needs, ...actions],
-        };
       },
-      6,
+      limits.candidates,
     );
     if (s.operation !== "critique" && !candidates.length)
       throw new InputError("Create/revise needs a candidate");
