@@ -1,3 +1,4 @@
+import { checkExecutionRepairs } from "./execution-repair-browser-check.ts";
 import { chromium, expect } from "@playwright/test";
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -130,6 +131,7 @@ try {
     const action = async (name: string) => {
       await latest().getByRole("button", { name, exact: true }).click();
       await idle();
+      await expect(latest()).not.toHaveAttribute("data-dispatch-pending","true");
     };
     transport.mode = "mixed";
     await prepare(6, "Six bounded offline attempts");
@@ -234,6 +236,7 @@ try {
     await app.close();
     app = undefined;
   }
+  await checkExecutionRepairs(browser,evidence);
 } finally {
   if (app) await app.close();
   await browser.close();

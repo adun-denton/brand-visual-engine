@@ -651,19 +651,31 @@ test("bounded timeout and status failure remain uncertain without resends or aut
     run = s.e.prepare(s.p.project.id, reference(g));
   const result = await s.e.execute(s.p.project.id, reference(run));
   assert.equal(result.payload.state.slots[0]!.status, "uncertain");
-  await new Promise((r) => setTimeout(r, 60));
+  await s.e.waitForDeliveries();
   assert.equal(s.transport.submissions.length, 1);
   assert.equal(s.transport.polls.length, 0);
+  assert.ok(
+    s.e.state(s.p.project.id, reference(s.u)).find((e) => e.run.id === run.id)!
+      .run.payload.state.slots[0]!.receipt,
+  );
+  const nextGrant = s.e.grant(s.p.project.id, {
+    ...s.terms,
+    maxStatusCalls: 1,
+  });
+  const pending = s.e.prepare(s.p.project.id, reference(nextGrant));
+  s.transport.mode = "running";
+  s.transport.submit = send;
+  await s.e.execute(s.p.project.id, reference(pending));
   s.transport.status = async () => {
     throw new Error("Status transport failed");
   };
-  const status = await s.e.reconcile(s.p.project.id, reference(run), 1);
+  const status = await s.e.reconcile(s.p.project.id, reference(pending), 1);
   assert.equal(
     status.payload.state.calls.filter((c) => c.kind === "status").length,
     1,
   );
   await assert.rejects(
-    s.e.reconcile(s.p.project.id, reference(run), 1),
+    s.e.reconcile(s.p.project.id, reference(pending), 1),
     /allowance/,
   );
   assert.equal(s.v.state(s.p.project.id, reference(s.u)).candidates.length, 0);
@@ -846,4 +858,332 @@ test("explicit failed receipt, unknown status and cancellation denial retain ind
   const unknown = await s.e.reconcile(s.p.project.id, reference(run), 2);
   assert.equal(unknown.payload.state.slots[0]!.status, "uncertain");
   assert.equal(s.transport.submissions.length, 7);
+});
+function controlled<T>() {
+  let release!: (value: T) => void;
+  const promise = new Promise<T>((r) => (release = r));
+  return { promise, release };
+}
+async function timedRun(s: Awaited<ReturnType<typeof setup>>, overrides = {}) {
+  const grant = s.e.grant(s.p.project.id, {
+    ...s.terms,
+    timeoutMs: 5,
+    maxStatusCalls: 0,
+    maxCancelCalls: 0,
+    ...overrides,
+  });
+  return s.e.prepare(s.p.project.id, reference(grant));
+}
+test("R2 delivered late acknowledgement becomes one historical receipt with zero polls, adoption or continuation; closed reopen retains it", async (t) => {
+  const s = await setup(t, 6),
+    send = s.transport.submit.bind(s.transport),
+    held = controlled<void>(),
+    entered = controlled<void>();
+  s.transport.submit = async (input) => {
+    const ack = await send(input);
+    entered.release();
+    await held.promise;
+    return ack;
+  };
+  const run = await timedRun(s),
+    flight = s.e.execute(s.p.project.id, reference(run));
+  await entered.promise;
+  const timeout = await flight;
+  assert.equal(timeout.payload.state.slots[0]!.status, "uncertain");
+  assert.equal(s.transport.submissions.length, 1);
+  assert.equal(timeout.payload.state.slots[0]!.receipt, null);
+  held.release();
+  await s.e.waitForDeliveries();
+  const latest = s.e
+    .state(s.p.project.id, reference(s.u))
+    .find((e) => e.run.id === run.id)!;
+  assert.ok(latest.run.payload.state.slots[0]!.jobId);
+  const receipt = s.app.workspace.kernel.get<any>(
+    latest.run.payload.state.slots[0]!.receipt!,
+  );
+  assert.equal(receipt.payload.state.outcome, "historical");
+  assert.ok(receipt.payload.state.media);
+  assert.equal(receipt.payload.state.candidate, null);
+  assert.equal(s.v.state(s.p.project.id, reference(s.u)).candidates.length, 0);
+  assert.equal(s.transport.submissions.length, 1);
+  assert.equal(s.transport.polls.length, 0);
+  assert.equal(latest.run.payload.state.calls.length, 1);
+  assert.ok(
+    latest.run.payload.state.slots
+      .slice(1)
+      .every((a) => a.status === "pending"),
+  );
+  const restored = await s.reopen();
+  assert.equal(
+    canonical(restored.workspace.kernel.get(reference(receipt))),
+    canonical(receipt),
+  );
+  assert.equal(
+    restored.visual.state(s.p.project.id, reference(s.u)).candidates.length,
+    0,
+  );
+});
+test("R2 concurrent explicit reconciliation and delivered receipt are idempotent; conflicting late identity/payload rejects", async (t) => {
+  for (const conflict of ["none", "job", "payload"]) {
+    const s = await setup(t),
+      send = s.transport.submit.bind(s.transport),
+      held = controlled<void>(),
+      entered = controlled<void>();
+    s.transport.submit = async (input) => {
+      const ack = await send(input);
+      entered.release();
+      await held.promise;
+      if (conflict === "job") return { ...ack, jobId: "foreign-job" };
+      if (conflict === "payload")
+        return {
+          ...ack,
+          result: { ...ack.result!, message: "conflicting payload" },
+        };
+      return ack;
+    };
+    const run = await timedRun(s, { maxStatusCalls: 1 });
+    const flight = s.e.execute(s.p.project.id, reference(run));
+    await entered.promise;
+    await flight;
+    const reconcile = s.e.reconcile(s.p.project.id, reference(run), 1);
+    if (conflict !== "none") await reconcile;
+    held.release();
+    await reconcile;
+    await s.e.waitForDeliveries();
+    const state = s.e
+      .state(s.p.project.id, reference(s.u))
+      .find((e) => e.run.id === run.id)!;
+    assert.equal(
+      s.app.workspace.kernel
+        .latestPackets()
+        .filter((p) => (p.payload as any).kind === "raster-execution-receipt")
+        .length,
+      1,
+    );
+    assert.equal(s.transport.submissions.length, 1);
+    assert.equal(s.transport.polls.length, 1);
+    assert.equal(state.run.payload.state.calls.length, 2);
+    assert.equal(
+      s.v.state(s.p.project.id, reference(s.u)).candidates.length,
+      0,
+    );
+    if (conflict !== "none") assert.ok(state.deliveryErrors.length);
+    else assert.deepEqual(state.deliveryErrors, []);
+  }
+});
+test("R2 invalid late media and late failure get independent historical receipts; late rejection is exposed without unhandled rejection", async (t) => {
+  for (const outcome of ["invalid", "failed", "rejected"]) {
+    const s = await setup(t),
+      send = s.transport.submit.bind(s.transport),
+      held = controlled<void>();
+    s.transport.submit = async (input) => {
+      const ack = await send(input);
+      await held.promise;
+      if (outcome === "rejected") throw new Error("Late transport rejection");
+      return {
+        ...ack,
+        result: {
+          ...ack.result!,
+          ...(outcome === "invalid"
+            ? { bytes: Buffer.from("invalid") }
+            : { outcome: "failed" as const, bytes: null }),
+          message: "Delayed " + outcome,
+        },
+      };
+    };
+    const run = await timedRun(s);
+    await s.e.execute(s.p.project.id, reference(run));
+    held.release();
+    await s.e.waitForDeliveries();
+    const state = s.e
+      .state(s.p.project.id, reference(s.u))
+      .find((e) => e.run.id === run.id)!;
+    assert.equal(state.run.payload.state.slots[0]!.status, "uncertain");
+    if (outcome === "rejected") {
+      assert.equal(state.run.payload.state.slots[0]!.receipt, null);
+      assert.equal(state.deliveryErrors[0]!.stage, "transport-rejection");
+      assert.equal(state.deliveryErrors[0]!.retryable, false);
+    } else {
+      const receipt = s.app.workspace.kernel.get<any>(
+        state.run.payload.state.slots[0]!.receipt!,
+      );
+      assert.equal(receipt.payload.state.outcome, "historical");
+      assert.equal(receipt.payload.state.media, null);
+      assert.match(
+        receipt.payload.state.message,
+        outcome === "invalid" ? /rejected/ : /Delayed failed/,
+      );
+    }
+    assert.equal(s.transport.submissions.length, 1);
+    assert.equal(s.transport.polls.length, 0);
+    assert.equal(
+      s.v.state(s.p.project.id, reference(s.u)).candidates.length,
+      0,
+    );
+  }
+});
+test("R2 late asset and transaction storage failure retains response for deliberate no-call retry, not a fabricated invalid receipt", async (t) => {
+  for (const failure of ["asset", "transaction"]) {
+    const s = await setup(t),
+      send = s.transport.submit.bind(s.transport),
+      held = controlled<void>();
+    s.transport.submit = async (input) => {
+      const ack = await send(input);
+      await held.promise;
+      return ack;
+    };
+    const run = await timedRun(s);
+    await s.e.execute(s.p.project.id, reference(run));
+    const save = s.app.workspace.assets.save.bind(s.app.workspace.assets),
+      put = s.app.workspace.kernel.putMany.bind(s.app.workspace.kernel);
+    if (failure === "asset")
+      s.app.workspace.assets.save = () => {
+        throw new Error("Injected late asset storage failure");
+      };
+    else
+      s.app.workspace.kernel.putMany = (packets) =>
+        put(packets, () => {
+          throw new Error("Injected late transaction storage failure");
+        });
+    held.release();
+    await s.e.waitForDeliveries();
+    let state = s.e
+      .state(s.p.project.id, reference(s.u))
+      .find((e) => e.run.id === run.id)!;
+    assert.equal(state.run.payload.state.slots[0]!.receipt, null);
+    assert.equal(state.deliveryErrors[0]!.stage, "received-intake");
+    assert.equal(state.deliveryErrors[0]!.retryable, true);
+    assert.match(state.deliveryErrors[0]!.message, /storage failure/);
+    s.app.workspace.assets.save = save;
+    s.app.workspace.kernel.putMany = put;
+    await s.e.retryDelivery(s.p.project.id, reference(run), 1);
+    state = s.e
+      .state(s.p.project.id, reference(s.u))
+      .find((e) => e.run.id === run.id)!;
+    assert.ok(state.run.payload.state.slots[0]!.receipt);
+    assert.deepEqual(state.deliveryErrors, []);
+    assert.equal(s.transport.submissions.length, 1);
+    assert.equal(s.transport.polls.length, 0);
+    assert.equal(
+      s.v.state(s.p.project.id, reference(s.u)).candidates.length,
+      0,
+    );
+  }
+});
+test("R2 late status result and cancellation confirmation are retained without further calls or outcome mutation", async (t) => {
+  const s = await setup(t),
+    run = await timedRun(s, { maxStatusCalls: 1, maxCancelCalls: 1 });
+  s.transport.mode = "running";
+  await s.e.execute(s.p.project.id, reference(run));
+  await s.e.waitForDeliveries();
+  const status = s.transport.status.bind(s.transport),
+    statusHold = controlled<void>();
+  s.transport.status = async (job) => {
+    const response = await status(job);
+    await statusHold.promise;
+    return response;
+  };
+  await s.e.reconcile(s.p.project.id, reference(run), 1);
+  statusHold.release();
+  await s.e.waitForDeliveries();
+  let state = s.e
+    .state(s.p.project.id, reference(s.u))
+    .find((e) => e.run.id === run.id)!;
+  assert.ok(state.run.payload.state.slots[0]!.receipt);
+  assert.equal(s.transport.polls.length, 1);
+  assert.equal(s.v.state(s.p.project.id, reference(s.u)).candidates.length, 0);
+  const t2 = await setup(t),
+    r2 = await timedRun(t2, { maxCancelCalls: 1 });
+  t2.transport.mode = "running";
+  await t2.e.execute(t2.p.project.id, reference(r2));
+  await t2.e.waitForDeliveries();
+  const cancel = t2.transport.cancel.bind(t2.transport),
+    cancelHold = controlled<void>();
+  t2.transport.cancel = async (job) => {
+    const response = await cancel(job);
+    await cancelHold.promise;
+    return response;
+  };
+  await t2.e.cancel(t2.p.project.id, reference(r2), 1);
+  const result = [...t2.transport.jobs.values()][0]!.result;
+  const receipt = await t2.e.intake(t2.p.project.id, reference(r2), result);
+  cancelHold.release();
+  await t2.e.waitForDeliveries();
+  state = t2.e
+    .state(t2.p.project.id, reference(t2.u))
+    .find((e) => e.run.id === r2.id)!;
+  assert.equal(state.run.payload.state.slots[0]!.cancelConfirmed, true);
+  assert.equal(state.run.payload.state.slots[0]!.status, "uncertain");
+  assert.equal(
+    canonical(t2.app.workspace.kernel.get(reference(receipt))),
+    canonical(receipt),
+  );
+  assert.equal(t2.transport.cancellations.length, 1);
+  assert.equal(t2.transport.polls.length, 0);
+});
+test("R2 service shutdown stops accepting unreceived responses; reopen remains uncertain and non-resending", async (t) => {
+  const s = await setup(t),
+    send = s.transport.submit.bind(s.transport),
+    held = controlled<void>();
+  s.transport.submit = async (input) => {
+    const ack = await send(input);
+    await held.promise;
+    return ack;
+  };
+  const run = await timedRun(s);
+  await s.e.execute(s.p.project.id, reference(run));
+  await s.e.close();
+  const restored = await s.reopen();
+  held.release();
+  await s.e.waitForDeliveries();
+  const state = restored.visual.executions
+    .state(s.p.project.id, reference(s.u))
+    .find((e) => e.run.id === run.id)!;
+  assert.equal(state.run.payload.state.slots[0]!.receipt, null);
+  await restored.visual.executions.execute(s.p.project.id, reference(run));
+  assert.equal(s.transport.submissions.length, 1);
+  assert.equal(
+    restored.visual.state(s.p.project.id, reference(s.u)).candidates.length,
+    0,
+  );
+});
+test("R2 shutdown drains intake already processing before closing storage and preserves its exact historical receipt", async (t) => {
+  const s = await setup(t),
+    send = s.transport.submit.bind(s.transport),
+    response = controlled<void>(),
+    processing = controlled<void>(),
+    entered = controlled<void>();
+  s.transport.submit = async (input) => {
+    const ack = await send(input);
+    await response.promise;
+    return ack;
+  };
+  const intake = s.e.intake.bind(s.e);
+  s.e.intake = async (...args) => {
+    entered.release();
+    await processing.promise;
+    return intake(...args);
+  };
+  const run = await timedRun(s);
+  await s.e.execute(s.p.project.id, reference(run));
+  response.release();
+  await entered.promise;
+  let closed = false;
+  const closing = s.app.close().then(() => {
+    closed = true;
+  });
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(closed, false);
+  processing.release();
+  await closing;
+  const reopened = await s.reopen();
+  const state = reopened.visual.executions
+    .state(s.p.project.id, reference(s.u))
+    .find((e) => e.run.id === run.id)!;
+  assert.ok(state.run.payload.state.slots[0]!.receipt);
+  assert.equal(
+    reopened.visual.state(s.p.project.id, reference(s.u)).candidates.length,
+    0,
+  );
+  assert.equal(s.transport.submissions.length, 1);
 });

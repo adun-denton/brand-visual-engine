@@ -113,3 +113,36 @@ restore and latency/resource measurements. Real generation and designer judgment
 
 Rollback uses a separate checkout at accepted V02 and a complete closed runtime that matches that code.
 Do not downgrade evolved roots in place or selectively delete records/media/history.
+
+## R1–R2 repair behavior
+
+Execution commands have an independent UI lifecycle. Sending Execute shows progress and disables
+repeat Execute, while Cancel/Revoke remain pointer/keyboard accessible. Other writes on that page
+wait; read-only page/project navigation and layout changes retain isolated drafts. Stored progress
+refreshes do not call the transport, grant authority or consume status allowance. They are bounded to
+60 GET observations per action; an explicit “Refresh stored progress” remains available afterward.
+DOM draft ownership and focus restoration prevent a blur/rerender from writing another page's draft.
+Cancellation denial leaves confirmation unknown and permits a deliberate follow-up within the original
+remaining allowance. Revocation does not claim that already sent work has been killed.
+
+A timed-out transport remains supervised while the receiver is open. An acknowledgement actually
+delivered later is checked against the exact submission/request/slot/known job identity and passes
+through the ordinary idempotent intake. It creates historical reference evidence, never candidate
+membership, adoption, another submit, automatic transport status query or continuation of pending slots.
+Late status responses use the same handling. Late cancellation confirmation can advance monotonically,
+including after historical receipt intake, without changing the committed outcome, identity or receipt.
+The persistence gate narrowly permits this confirmation metadata progress under an owned control call;
+all other consumed outcome fields remain immutable. No record/schema migration occurs.
+
+Received-response storage/intake failures are exposed in the workspace separately from invalid media.
+The failed response remains in a process-only cache for an explicit “Retry received evidence” action,
+which validates/commits the same evidence without a transport call or new grant. Binding conflicts still
+reject; malformed late media produces a historical rejection receipt, and late transport rejection has
+no fabricated output. The cache/diagnostics are not canonical project memory, do not survive shutdown,
+and cannot claim failed storage succeeded. Durable owned IDs/uncertainty remain available after reopen.
+
+The host drains foreground HTTP work before closing the receiver. It aborts outstanding waits, stops
+accepting subsequently arriving responses and drains intake already processing before closing SQLite.
+An abort-ignoring, not-yet-delivered response is not awaited forever and is not claimed retained after
+receiver/process shutdown. Genuine restart uncertainty remains non-resending. No AbortSignal or
+confirmation is treated as proof of GPU termination or billing disposition.

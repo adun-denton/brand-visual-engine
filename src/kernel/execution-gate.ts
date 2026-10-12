@@ -300,7 +300,23 @@ export function executionGate(
         throw new Error("One transport reservation per transition");
       for (const before of old.slots) {
         const next = e.slots.find((s) => s.slot === before.slot)!;
-        if (before.receipt) eq(next, before, "Consumed receipt cannot replay");
+        if (before.receipt)
+          eq(
+            { ...next, cancelConfirmed: before.cancelConfirmed },
+            before,
+            "Consumed outcome/receipt cannot replay",
+          );
+        if (
+          !before.cancelConfirmed &&
+          next.cancelConfirmed &&
+          !e.calls.some(
+            (c) =>
+              c.slot === next.slot && ["cancel", "status"].includes(c.kind),
+          )
+        )
+          throw new Error(
+            "Cancellation confirmation requires an owned control call",
+          );
         if (before.submissionId && next.submissionId !== before.submissionId)
           throw new Error("Submission cannot reset");
         if (before.jobId && next.jobId !== before.jobId)

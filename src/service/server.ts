@@ -503,6 +503,7 @@ export async function startApp(
       await new Promise<void>((resolve, reject) =>
         server.close((e) => (e ? reject(e) : resolve())),
       );
+      await visual.executions.close();
       workspace.close();
     },
   };

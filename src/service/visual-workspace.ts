@@ -184,7 +184,7 @@ export class VisualWorkspace {
   }
   async command(pid: string, action: string, input: unknown): Promise<unknown> {
     try {
-      if (['compile-execution','grant-execution','prepare-execution','execute','recover-execution','reconcile-execution','cancel-execution','revoke-execution'].includes(action)) return await this.executions.command(pid,action,input);
+      if (['compile-execution','grant-execution','prepare-execution','retry-delivery','execute','recover-execution','reconcile-execution','cancel-execution','revoke-execution'].includes(action)) return await this.executions.command(pid,action,input);
       return await this.perform(pid, action, input);
     } catch (error) {
       if (error instanceof ExplorationConflict)

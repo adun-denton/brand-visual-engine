@@ -27,7 +27,7 @@ type State = {
   selectedSources: Work<RasterConcept>[];
   sourceOrigins: Record<string, string[]>;
   executionAvailability: { connected:boolean; mode:string; label:string; adapter:unknown };
-  executions: { run:Work<Execution>; active:boolean; outputs:VersionRef[]; slots:(Execution['slots'][number]&{displayStatus:string})[]; grant:Work<Grant>; request:Work<ExecutionRequest> }[];
+  executions: { run:Work<Execution>; active:boolean; pendingDeliveries:{slot:number;kind:string;sequence:number}[]; deliveryErrors:{sequence:number;slot:number;kind:string;stage:string;message:string;retryable:boolean}[]; outputs:VersionRef[]; slots:(Execution['slots'][number]&{displayStatus:string;receiptSummary:{outcome:string;message:string;hasMedia:boolean}|null})[]; grant:Work<Grant>; request:Work<ExecutionRequest> }[];
 };
 const root = document.querySelector<HTMLDivElement>("#visual-app")!;
 const notice = document.querySelector<HTMLDivElement>("#visual-notice")!;
@@ -124,12 +124,12 @@ async function get(path: string) {
   if (!r.ok) throw Error(v.error);
   return v;
 }
-async function post(action: string, input: unknown) {
+async function post(action: string, input: unknown, projectId = pid) {
   const r = await fetch("/api/v1/visual/" + action, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-BVE-Token": token },
     body: JSON.stringify(
-      action === "create" ? input : { projectId: pid, input },
+      action === "create" ? input : { projectId, input },
     ),
   });
   const v = await r.json();
@@ -151,7 +151,15 @@ function focusSource(k: string) {
 }
 const selected = (c: Work<RasterConcept>) =>
   entries().filter((e) => key(e.candidate) === key(c));
-async function reload() {
+function executionFocus() {
+  const n=document.activeElement as HTMLInputElement|HTMLTextAreaElement|HTMLButtonElement|null;
+  if(!n||!root.contains(n))return ()=>{};
+  let selector=n.id?"#"+CSS.escape(n.id):n.getAttribute("name")&&n.closest("form")?.id?"#"+CSS.escape(n.closest("form")!.id)+` [name="${CSS.escape(n.getAttribute("name")!)}"]`:"";
+  if(!selector)for(const a of ["data-execution-cancel","data-execution-revoke","data-execution-run","data-execution-reconcile","data-execution-delivery"]){const value=n.getAttribute(a);if(value){selector=`[${a}^="${CSS.escape(value.split(":")[0]+":")}"]`;break;}}
+  const start="selectionStart" in n?n.selectionStart:null,end="selectionEnd" in n?n.selectionEnd:null;
+  return ()=>{const target=selector?root.querySelector<HTMLInputElement|HTMLTextAreaElement>(selector):null;target?.focus({preventScroll:true});if(target&&start!==null&&end!==null&&"setSelectionRange" in target)try{target.setSelectionRange(start,end);}catch{}};
+}
+async function reload(keepExecutionFocus=false) {
   if (!state) return;
   const ticket = ++epoch;
   errorUnit = key(state.unit);
@@ -167,13 +175,17 @@ async function reload() {
   units = next.units;
   if (!allCandidates().some((c) => key(c) === focused))
     focused = state.candidates[0] ? key(state.candidates[0]) : "";
-  render();
+  const restore=keepExecutionFocus?executionFocus():()=>{};render();restore();
 }
-async function run(action: () => Promise<void>, message: string) {
+const executionCommands = new Map<string,{projectId:string;unit:string;executionId:string;action:string}>();
+const dispatchPending = (id:string) => [...executionCommands.values()].some(c=>c.executionId===id && c.action==="execute");
+const pageDispatching = () => [...executionCommands.values()].some(c=>c.projectId===pid && state && c.unit===key(state.unit) && c.action==="execute");
+async function run(action: () => Promise<void>, message: string, readOnly=false) {
+  if(pageDispatching() && !readOnly){notice.textContent="Dispatch in progress. Cancel and Revoke remain available; other writes wait.";return;}
   if (busy) return;
   busy = true;
   const returnFocus = (document.activeElement as HTMLElement)?.id;
-  root.inert = true;
+  root.inert = !readOnly;
   root.setAttribute("aria-busy", "true");
   try {
     await action();
@@ -185,6 +197,27 @@ async function run(action: () => Promise<void>, message: string) {
     root.inert = false;
     if (returnFocus) document.getElementById(returnFocus)?.focus();
     root.removeAttribute("aria-busy");
+  }
+}
+async function executionAction(e:State["executions"][number], owner:VersionRef, attribute:string, action:string, slot?:number, sequence?:number) {
+  const projectId=owner.id, unit=e.run.payload.state.workUnit, operationKey=projectId+":"+e.run.id+":"+attribute;
+  if(executionCommands.has(operationKey)||attribute==="run" && (dispatchPending(e.run.id)||e.active))return;
+  if(busy && !["cancel","revoke"].includes(attribute))return;
+  executionCommands.set(operationKey,{projectId,unit:key(unit),executionId:e.run.id,action});render();
+  const ownsView=()=>pid===projectId && state && key(state.unit)===key(unit);
+  let finished=false, observing=true, reads=0, timer:ReturnType<typeof setTimeout>|undefined;
+  const refresh=async()=>{if(ownsView())await reload(true);};
+  // These GETs refresh stored progress only. They never call transport.status or spend a grant.
+  const tick=async()=>{try{await refresh();}catch(err){if(ownsView())notice.textContent=err instanceof Error?err.message:"Execution progress unavailable";}if(observing && ++reads<60 && (!finished || ownsView() && state!.executions.some(x=>x.run.id===e.run.id&&x.pendingDeliveries.length)))timer=setTimeout(()=>void tick(),150);};
+  timer=setTimeout(()=>void tick(),0);
+  try {
+    await post(action,{expectedProject:owner,unit,...(attribute==="revoke"?{grant:ref(e.grant)}:{execution:ref(e.run)}),...(attribute==="cancel"?{slot:null}:attribute==="reconcile"?{slot}:attribute==="delivery"?{sequence}:{})},projectId);
+    if(ownsView())notice.textContent=attribute==="cancel"?"Cancellation intent saved. Remote confirmation is shown separately.":attribute==="revoke"?"Grant revoked. Already sent work is not claimed killed.":"Execution state refreshed · offline fixture only";
+  }catch(err){if(ownsView())notice.textContent=err instanceof Error?err.message:"Execution action failed; inspect stored progress";}
+  finally {
+    finished=true;executionCommands.delete(operationKey);
+    if(ownsView()){try{await refresh();}catch{}const restore=executionFocus();render();restore();}
+    if(!ownsView()||!state!.executions.some(x=>x.run.id===e.run.id&&x.pendingDeliveries.length)){observing=false;if(timer)clearTimeout(timer);}
   }
 }
 async function openProject(id: string) {
@@ -349,7 +382,7 @@ function executionView() {
   const specs=state!.records.filter(p=>p.payload.kind==='raster-specification') as Work<Specification>[];
   const retry=state!.executions.find(e=>e.run.id===d["retry"]);
   return `<section class="execution"><div class="section-head"><h2>Execution</h2><span>${esc(a.connected?"Offline fixture only":"Unavailable")}</span></div><p>${esc(a.label)}</p>${!a.connected?'<button disabled>Execute · no connected executor</button>':`<details id="execution-panel" ${draft().open["execution-panel"]?"open":""}><summary>Explicit offline grant · no image generation</summary><p>Preparing, selecting and tuning grant nothing. Each submit, status and cancellation call consumes a separate bounded allowance. No automatic retry.</p><form id="execution-grant"><label>Frozen operation<select name="spec" required>${option("","Choose prepared input",d["spec"]??"")}${specs.map(q=>option(key(q),`${q.payload.state.count} attempts · ${q.payload.state.rawIntent.slice(0,60)}`,d["spec"]??"")).join("")}</select></label>${retry?`<p>Manual retry of attempt ${esc(d["slot"])} · new grant required. Original frozen request reused.</p>`:""}<div class="execution-fields">${[["width","Raster width (px)"],["height","Raster height (px)"],["submissions","Submission allowance"],["status","Status-call allowance (0–24)"],["cancels","Cancellation-call allowance (0–6)"],["timeout","Call timeout (ms, ≤30000)"],["expires","Grant lifetime (seconds)"]].map(([name,label])=>`<label>${label}<input type="number" name="${name}" required min="${["status","cancels"].includes(name!)?0:1}" value="${esc(d[name!]??"")}"></label>`).join("")}</div><label><input type="checkbox" required> I explicitly grant these bounded offline fixture calls.</label><button>Grant offline execution</button>${retry?'<button type="button" id="clear-execution-retry">Cancel retry preparation</button>':""}</form></details>`}
-  ${state!.executions.map(e=>`<article class="execution-run"><h3>${e.run.payload.state.retryOf?"Manual retry":"Frozen operation"} · synthetic execution</h3><div class="slots">${e.slots.map(s=>`<span class="slot ${s.displayStatus}">Attempt ${s.slot} · ${esc(s.displayStatus)}${s.cancelRequested?` · cancel requested${s.cancelConfirmed?" / confirmed":" / confirmation unknown"}`:""}${!s.receipt&&s.submissionId?` <button data-execution-reconcile="${key(e.run)}" data-slot="${s.slot}" ${!a.connected||e.active?"disabled":""}>Reconcile owned job</button>`:""}${["failed","invalid","cancelled","uncertain"].includes(s.displayStatus)?` <button data-execution-retry="${key(e.run)}" data-slot="${s.slot}" ${!a.connected?"disabled":""}>Prepare deliberate retry</button>`:""}</span>`).join("")}</div><p>${e.run.payload.state.calls.filter(c=>c.kind==="submit").length}/${e.grant.payload.state.maxSubmissions} submits · ${e.run.payload.state.calls.filter(c=>c.kind==="status").length}/${e.grant.payload.state.maxStatusCalls} status calls · ${e.run.payload.state.calls.filter(c=>c.kind==="cancel").length}/${e.grant.payload.state.maxCancelCalls} cancellation calls${e.grant.payload.state.revoked?" · Grant revoked":""}</p><button data-execution-run="${key(e.run)}" ${!a.connected||e.active||e.grant.payload.state.revoked||e.slots.some(s=>["uncertain","running","reserved"].includes(s.displayStatus)&&!s.receipt)||!e.slots.some(s=>s.status==="pending")?"disabled":""}>Execute granted slots</button><button data-execution-cancel="${key(e.run)}" ${e.slots.every(s=>s.receipt||s.cancelRequested)?"disabled":""}>Cancel this execution</button><button data-execution-revoke="${key(e.run)}" ${e.grant.payload.state.revoked?"disabled":""}>Revoke grant</button><details><summary>Inspect frozen request and accounting</summary><pre>${esc(JSON.stringify({request:e.request.payload.state,execution:e.run.payload.state},null,2))}</pre></details></article>`).join("")}</section>`;
+  ${state!.executions.map(e=>`<article class="execution-run" ${dispatchPending(e.run.id)?'data-dispatch-pending="true"':""}><h3>${e.run.payload.state.retryOf?"Manual retry":"Frozen operation"} · synthetic execution</h3>${dispatchPending(e.run.id)||e.active?'<p role="status">Dispatch in progress · Cancel and Revoke remain available.</p>':""}${e.pendingDeliveries.length&&!e.active?'<p role="status">Response wait ended. A response may still arrive; no resend or provider poll is scheduled.</p>':""}${e.deliveryErrors.map(d=>`<p role="alert">Received-response issue (attempt ${d.slot}): ${esc(d.message)}${d.retryable?` <button data-execution-delivery="${key(e.run)}" data-sequence="${d.sequence}">Retry received evidence · no transport call</button>`:" · No result bytes available; deliberate reconciliation remains separate."}</p>`).join("")}<div class="slots">${e.slots.map(s=>`<span class="slot ${s.displayStatus}">Attempt ${s.slot} · ${esc(s.displayStatus)}${s.receiptSummary?.outcome==="historical"?` · ${s.receiptSummary.hasMedia?"Historical raster retained · not adopted":"Historical response retained · no valid raster"}`:""}${s.cancelRequested?` · cancel requested${s.cancelConfirmed?" / confirmed":" / confirmation unknown"}`:""}${!s.receipt&&s.submissionId?` <button data-execution-reconcile="${key(e.run)}" data-slot="${s.slot}" ${!a.connected||e.active?"disabled":""}>Reconcile owned job</button>`:""}${["failed","invalid","cancelled","uncertain"].includes(s.displayStatus)?` <button data-execution-retry="${key(e.run)}" data-slot="${s.slot}" ${!a.connected?"disabled":""}>Prepare deliberate retry</button>`:""}</span>`).join("")}</div><p>${e.run.payload.state.calls.filter(c=>c.kind==="submit").length}/${e.grant.payload.state.maxSubmissions} submits · ${e.run.payload.state.calls.filter(c=>c.kind==="status").length}/${e.grant.payload.state.maxStatusCalls} status calls · ${e.run.payload.state.calls.filter(c=>c.kind==="cancel").length}/${e.grant.payload.state.maxCancelCalls} cancellation calls${e.grant.payload.state.revoked?" · Grant revoked":""}</p><button data-execution-run="${key(e.run)}" ${!a.connected||e.active||dispatchPending(e.run.id)||e.grant.payload.state.revoked||e.slots.some(s=>["uncertain","running","reserved"].includes(s.displayStatus)&&!s.receipt)||!e.slots.some(s=>s.status==="pending")?"disabled":""}>Execute granted slots</button><button data-execution-cancel="${key(e.run)}" ${e.slots.every(s=>s.receipt||s.cancelRequested) && !e.slots.some(s=>s.cancelRequested&&!s.cancelConfirmed&&!s.receipt&&s.jobId) || [...executionCommands.values()].some(c=>c.executionId===e.run.id&&c.action==="cancel-execution")?"disabled":""}>Cancel this execution</button><button data-execution-revoke="${key(e.run)}" ${e.grant.payload.state.revoked||[...executionCommands.values()].some(c=>c.executionId===e.run.id&&c.action==="revoke-execution")?"disabled":""}>Revoke grant</button><button data-execution-refresh="${key(e.run)}">Refresh stored progress · no provider poll</button><details><summary>Inspect frozen request and accounting</summary><pre>${esc(JSON.stringify({request:e.request.payload.state,execution:e.run.payload.state},null,2))}</pre></details></article>`).join("")}</section>`;
 }
 function historyView() {
   const batches = state!.records.filter(
@@ -417,9 +450,12 @@ function bind() {
   });
   const on = (id: string, event: string, fn: (e: Event) => void) =>
     document.getElementById(id)?.addEventListener(event, fn);
+  const boundScope=JSON.stringify([pid,state?key(state.unit):null]);
+  root.querySelectorAll<HTMLElement>("input,textarea,select").forEach(n=>n.dataset["draftOwner"]=boundScope);
   root.oninput = root.onchange = (event) => {
     if (!state) return;
     const target = event.target as HTMLInputElement;
+    if(target.dataset["draftOwner"]!==JSON.stringify([pid,key(state.unit)]))return;
     const form = target.closest("form");
     if (form?.id === "annotation") {
       const e = entries().find(e => e.id === entry);
@@ -458,12 +494,12 @@ function bind() {
   });
   on("project", "change", (e) => {
     const value = (e.target as HTMLSelectElement).value;
-    if (value) void run(() => openProject(value), "Project reopened");
+    if (value) void run(() => openProject(value), "Project reopened", true);
     else { pid = ""; state = null; project = null; units = []; workspaceError = ""; prepared = null; pendingRemoval = []; render(); notice.textContent = "Choose a project; session drafts retained"; }
   });
   on("page", "change", (e) => {
     const value = (e.target as HTMLSelectElement).value;
-    if (value) void run(() => openUnit(value), "Page reopened");
+    if (value) void run(() => openUnit(value), "Page reopened", true);
     else { state = null; workspaceError = ""; prepared = null; pendingRemoval = []; render(); notice.textContent = "Choose a page; session drafts retained"; }
   });
   on("new-project", "submit", (e) => {
@@ -668,10 +704,11 @@ function bind() {
     },"Offline grant prepared. Execute is a separate deliberate action.");
   });
   on("clear-execution-retry","click",()=>{delete draft().execution["retry"];delete draft().execution["slot"];render();});
-  for(const [attribute,action] of [["run","execute"],["cancel","cancel-execution"],["revoke","revoke-execution"],["reconcile","reconcile-execution"]])root.querySelectorAll<HTMLButtonElement>(`[data-execution-${attribute}]`).forEach(b=>b.onclick=()=>void run(async()=>{
-    const e=state!.executions.find(e=>key(e.run)===b.getAttribute(`data-execution-${attribute}`))!;
-    await post(action!,{expectedProject:project,unit:ref(state!.unit),...(attribute==="revoke"?{grant:ref(e.grant)}:{execution:ref(e.run)}),...(attribute==="cancel"?{slot:null}:attribute==="reconcile"?{slot:Number(b.dataset["slot"])}:{})});await reload();
-  },"Execution state refreshed · offline fixture only"));
+  for(const [attribute,action] of [["run","execute"],["cancel","cancel-execution"],["revoke","revoke-execution"],["reconcile","reconcile-execution"],["delivery","retry-delivery"]])root.querySelectorAll<HTMLButtonElement>(`[data-execution-${attribute}]`).forEach(b=>{
+    const e=state!.executions.find(e=>key(e.run)===b.getAttribute(`data-execution-${attribute}`))!, owner=project!;
+    b.onclick=()=>void executionAction(e,owner,attribute!,action!,Number(b.dataset["slot"]),Number(b.dataset["sequence"]));
+  });
+  root.querySelectorAll<HTMLButtonElement>("[data-execution-refresh]").forEach(b=>b.onclick=()=>void run(()=>reload(true),"Stored progress refreshed; no provider poll",true));
   root.querySelectorAll<HTMLButtonElement>("[data-execution-retry]").forEach(b=>b.onclick=()=>{
     const e=state!.executions.find(e=>key(e.run)===b.dataset["executionRetry"])!,d=draft().execution;
     d["retry"]=e.run.id;d["slot"]=b.dataset["slot"]!;d["spec"]=key(e.request.payload.state.spec);d["width"]=String(e.request.payload.state.width);d["height"]=String(e.request.payload.state.height);

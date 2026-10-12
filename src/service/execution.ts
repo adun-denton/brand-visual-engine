@@ -103,11 +103,110 @@ export interface OfflineExecutionInjection {
   testOnly: true;
   transport: ExecutionTransport;
 }
+interface DeliveryContext {
+  execution: VersionRef;
+  project: string;
+  slot: number;
+  kind: Call["kind"];
+  sequence: number;
+}
+interface DeliveryError {
+  sequence: number;
+  slot: number;
+  kind: Call["kind"];
+  stage: "received-intake" | "transport-rejection";
+  message: string;
+  retry: (() => Promise<void>) | null;
+}
+class ExecutionTimeout extends Error {}
 export class Executions {
   readonly w: Workspace;
   readonly exploration: Exploration;
   private injection: OfflineExecutionInjection | undefined;
   private active = new Set<string>();
+  private closed = false;
+  private controllers = new Set<AbortController>();
+  private completions = new Set<Promise<void>>();
+  private receiving = new Set<Promise<void>>();
+  private foreground = new Set<Promise<unknown>>();
+  private track<T>(promise: Promise<T>): Promise<T> {
+    this.foreground.add(promise);
+    void promise.then(
+      () => this.foreground.delete(promise),
+      () => this.foreground.delete(promise),
+    );
+    return promise;
+  }
+  private pendingDeliveries = new Map<string, DeliveryContext>();
+  private deliveryErrors = new Map<string, DeliveryError>();
+  private deliveryKey(c: DeliveryContext) {
+    return c.execution.id + ":" + c.sequence;
+  }
+  private context(
+    pid: string,
+    p: Work<Execution>,
+    slot: number,
+  ): DeliveryContext {
+    const call = p.payload.state.calls.at(-1)!;
+    return {
+      execution: reference(p),
+      project: pid,
+      slot,
+      kind: call.kind,
+      sequence: call.sequence,
+    };
+  }
+  private async received(
+    c: DeliveryContext,
+    handle: (historical: boolean) => Promise<void>,
+    historical: boolean,
+  ) {
+    const key = this.deliveryKey(c);
+    try {
+      await handle(historical);
+      this.deliveryErrors.delete(key);
+    } catch (error) {
+      this.deliveryErrors.set(key, {
+        sequence: c.sequence,
+        slot: c.slot,
+        kind: c.kind,
+        stage: "received-intake",
+        message:
+          error instanceof Error
+            ? error.message.slice(0, 1000)
+            : "Received evidence could not be committed",
+        retry: () => this.received(c, handle, true),
+      });
+      throw error;
+    }
+  }
+  private async retryReceived(
+    pid: string,
+    execution: VersionRef,
+    sequence: number,
+  ) {
+    const p = this.latest<Execution>(pid, execution, "raster-execution"),
+      key = p.id + ":" + sequence;
+    const error = this.deliveryErrors.get(key);
+    if (!error?.retry)
+      throw new InputError(
+        "No received response remains available in this process",
+      );
+    await error.retry();
+    return this.latest<Execution>(pid, execution, "raster-execution");
+  }
+  /** Test/host drain for responses already awaited in this process, never a transport query. */
+  async waitForDeliveries() {
+    while (this.completions.size) await Promise.all([...this.completions]);
+  }
+  async close() {
+    while (this.foreground.size) await Promise.allSettled([...this.foreground]);
+    this.closed = true;
+    for (const controller of this.controllers) controller.abort();
+    // Do not wait forever for an abort-ignoring transport. Drain only intake already in progress.
+    while (this.receiving.size) await Promise.all([...this.receiving]);
+    this.deliveryErrors.clear();
+  }
   constructor(w: Workspace, injection?: OfflineExecutionInjection) {
     this.w = w;
     this.exploration = new Exploration(w);
@@ -448,22 +547,149 @@ export class Executions {
   private async bounded<T>(
     ms: number,
     action: (signal: AbortSignal) => Promise<T>,
+    context: DeliveryContext,
+    onLate: (value: T) => Promise<void>,
   ): Promise<T> {
-    const c = new AbortController();
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    try {
-      return await Promise.race([
-        action(c.signal),
-        new Promise<never>((_, reject) => {
-          timer = setTimeout(() => {
-            c.abort();
-            reject(new Error("Transport timeout; outcome uncertain"));
-          }, ms);
-        }),
-      ]);
-    } finally {
-      if (timer) clearTimeout(timer);
+    if (this.closed) throw new InputError("Execution service is closed");
+    const controller = new AbortController(),
+      key = this.deliveryKey(context);
+    this.controllers.add(controller);
+    this.pendingDeliveries.set(key, context);
+    let timedOut = false,
+      timer: ReturnType<typeof setTimeout>;
+    let resolve!: (value: T) => void, reject!: (error: unknown) => void;
+    const foreground = new Promise<T>((a, b) => {
+      resolve = a;
+      reject = b;
+    });
+    timer = setTimeout(() => {
+      timedOut = true;
+      reject(new ExecutionTimeout("Transport timeout; outcome uncertain"));
+      controller.abort();
+    }, ms);
+    const completion = Promise.resolve()
+      .then(() => action(controller.signal))
+      .then(
+        async (value) => {
+          clearTimeout(timer);
+          if (!timedOut) {
+            resolve(value);
+            return;
+          }
+          if (this.closed) return;
+          const intake = onLate(value).catch(() => {});
+          this.receiving.add(intake);
+          try {
+            await intake;
+          } finally {
+            this.receiving.delete(intake);
+          }
+        },
+        (error) => {
+          clearTimeout(timer);
+          if (!timedOut) reject(error);
+          else if (!this.closed)
+            this.deliveryErrors.set(key, {
+              sequence: context.sequence,
+              slot: context.slot,
+              kind: context.kind,
+              stage: "transport-rejection",
+              message:
+                error instanceof Error
+                  ? error.message.slice(0, 1000)
+                  : "Transport rejected after timeout; no response retained",
+              retry: null,
+            });
+        },
+      )
+      .then(() => {
+        this.controllers.delete(controller);
+        this.pendingDeliveries.delete(key);
+        this.completions.delete(completion);
+      });
+    this.completions.add(completion);
+    return foreground;
+  }
+  private async acknowledgement(
+    c: DeliveryContext,
+    ack: { jobId: string; result?: RasterResult },
+    historical: boolean,
+  ) {
+    record(ack, ["jobId", "result"]);
+    id(ack.jobId);
+    let p = this.latest<Execution>(c.project, c.execution, "raster-execution"),
+      slot = p.payload.state.slots.find((s) => s.slot === c.slot)!;
+    if (slot.jobId && slot.jobId !== ack.jobId)
+      throw new InputError("Delivered acknowledgement changed owned job");
+    if (
+      ack.result &&
+      (ack.result.slot !== c.slot ||
+        ack.result.submissionId !== slot.submissionId ||
+        ack.result.jobId !== ack.jobId ||
+        ack.result.requestHash !== p.payload.state.requestHash ||
+        ack.result.specHash !== p.payload.state.specHash)
+    )
+      throw new InputError("Delivered result does not match owned submission");
+    if (historical) p = this.uncertain(c.project, p, c.slot);
+    p = this.mutate(c.project, reference(p), (s) => {
+      s.slots.find((s) => s.slot === c.slot)!.jobId = ack.jobId;
+    });
+    if (ack.result) await this.intake(c.project, reference(p), ack.result);
+  }
+  private async statusResponse(
+    c: DeliveryContext,
+    reply: Awaited<ReturnType<ExecutionTransport["status"]>>,
+    historical: boolean,
+  ) {
+    record(reply, ["state", "jobId", "result"]);
+    choice(reply.state, ["running", "cancelled", "unknown", "returned"]);
+    if (reply.jobId !== null) id(reply.jobId);
+    let p = this.latest<Execution>(c.project, c.execution, "raster-execution"),
+      slot = p.payload.state.slots.find((s) => s.slot === c.slot)!;
+    if (slot.jobId && reply.jobId !== slot.jobId)
+      throw new InputError("Reconciliation changed owned job");
+    if (reply.state === "returned") {
+      if (!reply.result || !reply.jobId)
+        throw new InputError("Returned status lacks owned receipt");
+      await this.acknowledgement(
+        c,
+        { jobId: reply.jobId, result: reply.result },
+        historical,
+      );
+      return;
     }
+    if (historical) p = this.uncertain(c.project, p, c.slot);
+    this.mutate(c.project, reference(p), (s) => {
+      const a = s.slots.find((s) => s.slot === c.slot)!;
+      if (reply.jobId) a.jobId = reply.jobId;
+      if (reply.state === "cancelled") {
+        if (a.cancelRequested) a.cancelConfirmed = true;
+        if (!a.receipt) a.status = "cancelled";
+      } else if (reply.state === "unknown" && !a.receipt)
+        a.status = "uncertain";
+    });
+  }
+  private async cancelResponse(
+    c: DeliveryContext,
+    jobId: string,
+    reply: { confirmed: boolean },
+  ) {
+    record(reply, ["confirmed"]);
+    if (typeof reply.confirmed !== "boolean")
+      throw new InputError("Invalid cancellation response");
+    const p = this.latest<Execution>(
+      c.project,
+      c.execution,
+      "raster-execution",
+    );
+    if (p.payload.state.slots.find((s) => s.slot === c.slot)!.jobId !== jobId)
+      throw new InputError("Cancellation changed owned job");
+    if (reply.confirmed)
+      this.mutate(c.project, reference(p), (s) => {
+        const a = s.slots.find((s) => s.slot === c.slot)!;
+        a.cancelConfirmed = true;
+        if (!a.receipt) a.status = "cancelled";
+      });
   }
   private uncertain(pid: string, p: Work<Execution>, slot: number) {
     return this.mutate(pid, reference(p), (s) => {
@@ -471,7 +697,23 @@ export class Executions {
       if (!a.receipt && a.status !== "cancelled") a.status = "uncertain";
     });
   }
-  async execute(pid: string, execution: VersionRef): Promise<Work<Execution>> {
+  execute(pid: string, execution: VersionRef) {
+    return this.track(this.dispatch(pid, execution));
+  }
+  reconcile(pid: string, execution: VersionRef, slot: number) {
+    return this.track(this.reconcileWork(pid, execution, slot));
+  }
+  cancel(pid: string, execution: VersionRef, slot: number | null) {
+    return this.track(this.cancelWork(pid, execution, slot));
+  }
+  retryDelivery(pid: string, execution: VersionRef, sequence: number) {
+    return this.track(this.retryReceived(pid, execution, sequence));
+  }
+  private async dispatch(
+    pid: string,
+    execution: VersionRef,
+  ): Promise<Work<Execution>> {
+    if (this.closed) throw new InputError("Execution service is closed");
     let p = this.latest<Execution>(pid, execution, "raster-execution");
     if (this.active.has(p.id)) return p;
     this.active.add(p.id);
@@ -501,29 +743,40 @@ export class Executions {
         p = this.mutate(pid, reference(p), (s) => {
           s.slots.find((s) => s.slot === a.slot)!.status = "running";
         });
+        const delivery = this.context(pid, p, a.slot);
         let ack: { jobId: string; result?: RasterResult };
         try {
-          ack = await this.bounded(g.payload.state.timeoutMs, (signal) =>
-            this.injection!.transport.submit(
-              {
-                request: structuredClone(q.payload.state),
-                requestHash: q.integrity,
-                slot: a.slot,
-                submissionId: reserved.a.submissionId!,
-                sources,
-              },
-              signal,
-            ),
+          ack = await this.bounded(
+            g.payload.state.timeoutMs,
+            (signal) =>
+              this.injection!.transport.submit(
+                {
+                  request: structuredClone(q.payload.state),
+                  requestHash: q.integrity,
+                  slot: a.slot,
+                  submissionId: reserved.a.submissionId!,
+                  sources,
+                },
+                signal,
+              ),
+            delivery,
+            (value) =>
+              this.received(
+                delivery,
+                (historical) =>
+                  this.acknowledgement(delivery, value, historical),
+                true,
+              ),
           );
-          id(ack.jobId);
         } catch {
           p = this.uncertain(pid, p, a.slot);
           break;
         }
-        p = this.mutate(pid, reference(p), (s) => {
-          s.slots.find((s) => s.slot === a.slot)!.jobId = ack.jobId;
-        });
-        if (ack.result) await this.intake(pid, reference(p), ack.result);
+        await this.received(
+          delivery,
+          (historical) => this.acknowledgement(delivery, ack, historical),
+          false,
+        );
         p = this.latest(pid, reference(p), "raster-execution");
         if (!p.payload.state.slots.find((s) => s.slot === a.slot)!.receipt)
           break;
@@ -543,7 +796,7 @@ export class Executions {
           a.status = "uncertain";
     });
   }
-  async reconcile(
+  private async reconcileWork(
     pid: string,
     execution: VersionRef,
     slot: number,
@@ -561,36 +814,35 @@ export class Executions {
     )
       throw new InputError("Slot does not need reconciliation");
     const { p, a, g } = this.call(pid, reference(current), slot, "status");
+    const delivery = this.context(pid, p, slot);
     let reply: Awaited<ReturnType<ExecutionTransport["status"]>>;
     try {
-      reply = await this.bounded(g.payload.state.timeoutMs, (signal) =>
-        this.injection!.transport.status(
-          { submissionId: a.submissionId!, jobId: a.jobId },
-          signal,
-        ),
+      reply = await this.bounded(
+        g.payload.state.timeoutMs,
+        (signal) =>
+          this.injection!.transport.status(
+            { submissionId: a.submissionId!, jobId: a.jobId },
+            signal,
+          ),
+        delivery,
+        (value) =>
+          this.received(
+            delivery,
+            (historical) => this.statusResponse(delivery, value, historical),
+            true,
+          ),
       );
-      choice(reply.state, ["running", "cancelled", "unknown", "returned"]);
-      if (reply.jobId !== null) id(reply.jobId);
-      if (a.jobId && reply.jobId !== a.jobId)
-        throw new InputError("Reconciliation changed owned job");
     } catch {
       return this.uncertain(pid, p, slot);
     }
-    const next = this.mutate(pid, reference(p), (s) => {
-      const a = s.slots.find((s) => s.slot === slot)!;
-      if (reply.jobId) a.jobId = reply.jobId;
-      if (reply.state === "cancelled") {
-        if (a.cancelRequested) a.cancelConfirmed = true;
-        a.status = "cancelled";
-      } else if (reply.state === "unknown") a.status = "uncertain";
-    });
-    if (reply.state === "returned") {
-      if (!reply.result) throw new InputError("Returned status lacks receipt");
-      await this.intake(pid, reference(next), reply.result);
-    }
+    await this.received(
+      delivery,
+      (historical) => this.statusResponse(delivery, reply, historical),
+      false,
+    );
     return this.latest<Execution>(pid, reference(p), "raster-execution");
   }
-  async cancel(
+  private async cancelWork(
     pid: string,
     execution: VersionRef,
     slot: number | null,
@@ -616,29 +868,32 @@ export class Executions {
       )
         continue;
       const call = this.call(pid, reference(p), a.slot, "cancel");
-      let confirmed = false;
+      const delivery = this.context(pid, call.p, a.slot);
+      let reply: { confirmed: boolean };
       try {
-        const response = await this.bounded(
+        reply = await this.bounded(
           call.g.payload.state.timeoutMs,
           (signal) =>
             this.injection!.transport.cancel(
               { submissionId: a.submissionId!, jobId: a.jobId! },
               signal,
             ),
+          delivery,
+          (value) =>
+            this.received(
+              delivery,
+              () => this.cancelResponse(delivery, a.jobId!, value),
+              true,
+            ),
         );
-        if (typeof response.confirmed !== "boolean")
-          throw new InputError("Invalid cancellation response");
-        confirmed = response.confirmed;
       } catch {
         continue;
       }
-      p = this.mutate(pid, reference(p), (s) => {
-        const live = s.slots.find((s) => s.slot === a.slot)!;
-        if (!live.receipt && confirmed) {
-          live.cancelConfirmed = true;
-          live.status = "cancelled";
-        }
-      });
+      await this.received(
+        delivery,
+        () => this.cancelResponse(delivery, a.jobId!, reply),
+        false,
+      );
     }
     return this.latest<Execution>(pid, reference(p), "raster-execution");
   }
@@ -881,21 +1136,19 @@ export class Executions {
   }
   state(pid: string, unit: VersionRef) {
     this.exploration.read(pid, unit, "page-work-unit");
-    const records = this.w.kernel
-      .latestPackets()
-      .filter(
-        (p) =>
-          p.projectId === pid &&
-          Object.hasOwn(
-            {
-              "raster-execution-request": 1,
-              "raster-execution-grant": 1,
-              "raster-execution": 1,
-              "raster-execution-receipt": 1,
-            },
-            (p.payload as DesignArtifact<unknown>).kind,
-          ),
-      );
+    const records = this.w.kernel.latestPackets().filter(
+      (p) =>
+        p.projectId === pid &&
+        Object.hasOwn(
+          {
+            "raster-execution-request": 1,
+            "raster-execution-grant": 1,
+            "raster-execution": 1,
+            "raster-execution-receipt": 1,
+          },
+          (p.payload as DesignArtifact<unknown>).kind,
+        ),
+    );
     const sequence = new Map(
       this.w.kernel
         .ledger(pid)
@@ -920,6 +1173,19 @@ export class Executions {
         return {
           run,
           active,
+          pendingDeliveries: [...this.pendingDeliveries.values()]
+            .filter((c) => c.execution.id === run.id)
+            .map((c) => ({ slot: c.slot, kind: c.kind, sequence: c.sequence })),
+          deliveryErrors: [...this.deliveryErrors.entries()]
+            .filter(([key]) => key.startsWith(run.id + ":"))
+            .map(([, e]) => ({
+              sequence: e.sequence,
+              slot: e.slot,
+              kind: e.kind,
+              stage: e.stage,
+              message: e.message,
+              retryable: e.retry !== null,
+            })),
           outputs: run.payload.state.slots.flatMap((s) =>
             s.receipt
               ? [
@@ -933,6 +1199,20 @@ export class Executions {
           ),
           slots: run.payload.state.slots.map((s) => ({
             ...s,
+            receiptSummary: s.receipt
+              ? (() => {
+                  const receipt = this.own<ExecutionReceipt>(
+                    pid,
+                    s.receipt!,
+                    "raster-execution-receipt",
+                  ).payload.state;
+                  return {
+                    outcome: receipt.outcome,
+                    message: receipt.message,
+                    hasMedia: receipt.media !== null,
+                  };
+                })()
+              : null,
             displayStatus:
               !active && ["running", "reserved"].includes(s.status)
                 ? "uncertain"
@@ -967,6 +1247,7 @@ export class Executions {
       ],
       "prepare-execution": ["grant", "retryOf"],
       execute: ["execution"],
+      "retry-delivery": ["execution", "sequence"],
       "recover-execution": ["execution"],
       "reconcile-execution": ["execution", "slot"],
       "cancel-execution": ["execution", "slot"],
@@ -1048,6 +1329,8 @@ export class Executions {
     );
     if (canonical(e.payload.state.workUnit) !== canonical(unit))
       throw new InputError("Foreign page execution");
+    if (action === "retry-delivery")
+      return this.retryDelivery(pid, reference(e), integer(r["sequence"], 36));
     if (action === "execute") return this.execute(pid, reference(e));
     if (action === "recover-execution") return this.recover(pid, reference(e));
     if (action === "reconcile-execution")
