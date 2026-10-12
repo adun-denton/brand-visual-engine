@@ -832,3 +832,5 @@ pre {
 
 .execution label:has(input[type="checkbox"]) { display:flex;align-items:center;gap:8px; }
 .execution input[type="checkbox"] { width:auto; }
+
+.project-memory {margin:24px 0;padding:18px;border:1px solid var(--line,#d6d8d2);border-radius:12px;background:#f5f6ef} .project-memory>summary {font-weight:650;cursor:pointer} .project-memory article {padding:12px;border-bottom:1px solid #d6d8d2} .memory-columns {display:grid;grid-template-columns:1fr 1fr;gap:24px} .project-memory label {display:block} .project-memory textarea {width:100%} .project-memory button,.project-memory a {margin:5px 5px 5px 0} .project-memory pre {white-space:pre-wrap;overflow-wrap:anywhere;max-height:420px;overflow:auto} .project-memory li {overflow-wrap:anywhere} .project-memory li button {text-align:left;white-space:normal;max-width:100%} @media(max-width:700px){.memory-columns{grid-template-columns:1fr}.project-memory{padding:12px}}

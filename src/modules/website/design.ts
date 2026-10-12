@@ -1,3 +1,4 @@
+import { memoryRoles, parseNote, parseCapsule } from "./memory-contracts.ts";
 import { validateExecutionRecord } from './execution-contracts.ts';
 import { validateExplorationRecord } from './exploration-contracts.ts';
 import type { BundleTemplate, DesignArtifact, Dimension, IterationBundle, ModuleManifest, ModuleProject, NodePacket, Value } from '../../kernel/contracts.ts';
@@ -22,6 +23,7 @@ export const explorationTemplate: BundleTemplate = { name: 'Landing page broad e
     { family: 'Styling', key: 'edge-expression', relative: 0.5 }, { family: 'Dynamics', key: 'motion-intent', relative: 0.5 }],
   capabilityIds: ['design.explore'], variationStrategy: 'coherent-grid' };
 export function validateWebsiteArtifact(payload: Record<string, unknown>): void {
+  if (Object.hasOwn(memoryRoles,String(payload['kind']))) { if(payload['kind']==='project-handoff-note')parseNote(payload['state']);else parseCapsule(payload['state']);return; }
   if (validateExecutionRecord(payload)) return;
   if (validateExplorationRecord(payload)) return;
   if (validatePageRecord(payload) || validateInferenceRecord(payload)) return;
