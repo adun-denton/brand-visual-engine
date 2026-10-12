@@ -1,3 +1,5 @@
+import { executionGate } from './execution-gate.ts';
+import { executionRoles } from '../modules/website/execution-contracts.ts';
 import { explorationGate } from './exploration-gate.ts';
 import { explorationRoles } from '../modules/website/exploration-contracts.ts';
 import type { ImageInfo } from '../service/assets.ts';
@@ -185,6 +187,7 @@ export function contractGate(input: unknown, port: PortContract, env: GateEnviro
     const before = atPath(previous.payload, path), after = atPath(p['payload'], path);
     if (before === undefined || after === undefined || canonical(before) !== canonical(after)) throw new Error('preservation contract failed');
   }
+  executionGate(p as unknown as NodePacket<unknown>, previous, env);
   explorationGate(p as unknown as NodePacket<unknown>, previous, env);
   const refs = [...list(p['contextRefs']).map(versionRef), ...list(p['dependencies']).map(versionRef), ...payloadSchema(type, p['payload'], env)];
   const payload = object(p['payload']);
@@ -195,7 +198,7 @@ export function contractGate(input: unknown, port: PortContract, env: GateEnviro
     const owner = ownerVersion === null ? null : env.lookup({ id: p['projectId'] as string, version: ownerVersion, freshness: 'pinned' });
     if (owner?.type !== 'module-project' || object(owner.payload)['moduleId'] !== payload['moduleId']) throw new Error('artifact owner mismatch');
   }
-  const expectedRole: Record<string, PacketType> = { ...explorationRoles, 'website-page': 'design-artifact', 'page-media': 'media-asset', 'inference-request': 'work-record', 'inference-result': 'work-record', 'page-migration': 'work-record', 'page-media-origin': 'work-record', 'page-import':'work-record', 'website-assembly': 'website-assembly' };
+  const expectedRole: Record<string, PacketType> = { ...executionRoles, ...explorationRoles, 'website-page': 'design-artifact', 'page-media': 'media-asset', 'inference-request': 'work-record', 'inference-result': 'work-record', 'page-migration': 'work-record', 'page-media-origin': 'work-record', 'page-import':'work-record', 'website-assembly': 'website-assembly' };
   if (expectedRole[String(payload['kind'])] && expectedRole[String(payload['kind'])] !== type) throw new Error('semantic record role mismatch');
   if (['media-asset', 'work-record', 'website-assembly'].includes(type) && !expectedRole[String(payload['kind'])]) throw new Error('unsupported semantic record kind');
   if (payload['kind'] === 'website-page') {

@@ -4,9 +4,10 @@ export interface RequestDraft { entryId: string | null; selectionId: string; val
 export interface PageDraft {
   intent: string; count: string; direction: string; brand: string; operation: string;
   scope: string; notes: Record<string, NoteDraft>; requests: Record<string, RequestDraft>;
+  execution: Record<string,string>;
   open: Record<string, boolean>;
 }
-export const emptyDraft = (): PageDraft => ({ intent: "", count: "", direction: "", brand: "", operation: "refine", scope: "", notes: {}, requests: {}, open: {} });
+export const emptyDraft = (): PageDraft => ({ intent: "", count: "", direction: "", brand: "", operation: "refine", scope: "", notes: {}, requests: {}, execution: {}, open: {} });
 export class VisualDrafts {
   private readonly pages = new Map<string, PageDraft>();
   page(project: string, unit: string) {

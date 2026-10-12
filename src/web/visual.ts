@@ -1,3 +1,4 @@
+import type { Execution, Grant, ExecutionRequest } from '../modules/website/execution-contracts.ts';
 import type {
   VersionRef,
   DesignArtifact,
@@ -25,6 +26,8 @@ type State = {
   candidates: Work<RasterConcept>[];
   selectedSources: Work<RasterConcept>[];
   sourceOrigins: Record<string, string[]>;
+  executionAvailability: { connected:boolean; mode:string; label:string; adapter:unknown };
+  executions: { run:Work<Execution>; active:boolean; pendingDeliveries:{slot:number;kind:string;sequence:number}[]; deliveryErrors:{sequence:number;slot:number;kind:string;stage:string;message:string;retryable:boolean}[]; outputs:VersionRef[]; slots:(Execution['slots'][number]&{displayStatus:string;receiptSummary:{outcome:string;message:string;hasMedia:boolean}|null})[]; grant:Work<Grant>; request:Work<ExecutionRequest> }[];
 };
 const root = document.querySelector<HTMLDivElement>("#visual-app")!;
 const notice = document.querySelector<HTMLDivElement>("#visual-notice")!;
@@ -121,12 +124,12 @@ async function get(path: string) {
   if (!r.ok) throw Error(v.error);
   return v;
 }
-async function post(action: string, input: unknown) {
+async function post(action: string, input: unknown, projectId = pid) {
   const r = await fetch("/api/v1/visual/" + action, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-BVE-Token": token },
     body: JSON.stringify(
-      action === "create" ? input : { projectId: pid, input },
+      action === "create" ? input : { projectId, input },
     ),
   });
   const v = await r.json();
@@ -148,7 +151,15 @@ function focusSource(k: string) {
 }
 const selected = (c: Work<RasterConcept>) =>
   entries().filter((e) => key(e.candidate) === key(c));
-async function reload() {
+function executionFocus() {
+  const n=document.activeElement as HTMLInputElement|HTMLTextAreaElement|HTMLButtonElement|null;
+  if(!n||!root.contains(n))return ()=>{};
+  let selector=n.id?"#"+CSS.escape(n.id):n.getAttribute("name")&&n.closest("form")?.id?"#"+CSS.escape(n.closest("form")!.id)+` [name="${CSS.escape(n.getAttribute("name")!)}"]`:"";
+  if(!selector)for(const a of ["data-execution-cancel","data-execution-revoke","data-execution-run","data-execution-reconcile","data-execution-delivery"]){const value=n.getAttribute(a);if(value){selector=`[${a}^="${CSS.escape(value.split(":")[0]+":")}"]`;break;}}
+  const start="selectionStart" in n?n.selectionStart:null,end="selectionEnd" in n?n.selectionEnd:null;
+  return ()=>{const target=selector?root.querySelector<HTMLInputElement|HTMLTextAreaElement>(selector):null;target?.focus({preventScroll:true});if(target&&start!==null&&end!==null&&"setSelectionRange" in target)try{target.setSelectionRange(start,end);}catch{}};
+}
+async function reload(keepExecutionFocus=false) {
   if (!state) return;
   const ticket = ++epoch;
   errorUnit = key(state.unit);
@@ -164,13 +175,17 @@ async function reload() {
   units = next.units;
   if (!allCandidates().some((c) => key(c) === focused))
     focused = state.candidates[0] ? key(state.candidates[0]) : "";
-  render();
+  const restore=keepExecutionFocus?executionFocus():()=>{};render();restore();
 }
-async function run(action: () => Promise<void>, message: string) {
+const executionCommands = new Map<string,{projectId:string;unit:string;executionId:string;action:string}>();
+const dispatchPending = (id:string) => [...executionCommands.values()].some(c=>c.executionId===id && c.action==="execute");
+const pageDispatching = () => [...executionCommands.values()].some(c=>c.projectId===pid && state && c.unit===key(state.unit) && c.action==="execute");
+async function run(action: () => Promise<void>, message: string, readOnly=false) {
+  if(pageDispatching() && !readOnly){notice.textContent="Dispatch in progress. Cancel and Revoke remain available; other writes wait.";return;}
   if (busy) return;
   busy = true;
   const returnFocus = (document.activeElement as HTMLElement)?.id;
-  root.inert = true;
+  root.inert = !readOnly;
   root.setAttribute("aria-busy", "true");
   try {
     await action();
@@ -182,6 +197,27 @@ async function run(action: () => Promise<void>, message: string) {
     root.inert = false;
     if (returnFocus) document.getElementById(returnFocus)?.focus();
     root.removeAttribute("aria-busy");
+  }
+}
+async function executionAction(e:State["executions"][number], owner:VersionRef, attribute:string, action:string, slot?:number, sequence?:number) {
+  const projectId=owner.id, unit=e.run.payload.state.workUnit, operationKey=projectId+":"+e.run.id+":"+attribute;
+  if(executionCommands.has(operationKey)||attribute==="run" && (dispatchPending(e.run.id)||e.active))return;
+  if(busy && !["cancel","revoke"].includes(attribute))return;
+  executionCommands.set(operationKey,{projectId,unit:key(unit),executionId:e.run.id,action});render();
+  const ownsView=()=>pid===projectId && state && key(state.unit)===key(unit);
+  let finished=false, observing=true, reads=0, timer:ReturnType<typeof setTimeout>|undefined;
+  const refresh=async()=>{if(ownsView())await reload(true);};
+  // These GETs refresh stored progress only. They never call transport.status or spend a grant.
+  const tick=async()=>{try{await refresh();}catch(err){if(ownsView())notice.textContent=err instanceof Error?err.message:"Execution progress unavailable";}if(observing && ++reads<60 && (!finished || ownsView() && state!.executions.some(x=>x.run.id===e.run.id&&x.pendingDeliveries.length)))timer=setTimeout(()=>void tick(),150);};
+  timer=setTimeout(()=>void tick(),0);
+  try {
+    await post(action,{expectedProject:owner,unit,...(attribute==="revoke"?{grant:ref(e.grant)}:{execution:ref(e.run)}),...(attribute==="cancel"?{slot:null}:attribute==="reconcile"?{slot}:attribute==="delivery"?{sequence}:{})},projectId);
+    if(ownsView())notice.textContent=attribute==="cancel"?"Cancellation intent saved. Remote confirmation is shown separately.":attribute==="revoke"?"Grant revoked. Already sent work is not claimed killed.":"Execution state refreshed · offline fixture only";
+  }catch(err){if(ownsView())notice.textContent=err instanceof Error?err.message:"Execution action failed; inspect stored progress";}
+  finally {
+    finished=true;executionCommands.delete(operationKey);
+    if(ownsView()){try{await refresh();}catch{}const restore=executionFocus();render();restore();}
+    if(!ownsView()||!state!.executions.some(x=>x.run.id===e.run.id&&x.pendingDeliveries.length)){observing=false;if(timer)clearTimeout(timer);}
   }
 }
 async function openProject(id: string) {
@@ -338,7 +374,15 @@ function contextControls() {
 function prepareView() {
   const d = draft();
   const option = (value: string, label: string, current: string) => `<option value="${value}" ${value === current ? "selected" : ""}>${label}</option>`;
-  return `<section class="prepare"><div class="section-head"><h2>Next variation</h2><span>Preparation only</span></div><form id="prepare"><label class="intent">Intent<textarea name="intent" rows="2" required placeholder="Describe the next visual direction…">${esc(d.intent)}</textarea></label><div class="prepare-core"><label>Operation<select name="operation">${[["refine","Refine selected sources"],["refresh","Refresh alternatives"],["create","Create direction"],["branch","Branch"]].map(([v,l])=>option(v!,l!,d.operation)).join("")}</select></label><label>Attempts<select name="count" required>${option("","Choose 1–6",d.count)}${[1,2,3,4,5,6].map(n=>option(String(n),String(n),d.count)).join("")}</select></label><label>Direction<select name="direction" required>${option("","Choose Direction",d.direction)}${option("fresh","Fresh",d.direction)}${option("follow","Follow selected direction",d.direction)}</select></label></div><div class="optional"><details id="tune-panel" ${d.open["tune-panel"] ? "open" : ""}><summary>Tune · Level 2 · ${d.scope === "" ? "This page" : "Selected source"}</summary><p class="hint">Requested characteristics only, not measurements. Scales 1.0–10.0. No request until changed; Clear restores unset. Current effect category/strength are unknown.</p><div class="controls">${controls(2)}</div></details><details id="brand-panel" ${d.open["brand-panel"] ? "open" : ""}><summary>Brand · ${d.brand === "" ? "off" : "on"}</summary><label>Optional approved Brand<select name="brand"><option value="">Off · unbranded</option>${catalog.brands.map((b,i) => `<option value="${i}" ${d.brand === String(i) ? "selected" : ""}>${esc(b.label)}</option>`).join("")}</select></label><p class="hint">Brand and Direction are independent.</p></details></div><p class="execution-note">Image execution is unavailable. Preparation saves canonical sources and pending slots only; save source notes explicitly before freezing.</p><p class="hint">Session drafts survive view and page/project switches. Reload closes this draft session. Successful preparation retains this editable draft for another explicit operation.</p><button class="primary">Prepare next attempt</button><button type="button" id="discard-draft">Discard this page's unsaved drafts</button></form>${prepared ? `<div class="prepared" role="status"><strong>${prepared.batch.payload.state.attempts.length} pending attempts prepared · draft retained</strong><p>${esc(prepared.specification.payload.state.rawIntent)} · ${prepared.specification.payload.state.direction} · Brand ${prepared.specification.payload.state.brand.enabled ? "on" : "off"}</p><details><summary>Inspect exact frozen input</summary><pre>${esc(JSON.stringify(prepared.specification.payload.state, null, 2))}</pre></details></div>` : ""}</section>`;
+  return `<section class="prepare"><div class="section-head"><h2>Next variation</h2><span>Preparation only</span></div><form id="prepare"><label class="intent">Intent<textarea name="intent" rows="2" required placeholder="Describe the next visual direction…">${esc(d.intent)}</textarea></label><div class="prepare-core"><label>Operation<select name="operation">${[["refine","Refine selected sources"],["refresh","Refresh alternatives"],["create","Create direction"],["branch","Branch"]].map(([v,l])=>option(v!,l!,d.operation)).join("")}</select></label><label>Attempts<select name="count" required>${option("","Choose 1–6",d.count)}${[1,2,3,4,5,6].map(n=>option(String(n),String(n),d.count)).join("")}</select></label><label>Direction<select name="direction" required>${option("","Choose Direction",d.direction)}${option("fresh","Fresh",d.direction)}${option("follow","Follow selected direction",d.direction)}</select></label></div><div class="optional"><details id="tune-panel" ${d.open["tune-panel"] ? "open" : ""}><summary>Tune · Level 2 · ${d.scope === "" ? "This page" : "Selected source"}</summary><p class="hint">Requested characteristics only, not measurements. Scales 1.0–10.0. No request until changed; Clear restores unset. Current effect category/strength are unknown.</p><div class="controls">${controls(2)}</div></details><details id="brand-panel" ${d.open["brand-panel"] ? "open" : ""}><summary>Brand · ${d.brand === "" ? "off" : "on"}</summary><label>Optional approved Brand<select name="brand"><option value="">Off · unbranded</option>${catalog.brands.map((b,i) => `<option value="${i}" ${d.brand === String(i) ? "selected" : ""}>${esc(b.label)}</option>`).join("")}</select></label><p class="hint">Brand and Direction are independent.</p></details></div><p class="execution-note">${state!.executionAvailability.connected ? "Offline fixture executor only." : "Image execution is unavailable."} Preparation saves canonical sources and pending slots only; save source notes explicitly before freezing.</p><p class="hint">Session drafts survive view and page/project switches. Reload closes this draft session. Successful preparation retains this editable draft for another explicit operation.</p><button class="primary">Prepare next attempt</button><button type="button" id="discard-draft">Discard this page's unsaved drafts</button></form>${prepared ? `<div class="prepared" role="status"><strong>${prepared.batch.payload.state.attempts.length} pending attempts prepared · draft retained</strong><p>${esc(prepared.specification.payload.state.rawIntent)} · ${prepared.specification.payload.state.direction} · Brand ${prepared.specification.payload.state.brand.enabled ? "on" : "off"}</p><details><summary>Inspect exact frozen input</summary><pre>${esc(JSON.stringify(prepared.specification.payload.state, null, 2))}</pre></details></div>` : ""}</section>`;
+}
+function executionView() {
+  const option=(value:string,label:string,selected:string)=>`<option value="${esc(value)}" ${value===selected?"selected":""}>${esc(label)}</option>`;
+  const a=state!.executionAvailability, d=draft().execution;
+  const specs=state!.records.filter(p=>p.payload.kind==='raster-specification') as Work<Specification>[];
+  const retry=state!.executions.find(e=>e.run.id===d["retry"]);
+  return `<section class="execution"><div class="section-head"><h2>Execution</h2><span>${esc(a.connected?"Offline fixture only":"Unavailable")}</span></div><p>${esc(a.label)}</p>${!a.connected?'<button disabled>Execute · no connected executor</button>':`<details id="execution-panel" ${draft().open["execution-panel"]?"open":""}><summary>Explicit offline grant · no image generation</summary><p>Preparing, selecting and tuning grant nothing. Each submit, status and cancellation call consumes a separate bounded allowance. No automatic retry.</p><form id="execution-grant"><label>Frozen operation<select name="spec" required>${option("","Choose prepared input",d["spec"]??"")}${specs.map(q=>option(key(q),`${q.payload.state.count} attempts · ${q.payload.state.rawIntent.slice(0,60)}`,d["spec"]??"")).join("")}</select></label>${retry?`<p>Manual retry of attempt ${esc(d["slot"])} · new grant required. Original frozen request reused.</p>`:""}<div class="execution-fields">${[["width","Raster width (px)"],["height","Raster height (px)"],["submissions","Submission allowance"],["status","Status-call allowance (0–24)"],["cancels","Cancellation-call allowance (0–6)"],["timeout","Call timeout (ms, ≤30000)"],["expires","Grant lifetime (seconds)"]].map(([name,label])=>`<label>${label}<input type="number" name="${name}" required min="${["status","cancels"].includes(name!)?0:1}" value="${esc(d[name!]??"")}"></label>`).join("")}</div><label><input type="checkbox" required> I explicitly grant these bounded offline fixture calls.</label><button>Grant offline execution</button>${retry?'<button type="button" id="clear-execution-retry">Cancel retry preparation</button>':""}</form></details>`}
+  ${state!.executions.map(e=>`<article class="execution-run" ${dispatchPending(e.run.id)?'data-dispatch-pending="true"':""}><h3>${e.run.payload.state.retryOf?"Manual retry":"Frozen operation"} · synthetic execution</h3>${dispatchPending(e.run.id)||e.active?'<p role="status">Dispatch in progress · Cancel and Revoke remain available.</p>':""}${e.pendingDeliveries.length&&!e.active?'<p role="status">Response wait ended. A response may still arrive; no resend or provider poll is scheduled.</p>':""}${e.deliveryErrors.map(d=>`<p role="alert">Received-response issue (attempt ${d.slot}): ${esc(d.message)}${d.retryable?` <button data-execution-delivery="${key(e.run)}" data-sequence="${d.sequence}">Retry received evidence · no transport call</button>`:" · No result bytes available; deliberate reconciliation remains separate."}</p>`).join("")}<div class="slots">${e.slots.map(s=>`<span class="slot ${s.displayStatus}">Attempt ${s.slot} · ${esc(s.displayStatus)}${s.receiptSummary?.outcome==="historical"?` · ${s.receiptSummary.hasMedia?"Historical raster retained · not adopted":"Historical response retained · no valid raster"}`:""}${s.cancelRequested?` · cancel requested${s.cancelConfirmed?" / confirmed":" / confirmation unknown"}`:""}${!s.receipt&&s.submissionId?` <button data-execution-reconcile="${key(e.run)}" data-slot="${s.slot}" ${!a.connected||e.active?"disabled":""}>Reconcile owned job</button>`:""}${["failed","invalid","cancelled","uncertain"].includes(s.displayStatus)?` <button data-execution-retry="${key(e.run)}" data-slot="${s.slot}" ${!a.connected?"disabled":""}>Prepare deliberate retry</button>`:""}</span>`).join("")}</div><p>${e.run.payload.state.calls.filter(c=>c.kind==="submit").length}/${e.grant.payload.state.maxSubmissions} submits · ${e.run.payload.state.calls.filter(c=>c.kind==="status").length}/${e.grant.payload.state.maxStatusCalls} status calls · ${e.run.payload.state.calls.filter(c=>c.kind==="cancel").length}/${e.grant.payload.state.maxCancelCalls} cancellation calls${e.grant.payload.state.revoked?" · Grant revoked":""}</p><button data-execution-run="${key(e.run)}" ${!a.connected||e.active||dispatchPending(e.run.id)||e.grant.payload.state.revoked||e.slots.some(s=>["uncertain","running","reserved"].includes(s.displayStatus)&&!s.receipt)||!e.slots.some(s=>s.status==="pending")?"disabled":""}>Execute granted slots</button><button data-execution-cancel="${key(e.run)}" ${e.slots.every(s=>s.receipt||s.cancelRequested) && !e.slots.some(s=>s.cancelRequested&&!s.cancelConfirmed&&!s.receipt&&s.jobId) || [...executionCommands.values()].some(c=>c.executionId===e.run.id&&c.action==="cancel-execution")?"disabled":""}>Cancel this execution</button><button data-execution-revoke="${key(e.run)}" ${e.grant.payload.state.revoked||[...executionCommands.values()].some(c=>c.executionId===e.run.id&&c.action==="revoke-execution")?"disabled":""}>Revoke grant</button><button data-execution-refresh="${key(e.run)}">Refresh stored progress · no provider poll</button><details><summary>Inspect frozen request and accounting</summary><pre>${esc(JSON.stringify({request:e.request.payload.state,execution:e.run.payload.state},null,2))}</pre></details></article>`).join("")}</section>`;
 }
 function historyView() {
   const batches = state!.records.filter(
@@ -359,7 +403,7 @@ function render() {
                 )
                 .join("")}</select></label>`
             : ""
-        }<details class="entry-extra" id="import-tools" ${state.candidates.length ? "" : "open"}><summary>Import raster</summary><form id="import"><label class="import-pick">Import PNG / JPEG / WebP<input name="file" type="file" accept="image/png,image/jpeg,image/webp" required></label><input name="permission" aria-label="Image use permission" placeholder="Permission / source" required><label>Import as<select name="previous"><option value="">New concept</option>${state.candidates.map((c, i) => `<option value="${key(c)}">Replace Concept ${i + 1} · v${c.version}</option>`).join("")}</select></label><button>Import raster</button></form></details><div class="deferred"><button disabled title="Library contract is deferred">Add to Library</button><button disabled title="Raster export contract is deferred">Export As</button><button disabled title="HTML reconstruction is a later process">Build as HTML</button></div></div><p class="hint">Library, raster export and HTML reconstruction are separate deferred operations.</p><div class="studio ${layout}"><div class="visual-area">${(state.candidates.length || state.selectedSources.length) ? (layout === "sheet" ? `<section class="contact-sheet" aria-label="Candidate contact sheet">${groups()}</section>${focusView()}` : `${focusView()}<section class="filmstrip" aria-label="Candidate filmstrip">${state.candidates.map((c, i) => card(c, i, true)).join("")}</section>`) : '<div class="empty-canvas"><h2>Your next direction starts here.</h2><p>Import raster concepts to compare, select and annotate.</p><p>No image generator is connected in this review slice.</p>${contextControls()}</div>'}</div>${selectionView()}</div>${prepareView()}${historyView()}`
+        }<details class="entry-extra" id="import-tools" ${state.candidates.length ? "" : "open"}><summary>Import raster</summary><form id="import"><label class="import-pick">Import PNG / JPEG / WebP<input name="file" type="file" accept="image/png,image/jpeg,image/webp" required></label><input name="permission" aria-label="Image use permission" placeholder="Permission / source" required><label>Import as<select name="previous"><option value="">New concept</option>${state.candidates.map((c, i) => `<option value="${key(c)}">Replace Concept ${i + 1} · v${c.version}</option>`).join("")}</select></label><button>Import raster</button></form></details><div class="deferred"><button disabled title="Library contract is deferred">Add to Library</button><button disabled title="Raster export contract is deferred">Export As</button><button disabled title="HTML reconstruction is a later process">Build as HTML</button></div></div><p class="hint">Library, raster export and HTML reconstruction are separate deferred operations.</p><div class="studio ${layout}"><div class="visual-area">${(state.candidates.length || state.selectedSources.length) ? (layout === "sheet" ? `<section class="contact-sheet" aria-label="Candidate contact sheet">${groups()}</section>${focusView()}` : `${focusView()}<section class="filmstrip" aria-label="Candidate filmstrip">${state.candidates.map((c, i) => card(c, i, true)).join("")}</section>`) : `<div class="empty-canvas"><h2>Your next direction starts here.</h2><p>Import raster concepts to compare, select and annotate.</p><p>No image generator is connected in this review slice.</p>${contextControls()}</div>`}</div>${selectionView()}</div>${prepareView()}${executionView()}${historyView()}`
       : workspaceError ? `<section class="workspace-error" role="alert"><h2>Workspace unavailable</h2><p>${esc(workspaceError)}</p><p>Stored sources could not be validated. No records or drafts were changed.</p><button id="retry-open">Retry reopen</button></section>` : '<section class="welcome"> <h2>A visual place to explore.</h2><p>Create a Website project and choose Homepage, About Us or a custom page. Brand setup and chat are optional.</p></section>'
   }</main>`;
   bind();
@@ -379,6 +423,11 @@ function groups() {
     );
     candidates.forEach((c) => assigned.add(key(c)));
     html += `<div class="batch-group"><h2>Batch ${i + 1} <small>${b.payload.state.attempts.map((a) => a.status).join(" / ")}</small></h2><div class="card-grid">${candidates.map((c) => card(c, state!.candidates.indexOf(c))).join("")}</div></div>`;
+  }
+  for(const [i,e] of state!.executions.entries()) {
+    const candidates=e.outputs.map(r=>state!.candidates.find(c=>key(c)===key(r))).filter((c):c is Work<RasterConcept>=>!!c);
+    candidates.forEach(c=>assigned.add(key(c)));
+    if(candidates.length)html+=`<div class="batch-group"><h2>Offline execution ${i+1} <small>Synthetic fixtures · ${e.slots.map(s=>s.displayStatus).join(" / ")}</small></h2><div class="card-grid">${candidates.map(c=>card(c,state!.candidates.indexOf(c))).join("")}</div></div>`;
   }
   const imports = state!.candidates.filter((c) => !assigned.has(key(c)));
   return (
@@ -401,13 +450,18 @@ function bind() {
   });
   const on = (id: string, event: string, fn: (e: Event) => void) =>
     document.getElementById(id)?.addEventListener(event, fn);
+  const boundScope=JSON.stringify([pid,state?key(state.unit):null]);
+  root.querySelectorAll<HTMLElement>("input,textarea,select").forEach(n=>n.dataset["draftOwner"]=boundScope);
   root.oninput = root.onchange = (event) => {
     if (!state) return;
     const target = event.target as HTMLInputElement;
+    if(target.dataset["draftOwner"]!==JSON.stringify([pid,key(state.unit)]))return;
     const form = target.closest("form");
     if (form?.id === "annotation") {
       const e = entries().find(e => e.id === entry);
       if (e) draft().notes[noteKey(e)] = { note: (form.querySelector("textarea") as HTMLTextAreaElement).value, intent: (form.querySelector("select") as HTMLSelectElement).value };
+    } else if (form?.id === "execution-grant") {
+      draft().execution[target.name] = target.value;
     } else if (form?.id === "prepare" && ["intent","count","direction","brand","operation"].includes(target.name)) {
       const name = target.name as "intent" | "count" | "direction" | "brand" | "operation";
       draft()[name] = target.value;
@@ -440,12 +494,12 @@ function bind() {
   });
   on("project", "change", (e) => {
     const value = (e.target as HTMLSelectElement).value;
-    if (value) void run(() => openProject(value), "Project reopened");
+    if (value) void run(() => openProject(value), "Project reopened", true);
     else { pid = ""; state = null; project = null; units = []; workspaceError = ""; prepared = null; pendingRemoval = []; render(); notice.textContent = "Choose a project; session drafts retained"; }
   });
   on("page", "change", (e) => {
     const value = (e.target as HTMLSelectElement).value;
-    if (value) void run(() => openUnit(value), "Page reopened");
+    if (value) void run(() => openUnit(value), "Page reopened", true);
     else { state = null; workspaceError = ""; prepared = null; pendingRemoval = []; render(); notice.textContent = "Choose a page; session drafts retained"; }
   });
   on("new-project", "submit", (e) => {
@@ -632,6 +686,34 @@ function bind() {
       });
       await reload();
     }, "Prepared pending attempts only. Image execution is unavailable.");
+  });
+  on("execution-grant","submit",e=>{
+    e.preventDefault(); const d=draft().execution;
+    void run(async()=>{
+      const retry=state!.executions.find(e=>e.run.id===d["retry"]);
+      const spec=state!.records.find(p=>key(p)===d["spec"]) as Work<Specification>|undefined;
+      if(!spec)throw Error("Choose a frozen operation");
+      const base={expectedProject:project,unit:ref(state!.unit)};
+      const q:Work<ExecutionRequest>=retry?retry.request:await post("compile-execution",{...base,spec:ref(spec),width:Number(d["width"]),height:Number(d["height"])});
+      if(retry&&(Number(d["width"])!==q.payload.state.width||Number(d["height"])!==q.payload.state.height||key(q.payload.state.spec)!==key(spec)))throw Error("Retry uses the original exact input and dimensions");
+      const slots=retry?[Number(d["slot"])]:Array.from({length:spec.payload.state.count},(_,i)=>i+1);
+      const lifetime=Number(d["expires"]);if(!Number.isSafeInteger(lifetime)||lifetime<1||lifetime>86400)throw Error("Choose grant lifetime 1–86400 seconds");
+      const g:Work<Grant>=await post("grant-execution",{...base,request:ref(q),adapter:state!.executionAvailability.adapter,slots,maxSubmissions:Number(d["submissions"]),maxStatusCalls:Number(d["status"]),maxCancelCalls:Number(d["cancels"]),timeoutMs:Number(d["timeout"]),expiresAt:new Date(Date.now()+lifetime*1000).toISOString(),reason:"Explicit visual workspace offline fixture grant"});
+      await post("prepare-execution",{...base,grant:ref(g),retryOf:retry?{execution:ref(retry.run),slot:Number(d["slot"])}:null});
+      delete d["retry"];delete d["slot"];await reload();
+    },"Offline grant prepared. Execute is a separate deliberate action.");
+  });
+  on("clear-execution-retry","click",()=>{delete draft().execution["retry"];delete draft().execution["slot"];render();});
+  for(const [attribute,action] of [["run","execute"],["cancel","cancel-execution"],["revoke","revoke-execution"],["reconcile","reconcile-execution"],["delivery","retry-delivery"]])root.querySelectorAll<HTMLButtonElement>(`[data-execution-${attribute}]`).forEach(b=>{
+    const e=state!.executions.find(e=>key(e.run)===b.getAttribute(`data-execution-${attribute}`))!, owner=project!;
+    b.onclick=()=>void executionAction(e,owner,attribute!,action!,Number(b.dataset["slot"]),Number(b.dataset["sequence"]));
+  });
+  root.querySelectorAll<HTMLButtonElement>("[data-execution-refresh]").forEach(b=>b.onclick=()=>void run(()=>reload(true),"Stored progress refreshed; no provider poll",true));
+  root.querySelectorAll<HTMLButtonElement>("[data-execution-retry]").forEach(b=>b.onclick=()=>{
+    const e=state!.executions.find(e=>key(e.run)===b.dataset["executionRetry"])!,d=draft().execution;
+    d["retry"]=e.run.id;d["slot"]=b.dataset["slot"]!;d["spec"]=key(e.request.payload.state.spec);d["width"]=String(e.request.payload.state.width);d["height"]=String(e.request.payload.state.height);
+    for(const name of ["submissions","status","cancels","timeout","expires"])delete d[name];draft().open["execution-panel"]=true;render();
+    root.querySelector("#execution-grant")?.scrollIntoView({block:"center"});notice.textContent="Retry prepared locally; new explicit grant required. Nothing dispatched.";
   });
   root.querySelectorAll<HTMLButtonElement>("[data-cancel]").forEach(
     (b) =>
