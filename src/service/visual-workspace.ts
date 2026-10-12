@@ -1,3 +1,4 @@
+import { Executions, type OfflineExecutionInjection } from './execution.ts';
 import type { Workspace } from "./workspace.ts";
 import { Exploration } from "./exploration.ts";
 import {
@@ -37,8 +38,10 @@ export function plainText(x: unknown, max = 4000): string {
 export class VisualWorkspace {
   readonly w: Workspace;
   readonly exploration: Exploration;
-  constructor(w: Workspace) {
+  readonly executions: Executions;
+  constructor(w: Workspace, injection?: OfflineExecutionInjection) {
     this.w = w;
+    this.executions = new Executions(w, injection);
     this.exploration = new Exploration(w);
   }
   catalog() {
@@ -123,7 +126,7 @@ export class VisualWorkspace {
         .filter((m) => canonical(m.payload.state.candidate) === canonical(reference(c)))
         .map((m) => this.exploration.read<WorkUnit>(pid, m.payload.state.workUnit, "page-work-unit").payload.state.label);
     }
-    return { ...this.project(pid), unit: u, records, candidates, selectedSources, sourceOrigins };
+    return { ...this.project(pid), unit: u, records, candidates, selectedSources, sourceOrigins, executionAvailability:this.executions.availability(), executions:this.executions.state(pid,unit) };
   }
   private order(pid: string) {
     const sequence = new Map<string, number>();
@@ -181,6 +184,7 @@ export class VisualWorkspace {
   }
   async command(pid: string, action: string, input: unknown): Promise<unknown> {
     try {
+      if (['compile-execution','grant-execution','prepare-execution','execute','recover-execution','reconcile-execution','cancel-execution','revoke-execution'].includes(action)) return await this.executions.command(pid,action,input);
       return await this.perform(pid, action, input);
     } catch (error) {
       if (error instanceof ExplorationConflict)

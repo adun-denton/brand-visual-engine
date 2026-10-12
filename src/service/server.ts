@@ -1,3 +1,4 @@
+import type { OfflineExecutionInjection } from './execution.ts';
 import { VisualWorkspace } from './visual-workspace.ts';
 import { Compositions } from './compositions.ts';
 import { Pages } from './pages.ts';
@@ -20,6 +21,7 @@ export interface RunningApp {
   regions: Regions;
   compositions: Compositions;
   pages: Pages;
+  visual: VisualWorkspace;
   origin: string;
   close: () => Promise<void>;
 }
@@ -31,6 +33,7 @@ export async function startApp(
   workspaceOptions?: {
     directionFixture?: boolean;
     aiResponseFixture?: boolean;
+    executionFixture?: OfflineExecutionInjection;
   },
 ): Promise<RunningApp> {
   const workspace = new Workspace(root, workspaceOptions),
@@ -40,7 +43,7 @@ export async function startApp(
   const compositions = new Compositions(workspace);
   const pages = new Pages(workspace);
   const directions = new AIDirections(workspace);
-  const visual = new VisualWorkspace(workspace);
+  const visual = new VisualWorkspace(workspace,workspaceOptions?.executionFixture);
   let origin = '';
   const server = createServer(async (req, res) => {
     const json = (status: number, body: unknown, augment = true) => {
@@ -493,6 +496,7 @@ export async function startApp(
     regions,
     compositions,
     pages,
+    visual,
     origin,
     close: async () => {
       await providers.close();
