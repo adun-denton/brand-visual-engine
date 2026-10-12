@@ -1,3 +1,4 @@
+import type { MemoryIndex, HandoffNote, EvidenceEntry, EvidenceLink } from "../modules/website/memory-contracts.ts";
 import type { Execution, Grant, ExecutionRequest } from '../modules/website/execution-contracts.ts';
 import type {
   VersionRef,
@@ -390,6 +391,330 @@ function historyView() {
   ) as Work<Batch>[];
   return `<details class="history"><summary>History · ${batches.length} batches</summary>${batches.map((b, i) => `<article><h3>Batch ${i + 1} · ${b.payload.state.retryOf ? "Manual retry" : "Prepared operation"}</h3><div class="slots">${b.payload.state.attempts.map((a) => `<span class="slot ${a.status}">Attempt ${a.slot} · ${a.status}${["failed", "invalid", "cancelled", "uncertain"].includes(a.status) ? ` <button data-retry="${key(b)}" data-slot="${a.slot}">Prepare manual retry</button>` : ""}</span>`).join("")}</div>${b.payload.state.attempts.some((a) => ["pending", "running"].includes(a.status)) ? `<button data-cancel="${key(b)}">Cancel pending work</button>` : ""}<details><summary>Frozen specification</summary><pre>${esc(JSON.stringify((state!.records.find((q) => key(q) === key(b.payload.state.spec)) as Work<Specification>)?.payload.state, null, 2))}</pre></details></article>`).join("")}</details>`;
 }
+type MemoryState = {
+  notes: { ref: VersionRef; integrity: string; note: HandoffNote }[];
+  capsules: { ref: VersionRef; scope: VersionRef | null }[];
+  coverage: {
+    notes: number;
+    capsules: number;
+    omittedNotes: number;
+    omittedCapsules: number;
+    next: number | null;
+  };
+};
+type MemoryCapsule = {
+  ref: VersionRef;
+  integrity: string;
+  snapshot: MemoryIndex;
+  currency: {
+    availability:{missing:number;corrupt:number;mediaUnavailable:number;unknownScope:number};
+    status: string;
+    details: { ref: VersionRef; status: string }[];
+    added: number | null;
+  };
+  preview: {
+    entries: number;
+    events: number;
+    scope: VersionRef | null;
+    content: string;
+  };
+};
+type MemoryView = {
+  text: string;
+  expected: VersionRef | null;
+  noteScope: VersionRef | null;
+  links: EvidenceLink[];
+  data: MemoryState | null;
+  index:
+    | (MemoryIndex & {
+        next: number | null;
+        coverage: MemoryIndex["coverage"] & {
+          returned: number;
+          omitted: number;
+        };
+      })
+    | null;
+  capsule: MemoryCapsule | null;
+  inspection: EvidenceEntry | null;
+  status: string;
+  pending: boolean;
+};
+let memoryScope: "page" | "project" = "page";
+const memoryViews = new Map<string, MemoryView>();
+const memoryOwner = () => ({
+  projectId: pid,
+  scope: memoryScope === "page" && state ? ref(state.unit) : null,
+});
+const memoryKey = (o: ReturnType<typeof memoryOwner>) =>
+  JSON.stringify([o.projectId, o.scope]);
+function memoryView() {
+  const k = memoryKey(memoryOwner());
+  if (!memoryViews.has(k))
+    memoryViews.set(k, {
+      text: "",
+      expected: null,
+      noteScope: memoryOwner().scope,
+      links: [],
+      data: null,
+      index: null,
+      capsule: null,
+      inspection: null,
+      status: "Load saved project evidence to continue.",
+      pending: false,
+    });
+  return memoryViews.get(k)!;
+}
+const memoryQuery = (o: ReturnType<typeof memoryOwner>, r?: VersionRef) =>
+  new URLSearchParams({
+    project: o.projectId,
+    ...(o.scope
+      ? { scope: o.scope.id, scopeVersion: String(o.scope.version) }
+      : {}),
+    ...(r ? { id: r.id, version: String(r.version) } : {}),
+  }).toString();
+async function memoryAction(
+  action: (v: MemoryView, o: ReturnType<typeof memoryOwner>) => Promise<void>,
+) {
+  const o = memoryOwner(),
+    v = memoryView();
+  if (v.pending) return;
+  v.pending = true;
+  v.status = "Reading or saving project memory…";
+  render();
+  try {
+    await action(v, o);
+  } catch (e) {
+    v.status =
+      e instanceof Error ? e.message : "Memory unavailable; draft retained";
+  } finally {
+    v.pending = false;
+    if (memoryKey(memoryOwner()) === memoryKey(o)) {
+      const restore = executionFocus();
+      render();
+      restore();
+    }
+  }
+}
+async function loadMemory(
+  v: MemoryView,
+  o: ReturnType<typeof memoryOwner>,
+  from = 0,
+) {
+  const q = memoryQuery(o);
+  v.data = await get("memory/state?" + q);
+  v.index = await get("memory/index?" + q + "&offset=" + from + "&limit=20");
+  if (v.capsule)
+    v.capsule = await get("memory/capsule?" + memoryQuery(o, v.capsule.ref));
+  v.status =
+    "Stored evidence loaded. Unsaved drafts are separate; no execution or adoption occurred.";
+}
+function memoryPanel() {
+  const v = memoryView(),
+    scope = memoryScope,
+    preview = v.capsule?.preview;
+  const outcome = (e: EvidenceEntry) => {
+    const s = e.summary as Record<string, any> | null;
+    if (!s) return "";
+    if (e.kind === "raster-execution-receipt" || e.kind === "raster-receipt")
+      return ` · ${s["outcome"]} · ${s["outcome"] === "historical" ? "historical evidence, not adopted" : s["outcome"] === "succeeded" ? "canonical result, not acceptance" : "no adopted result"}`;
+    if (e.kind === "raster-execution")
+      return ` · ${(s["slots"] as { status: string }[]).map((s) => (["reserved", "running"].includes(s.status) ? s.status + " (unresolved)" : s.status)).join(" / ")} · ${s["calls"].length} recorded transport calls`;
+    if (e.kind === "raster-batch")
+      return ` · ${(s["attempts"] as { status: string }[]).map((a) => a.status).join(" / ")} · synthetic registration only`;
+    if (e.kind === "raster-specification")
+      return ` · ${s["count"]} requested attempts · ${s["direction"]} · Brand ${s["brand"].enabled ? "on" : "off"}`;
+    if (e.kind === "raster-selections")
+      return ` · ${s["entries"].length} saved sources · selection is not acceptance`;
+    return "";
+  };
+  const eList = (entries: EvidenceEntry[]) =>
+    entries
+      .map(
+        (e) =>
+          `<li><button data-memory-evidence="${esc(key(e.ref))}" data-memory-integrity="${esc(e.integrity ?? "")}">${esc(e.kind)} · v${e.ref.version}</button> <span>${esc(e.status)}${e.media === "unavailable" ? " · media unavailable" : ""}</span>${e.kind==="unknown"?" · page scope unknown; unavailable evidence":""}${esc(outcome(e))}${e.kind === "raster-concept" ? ` · ${esc((e.summary as { origin?: string } | null)?.origin ?? "unknown provenance")} · selection is not acceptance` : ""}</li>`,
+      )
+      .join("");
+  return `<details id="memory-panel" class="project-memory" ${draft().open["memory-panel"] ? "open" : ""}><summary>Project memory / Continue</summary><p>Saved canonical evidence and human notes. Chat is optional. This index grants no execution and approves no design or Brand rule.</p><label>Continuation scope<select id="memory-scope"><option value="page" ${scope === "page" ? "selected" : ""}>This page + exact source closure</option><option value="project" ${scope === "project" ? "selected" : ""}>Whole project</option></select></label><button id="memory-load" ${v.pending ? "disabled" : ""}>Load / refresh stored evidence</button><p id="memory-status" role="status">${esc(v.status)}</p>
+ <div class="memory-columns"><section><h2>Saved handoff notes</h2>${v.data?.notes.map((n) => `<article><p>${esc(n.note.text)}</p><small>Human-authored · v${n.ref.version} · ${n.note.scope ? "Page note" : "Project note"}</small><button data-memory-edit="${esc(key(n.ref))}" ${v.pending ? "disabled" : ""}>Edit saved note</button></article>`).join("") ?? ""}${v.data?.coverage.omittedNotes ? `<p>${v.data.coverage.omittedNotes} notes beyond the first 50; use Next saved records.</p>` : ""}
+ <form id="memory-note"><label>${v.expected ? "Edit exact note revision v" + v.expected.version : "New human handoff note"}<textarea id="memory-note-text" name="text" maxlength="4000" rows="3" required>${esc(v.text)}</textarea></label><p>${v.links.length} exact evidence links attached. Notes express intent, never tool instructions.</p><button ${v.pending ? "disabled" : ""}>Save handoff note</button><button id="memory-new-note" type="button" ${v.pending ? "disabled" : ""}>New note draft</button></form></section>
+ <section><h2>Continuation capsules</h2><button id="memory-create" ${v.pending ? "disabled" : ""}>Create frozen capsule</button>${v.data?.capsules.map((c) => `<button data-memory-capsule="${esc(key(c.ref))}" ${v.pending ? "disabled" : ""}>Inspect capsule ${esc(c.ref.id.slice(-8))}</button>`).join("") ?? ""}${v.data?.coverage.omittedCapsules ? `<p>${v.data.coverage.omittedCapsules} more capsules; use Next saved records.</p>` : ""}
+ ${v.capsule ? `<article class="memory-capsule"><h3>Capsule currency: <span id="memory-currency">${esc(v.capsule.currency.status)}</span></h3><p id="memory-availability">${v.capsule.currency.availability.missing} missing · ${v.capsule.currency.availability.corrupt} corrupt · ${v.capsule.currency.availability.mediaUnavailable} unavailable media · ${v.capsule.currency.availability.unknownScope} unknown scope. Unavailable sources are unresolved coverage, not recovered content.</p><p>${preview!.entries} exact evidence versions · ${preview!.events} workflow events · ${preview!.scope ? "Page scope" : "Project scope"}</p><p>${esc(preview!.content)}</p><p>JSON contains saved summaries and references only. Media bytes, chat, accounts and process observations are absent. This is not a media backup or restore package.</p><button id="memory-refresh" ${v.pending ? "disabled" : ""}>Refresh into new capsule</button><a id="memory-download" download href="/api/v1/visual/memory/download?${esc(memoryQuery(memoryOwner(), v.capsule.ref))}">Download previewed JSON</a><details><summary>Frozen exact sources · ${v.capsule.snapshot.entries.length}</summary><ul>${eList(v.capsule.snapshot.entries.slice(0, 50))}</ul>${v.capsule.snapshot.entries.length > 50 ? "<p>First 50 shown; the previewed JSON includes the full bounded snapshot.</p>" : ""}</details><p>${v.capsule.currency.details.filter((d) => d.status !== "current").length} changed or unavailable exact sources; ${v.capsule.currency.added ?? "unknown"} added versions.</p></article>` : ""}</section></div>
+ ${v.data?.coverage.next !== null && v.data?.coverage.next !== undefined ? `<button id="memory-saved-more" data-offset="${v.data.coverage.next}" ${v.pending ? "disabled" : ""}>Next saved records</button>` : ""}<button id="memory-saved-first" ${v.pending ? "disabled" : ""}>First saved records</button>
+ ${v.index ? `<details open><summary>Evidence index · ${v.index.coverage.entries} versions · ${v.index.coverage.omitted} outside this page</summary><ul>${eList(v.index.entries)}</ul>${v.index.next !== null ? `<button id="memory-more" data-offset="${v.index.next}" ${v.pending ? "disabled" : ""}>Next evidence page</button>` : ""}<button id="memory-first" ${v.pending ? "disabled" : ""}>First evidence page</button><p>${v.index.coverage.unsupported} unsupported records explicitly excluded. Raster provenance and receipt outcome are factual; visual quality and cost remain unknown.</p></details>` : ""}
+ ${v.inspection ? `<section class="memory-inspection"><h3>Exact evidence · ${esc(v.inspection.kind)} · v${v.inspection.ref.version}</h3><p>${esc(v.inspection.status)} · media ${esc(v.inspection.media)}</p><pre id="memory-evidence-json">${esc(JSON.stringify(v.inspection, null, 2))}</pre>${v.inspection.status === "available" ? '<button id="memory-link-note">Attach exact evidence to note draft</button>' : ""}</section>` : ""}
+ ${state!.executions.some((e) => e.active || e.pendingDeliveries.length || e.deliveryErrors.length) ? '<p class="hint">Current-session execution activity is shown in Execution below. It is not included in saved capsules or promised after restart.</p>' : ""}</details>`;
+}
+function bindMemory() {
+  if (!state) return;
+  const on = (id: string, event: string, fn: (e: Event) => void) =>
+    document.getElementById(id)?.addEventListener(event, fn);
+  const owner = memoryKey(memoryOwner());
+  on("memory-note-text", "input", (e) => {
+    if (memoryKey(memoryOwner()) === owner)
+      memoryView().text = (e.target as HTMLTextAreaElement).value;
+  });
+  on("memory-scope", "change", (e) => {
+    memoryScope = (e.target as HTMLSelectElement).value as typeof memoryScope;
+    render();
+  });
+  on(
+    "memory-load",
+    "click",
+    () => void memoryAction((v, o) => loadMemory(v, o)),
+  );
+  on(
+    "memory-more",
+    "click",
+    (e) =>
+      void memoryAction((v, o) =>
+        loadMemory(
+          v,
+          o,
+          Number((e.currentTarget as HTMLElement).dataset["offset"]),
+        ),
+      ),
+  );
+  on(
+    "memory-saved-more",
+    "click",
+    (e) =>
+      void memoryAction(async (v, o) => {
+        v.data = await get(
+          "memory/state?" +
+            memoryQuery(o) +
+            "&offset=" +
+            (e.currentTarget as HTMLElement).dataset["offset"],
+        );
+        v.status = "Next bounded saved-record page loaded; draft retained.";
+      }),
+  );
+  on(
+    "memory-saved-first",
+    "click",
+    () =>
+      void memoryAction(async (v, o) => {
+        v.data = await get("memory/state?" + memoryQuery(o));
+        v.status = "First saved records loaded; draft retained.";
+      }),
+  );
+  on(
+    "memory-first",
+    "click",
+    () => void memoryAction((v, o) => loadMemory(v, o)),
+  );
+  on("memory-note", "submit", (e) => {
+    e.preventDefault();
+    void memoryAction(async (v, o) => {
+      const saved = await post(
+        "memory/note",
+        {
+          expected: v.expected,
+          note: {
+            version: 1,
+            scope: v.expected ? v.noteScope : o.scope,
+            text: v.text,
+            source: "human-authored",
+            evidence: v.links,
+          },
+        },
+        o.projectId,
+      );
+      v.expected = ref(saved);
+      await loadMemory(v, o);
+      v.status =
+        "Handoff note saved explicitly. Earlier revisions remain available.";
+    });
+  });
+  on("memory-new-note", "click", () => {
+    const v = memoryView();
+    v.expected = null;
+    v.status =
+      "New note draft. Existing text and links retained for explicit editing.";
+    render();
+  });
+  root.querySelectorAll<HTMLButtonElement>("[data-memory-edit]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        const v = memoryView(),
+          n = v.data!.notes.find(
+            (n) => key(n.ref) === b.dataset["memoryEdit"],
+          )!;
+        if (
+          v.text &&
+          v.text !== n.note.text &&
+          !confirm(
+            "Replace the current unsaved handoff-note draft with this saved revision?",
+          )
+        )
+          return;
+        v.text = n.note.text;
+        v.links = n.note.evidence;
+        v.expected = n.ref;
+        v.noteScope = n.note.scope;
+        v.status =
+          "Editing exact saved note revision; conflicting saves preserve this draft.";
+        render();
+      }),
+  );
+  const freeze = (refresh: boolean) =>
+    void memoryAction(async (v, o) => {
+      const saved = await post(
+        "memory/create",
+        {
+          scope: refresh ? v.capsule!.snapshot.scope : o.scope,
+          previous: refresh ? v.capsule!.ref : null,
+        },
+        o.projectId,
+      );
+      v.capsule = await get("memory/capsule?" + memoryQuery(o, ref(saved)));
+      await loadMemory(v, o);
+      v.status =
+        "Frozen capsule saved. Creation bookkeeping does not change its evidence currency.";
+    });
+  on("memory-create", "click", () => freeze(false));
+  on("memory-refresh", "click", () => freeze(true));
+  root.querySelectorAll<HTMLButtonElement>("[data-memory-capsule]").forEach(
+    (b) =>
+      (b.onclick = () =>
+        void memoryAction(async (v, o) => {
+          const c = v.data!.capsules.find(
+            (c) => key(c.ref) === b.dataset["memoryCapsule"],
+          )!;
+          v.capsule = await get("memory/capsule?" + memoryQuery(o, c.ref));
+          v.status = "Frozen evidence inspected; currency checked separately.";
+        })),
+  );
+  root.querySelectorAll<HTMLButtonElement>("[data-memory-evidence]").forEach(
+    (b) =>
+      (b.onclick = () =>
+        void memoryAction(async (v, o) => {
+          const [id, version] = b.dataset["memoryEvidence"]!.split(":"),
+            r = {
+              id: id!,
+              version: Number(version),
+              freshness: "pinned" as const,
+            };
+          v.inspection = await get(
+            "memory/evidence?" +
+              memoryQuery(o, r) +
+              (b.dataset["memoryIntegrity"]
+                ? "&integrity=" + b.dataset["memoryIntegrity"]
+                : ""),
+          );
+          v.status = "Exact version inspected; no latest-version substitution.";
+        })),
+  );
+  on("memory-link-note", "click", () => {
+    const v = memoryView(),
+      e = v.inspection!;
+    if (!v.links.some((l) => key(l.ref) === key(e.ref)))
+      v.links.push({ ref: e.ref, integrity: e.integrity! });
+    v.status =
+      "Exact evidence attached to unsaved note draft. Save explicitly.";
+    render();
+  });
+}
+
 function render() {
   const focusId = (document.activeElement as HTMLElement)?.id;
   root.innerHTML = `<header><a class="wordmark" href="/visual">BVE <span>VISUAL STUDIO</span></a><span class="review-tag">Interaction review · no image execution</span><a href="/">Semantic & legacy workspace</a></header><main id="workspace"><div class="workspace-title"><div><p class="eyebrow">WEBSITE EXPLORATION</p><h1>${esc(state?.title ?? (pid ? "Start a page" : "Start with a page."))}</h1></div><label>Review layout<select id="layout"><option value="sheet" ${layout === "sheet" ? "selected" : ""}>A · Contact sheet + Focus</option><option value="film" ${layout === "film" ? "selected" : ""}>B · Focus + Filmstrip</option></select></label></div><div class="entry-bar"><label>Project<select id="project"><option value="">Choose project</option>${catalog.projects.map((p) => `<option value="${p.ref.id}" ${pid === p.ref.id ? "selected" : ""}>${esc(p.title)}</option>`).join("")}</select></label><details class="entry-extra" ${pid ? "" : "open"}><summary>New project</summary><form id="new-project"><input name="title" required aria-label="New Website project name" placeholder="New Website project"><button>Create project</button></form></details>${pid ? `<label>Page<select id="page"><option value="">Choose page</option>${units.map((u) => `<option value="${key(u)}" ${state && key(state.unit) === key(u) ? "selected" : ""}>${esc(u.payload.state.label)}</option>`).join("")}</select></label><details class="entry-extra" id="page-tools" ${state ? "" : "open"}><summary>Add page</summary><form id="new-page"><select name="type" aria-label="Page type"><option value="homepage">Homepage</option><option value="about">About Us</option><option value="custom">Custom page</option></select><input name="label" aria-label="Page label" placeholder="Page label (optional)"><button>Add page</button></form></details>` : ""}</div>${
@@ -403,7 +728,7 @@ function render() {
                 )
                 .join("")}</select></label>`
             : ""
-        }<details class="entry-extra" id="import-tools" ${state.candidates.length ? "" : "open"}><summary>Import raster</summary><form id="import"><label class="import-pick">Import PNG / JPEG / WebP<input name="file" type="file" accept="image/png,image/jpeg,image/webp" required></label><input name="permission" aria-label="Image use permission" placeholder="Permission / source" required><label>Import as<select name="previous"><option value="">New concept</option>${state.candidates.map((c, i) => `<option value="${key(c)}">Replace Concept ${i + 1} · v${c.version}</option>`).join("")}</select></label><button>Import raster</button></form></details><div class="deferred"><button disabled title="Library contract is deferred">Add to Library</button><button disabled title="Raster export contract is deferred">Export As</button><button disabled title="HTML reconstruction is a later process">Build as HTML</button></div></div><p class="hint">Library, raster export and HTML reconstruction are separate deferred operations.</p><div class="studio ${layout}"><div class="visual-area">${(state.candidates.length || state.selectedSources.length) ? (layout === "sheet" ? `<section class="contact-sheet" aria-label="Candidate contact sheet">${groups()}</section>${focusView()}` : `${focusView()}<section class="filmstrip" aria-label="Candidate filmstrip">${state.candidates.map((c, i) => card(c, i, true)).join("")}</section>`) : `<div class="empty-canvas"><h2>Your next direction starts here.</h2><p>Import raster concepts to compare, select and annotate.</p><p>No image generator is connected in this review slice.</p>${contextControls()}</div>`}</div>${selectionView()}</div>${prepareView()}${executionView()}${historyView()}`
+        }<details class="entry-extra" id="import-tools" ${state.candidates.length ? "" : "open"}><summary>Import raster</summary><form id="import"><label class="import-pick">Import PNG / JPEG / WebP<input name="file" type="file" accept="image/png,image/jpeg,image/webp" required></label><input name="permission" aria-label="Image use permission" placeholder="Permission / source" required><label>Import as<select name="previous"><option value="">New concept</option>${state.candidates.map((c, i) => `<option value="${key(c)}">Replace Concept ${i + 1} · v${c.version}</option>`).join("")}</select></label><button>Import raster</button></form></details><div class="deferred"><button disabled title="Library contract is deferred">Add to Library</button><button disabled title="Raster export contract is deferred">Export As</button><button disabled title="HTML reconstruction is a later process">Build as HTML</button></div></div><p class="hint">Library, raster export and HTML reconstruction are separate deferred operations.</p><div class="studio ${layout}"><div class="visual-area">${(state.candidates.length || state.selectedSources.length) ? (layout === "sheet" ? `<section class="contact-sheet" aria-label="Candidate contact sheet">${groups()}</section>${focusView()}` : `${focusView()}<section class="filmstrip" aria-label="Candidate filmstrip">${state.candidates.map((c, i) => card(c, i, true)).join("")}</section>`) : `<div class="empty-canvas"><h2>Your next direction starts here.</h2><p>Import raster concepts to compare, select and annotate.</p><p>No image generator is connected in this review slice.</p>${contextControls()}</div>`}</div>${selectionView()}</div>${memoryPanel()}${prepareView()}${executionView()}${historyView()}`
       : workspaceError ? `<section class="workspace-error" role="alert"><h2>Workspace unavailable</h2><p>${esc(workspaceError)}</p><p>Stored sources could not be validated. No records or drafts were changed.</p><button id="retry-open">Retry reopen</button></section>` : '<section class="welcome"> <h2>A visual place to explore.</h2><p>Create a Website project and choose Homepage, About Us or a custom page. Brand setup and chat are optional.</p></section>'
   }</main>`;
   bind();
@@ -438,6 +763,7 @@ function groups() {
   );
 }
 function bind() {
+  bindMemory();
   observers.forEach((o) => o.disconnect());
   observers = [];
   root.querySelectorAll<HTMLImageElement>("img").forEach((img) => {

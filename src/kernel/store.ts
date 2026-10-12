@@ -46,7 +46,7 @@ export class KernelStore {
     return value as NodePacket<T>; // Consumers still validate their port before crossing a boundary.
   }
   environment(): GateEnvironment {
-    return { ...this.services, lookup: ref => this.lookup(ref), currentVersion: id => this.currentVersion(id),
+    return { ...this.services, projectRefs:(pid,max,exclude)=>this.projectRefs(pid,max,exclude), projectEvents:pid=>this.ledger(pid).events, projectSelections:pid=>this.acceptedSelections(pid), lookup: ref => this.lookup(ref), currentVersion: id => this.currentVersion(id),
       accepted: (pid, ref) => this.ledger(pid).events.some(e => e.kind === 'acceptance' && e.subject.id === ref.id && e.subject.version === ref.version) };
   }
   private event(projectId: string, subject: VersionRef, kind: LedgerEvent['kind'], actor: string,
@@ -79,6 +79,16 @@ export class KernelStore {
     return this.db.prepare('SELECT id, MAX(version) AS version FROM kernel_packets GROUP BY id ORDER BY id').all()
       .map(row => this.lookup({ id: row['id'] as string, version: row['version'] as number, freshness: 'pinned' })!);
   }
+  /** Bounded ownership comes from canonical revision events, including damaged packet bodies. */
+  projectRefs(projectId:string, max=4096, excludeCapsules=false): VersionRef[] {
+    const refs:VersionRef[]=[];
+    const rows=this.db.prepare("SELECT DISTINCT json_extract(body,'$.subject.id') AS id,json_extract(body,'$.subject.version') AS version FROM kernel_events WHERE project_id=? AND json_extract(body,'$.kind')='revision' ORDER BY id,version").iterate(projectId);
+    for(const row of rows){const ref:VersionRef={id:row['id'] as string,version:row['version'] as number,freshness:'pinned'};
+      if(excludeCapsules){try{const p=this.lookup(ref);if(p?.type==='work-record'&&(p.payload as {kind?:string}).kind==='project-continuation-capsule')continue;}catch(e){if(!(e instanceof SyntaxError)&&!(e instanceof Error&&e.message==='stored packet integrity mismatch'))throw e;}}
+      refs.push(ref);if(refs.length>max)throw new Error('Project memory inventory limit exceeded (4096 versions); no snapshot created');
+    }
+    return refs;
+  }
   importSnapshot(projectId: string, packets: NodePacket<unknown>[], actor: string, reason: string): void {
     this.transaction(() => {
       if (!packets.length || packets.some(p => p.projectId !== projectId)) throw new Error('import scope mismatch');
@@ -89,6 +99,9 @@ export class KernelStore {
   ledger(projectId: string): ProjectLedger {
     return { projectId, events: this.db.prepare('SELECT body FROM kernel_events WHERE project_id=? ORDER BY sequence').all(projectId)
       .map(row => JSON.parse(row['body'] as string) as LedgerEvent) };
+  }
+  acceptedSelections(projectId:string): {slot:string;ref:VersionRef}[] {
+    return this.db.prepare('SELECT slot,body FROM kernel_selections WHERE project_id=? ORDER BY slot').all(projectId).map(row=>({slot:row['slot'] as string,ref:JSON.parse(row['body'] as string) as VersionRef}));
   }
   selected(projectId: string, slot: string): VersionRef | null {
     const row = this.db.prepare('SELECT body FROM kernel_selections WHERE project_id=? AND slot=?').get(projectId, slot);

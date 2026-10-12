@@ -1,3 +1,5 @@
+import { ProjectMemory } from "./project-memory.ts";
+import { exactRef, hash } from "../modules/website/exploration-contracts.ts";
 import type { OfflineExecutionInjection } from './execution.ts';
 import { VisualWorkspace } from './visual-workspace.ts';
 import { Compositions } from './compositions.ts';
@@ -22,6 +24,7 @@ export interface RunningApp {
   compositions: Compositions;
   pages: Pages;
   visual: VisualWorkspace;
+  memory: ProjectMemory;
   origin: string;
   close: () => Promise<void>;
 }
@@ -44,6 +47,7 @@ export async function startApp(
   const pages = new Pages(workspace);
   const directions = new AIDirections(workspace);
   const visual = new VisualWorkspace(workspace,workspaceOptions?.executionFixture);
+  const memory = new ProjectMemory(workspace);
   let origin = '';
   const server = createServer(async (req, res) => {
     const json = (status: number, body: unknown, augment = true) => {
@@ -81,6 +85,19 @@ export async function startApp(
       const url = new URL(req.url ?? '/', origin);
       const path = url.pathname;
       if (req.method === 'GET') {
+        if (path.startsWith('/api/v1/visual/memory/')) {
+          const pid=id(url.searchParams.get('project'));
+          const pointer=()=>exactRef({id:url.searchParams.get('id'),version:Number(url.searchParams.get('version')),freshness:'pinned'});
+          const scope=url.searchParams.has('scope')?exactRef({id:url.searchParams.get('scope'),version:Number(url.searchParams.get('scopeVersion')),freshness:'pinned'}):null;
+          const action=path.slice('/api/v1/visual/memory/'.length);
+          if(action==='state')json(200,memory.state(pid,scope,Number(url.searchParams.get('offset')??0),Number(url.searchParams.get('limit')??50)),false);
+          else if(action==='index')json(200,memory.page(pid,scope,Number(url.searchParams.get('offset')??0),Number(url.searchParams.get('limit')??20)),false);
+          else if(action==='evidence')json(200,memory.evidence(pid,pointer(),url.searchParams.has('integrity')?hash(url.searchParams.get('integrity')):null),false);
+          else if(action==='capsule')json(200,memory.capsule(pid,pointer()),false);
+          else if(action==='download'){const d=memory.download(pid,pointer());res.writeHead(200,{'Content-Type':'application/json; charset=utf-8','Content-Disposition':'attachment; filename="'+d.filename+'"'});res.end(d.output);}
+          else throw new InputError('Not found',404);
+          return;
+        }
         if (path === '/api/v1/visual/session') {
           json(200, { token, ...visual.catalog() }, false);
           return;
@@ -268,6 +285,10 @@ export async function startApp(
       if (path === '/api/v1/visual/create') {
         json(200, visual.create(input), false);
         return;
+      }
+      if (path==='/api/v1/visual/memory/note'||path==='/api/v1/visual/memory/create') {
+        const outer=record(input,['projectId','input']),pid=id(outer['projectId']);
+        json(200,path.endsWith('/note')?memory.saveNote(pid,outer['input']):memory.createCapsule(pid,outer['input']),false);return;
       }
       if (path.startsWith('/api/v1/visual/')) {
         const outer = record(input, ['projectId', 'input']);
@@ -497,6 +518,7 @@ export async function startApp(
     compositions,
     pages,
     visual,
+    memory,
     origin,
     close: async () => {
       await providers.close();
