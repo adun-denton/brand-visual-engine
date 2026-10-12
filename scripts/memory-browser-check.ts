@@ -339,8 +339,18 @@ try {
         action === "cancel"
           ? app.visual.executions.state(pid, reference(u)).at(-1)!.run.payload
               .state.slots[0]!.cancelRequested
-          : app.workspace.kernel.get<any>({ ...reference(grant), version: 2 })
-              .payload.state.revoked,
+          : ((
+              app.workspace.kernel.lookup({
+                ...reference(grant),
+                version: 2,
+              }) as
+                | import("../src/kernel/contracts.ts").NodePacket<
+                    import("../src/kernel/contracts.ts").DesignArtifact<
+                      import("../src/modules/website/execution-contracts.ts").Grant
+                    >
+                  >
+                | null
+            )?.payload.state.revoked ?? false),
       )
       .toBe(true);
     releaseMemory();

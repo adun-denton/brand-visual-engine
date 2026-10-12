@@ -41,6 +41,10 @@ are reported separately. A later Windows run failed opening the inherited V02 re
 cover damaged scoped-note visibility, corrupt approved-context links, foreign corrupt/missing-version
 rejection and storage-read errors without invented corruption outcomes. Final currency compares source heads observed at snapshot creation, so a
 historical version already included in a fresh capsule is not labelled a newly changed source.
+Another Linux memory-gate run caught a probe reading grant revision two before the asynchronous
+Revoke response committed it. The probe now waits for that exact revision to exist, retaining the
+250 ms ordinary-click bound, real persisted-revocation assertion and one-submit-per-run assertions.
+No execution or product contract was weakened to repair these evidence helpers.
 
 The deterministic fresh consumer follows saved selections from an About capsule to exact imported
 Homepage v1 after replacement by v2, with no previous browser/controller session, false About membership,

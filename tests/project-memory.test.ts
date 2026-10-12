@@ -827,6 +827,12 @@ test("snapshot and evidence size limits and paged note/capsule history reject or
   const { digest: _, ...body } = forged.snapshot;
   forged.snapshot.digest = digest(body);
   assert.throws(() => parseCapsule(forged), /size limit/);
+  forged.snapshot.entries[0]!.summary = "ی".repeat(
+    MEMORY_LIMITS.downloadBytes / 2 + 1,
+  );
+  const { digest: oldDigest, ...unicodeBody } = forged.snapshot;
+  forged.snapshot.digest = digest(unicodeBody);
+  assert.throws(() => parseCapsule(forged), /size limit/); // UTF-8 byte budget, not UTF-16/string length.
   // A valid but oversized exact human source cannot be silently clipped into a response.
   const source = packet({
     type: "design-artifact",

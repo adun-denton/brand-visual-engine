@@ -235,7 +235,8 @@ export function parseCapsule(x: unknown): Capsule {
   if (
     canonical(out.scope) !== canonical(out.snapshot.scope) ||
     out.snapshot.entries.length > MEMORY_LIMITS.snapshot ||
-    canonical(out).length > MEMORY_LIMITS.downloadBytes
+    new TextEncoder().encode(canonical(out)).byteLength >
+      MEMORY_LIMITS.downloadBytes
   )
     throw new InputError("Capsule scope/size limit");
   return out;
