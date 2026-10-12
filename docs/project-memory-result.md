@@ -31,7 +31,13 @@ Local browser override: `BVE_CHROMIUM_EXECUTABLE` points to preinstalled Chromiu
 `BVE_EVIDENCE_DIR` selects a disposable output directory. The initial affected-suite launches used an
 incorrect override name and reported missing Playwright browser; reruns with the documented override
 pass. CI runs the existing locked installation and normal browser setup with one added memory gate.
-No repository provider or browser installation is required by the local handoff.
+No repository provider or browser installation is required by the local handoff. The initial Linux
+CI at the intermediate head passed all inherited gates, but failed V04 screenshot capture when the
+inspection action replaced the DOM during Playwright's stable-element scroll. The evidence helper
+now waits for that memory action to finish before capture and scrolls the current node synchronously;
+ordinary Cancel/Revoke probes retain their original 250 ms bound. Final exact-head platform outcomes
+are reported separately. Final currency compares source heads observed at snapshot creation, so a
+historical version already included in a fresh capsule is not labelled a newly changed source.
 
 The deterministic fresh consumer follows saved selections from an About capsule to exact imported
 Homepage v1 after replacement by v2, with no previous browser/controller session, false About membership,

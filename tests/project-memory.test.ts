@@ -103,6 +103,17 @@ test("capsule bookkeeping never stales source; exact notes preserve revisions, c
     /changed/,
   );
   assert.equal(m.capsule(pid, reference(cap)).currency.status, "changed");
+  const refreshed = m.createCapsule(pid, {
+    scope: reference(s.u),
+    previous: reference(cap),
+  });
+  assert.equal(m.capsule(pid, reference(refreshed)).currency.status, "current");
+  assert.equal(
+    m
+      .capsule(pid, reference(refreshed))
+      .currency.details.filter((e) => e.status === "changed").length,
+    0,
+  );
   assert.equal(m.download(pid, reference(cap)).output, before);
   assert.equal(
     parseIndex(JSON.parse(before)).digest,

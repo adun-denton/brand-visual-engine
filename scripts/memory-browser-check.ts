@@ -69,7 +69,10 @@ try {
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("dialog", (d) => void d.accept());
   const shot = async (name: string) => {
-    await page.locator("#memory-panel").scrollIntoViewIfNeeded();
+    await expect(page.locator("#memory-create")).toBeEnabled();
+    await page
+      .locator("#memory-panel")
+      .evaluate((n) => n.scrollIntoView({ block: "start" }));
     await page.screenshot({
       path: join(evidence, name + ".png"),
       fullPage: false,
@@ -212,7 +215,10 @@ try {
     .filter({ hasText: "raster-concept" })
     .first()
     .click();
-  await page.locator(".memory-inspection").scrollIntoViewIfNeeded();
+  await expect(page.locator("#memory-create")).toBeEnabled();
+  await page
+    .locator(".memory-inspection")
+    .evaluate((n) => n.scrollIntoView({ block: "start" }));
   await page.screenshot({
     path: join(evidence, "04-memory-exact-source-narrow.png"),
   });
@@ -252,7 +258,10 @@ try {
   await expect(fresh.locator("#memory-evidence-json")).toContainText(
     '"version": 1',
   );
-  await fresh.locator("#memory-panel").scrollIntoViewIfNeeded();
+  await expect(fresh.locator("#memory-create")).toBeEnabled();
+  await fresh
+    .locator("#memory-panel")
+    .evaluate((n) => n.scrollIntoView({ block: "start" }));
   await fresh.screenshot({
     path: join(evidence, "05-memory-chat-free-reopen-desktop.png"),
   });
@@ -349,7 +358,10 @@ try {
     transport.submit = send;
     await fresh.locator("#memory-load").click();
     await expect(fresh.locator("#memory-status")).toContainText("loaded");
-    await fresh.locator("#memory-panel").scrollIntoViewIfNeeded();
+    await expect(fresh.locator("#memory-create")).toBeEnabled();
+    await fresh
+      .locator("#memory-panel")
+      .evaluate((n) => n.scrollIntoView({ block: "start" }));
     await fresh.screenshot({
       path: join(evidence, "06-memory-held-" + action + ".png"),
     });

@@ -448,7 +448,7 @@ export class ProjectMemory {
               ? now.status
               : now.media === "unavailable"
                 ? "media-unavailable"
-                : this.w.kernel.currentVersion(e.ref.id) !== e.ref.version
+                : this.w.kernel.currentVersion(e.ref.id) !== e.latestVersion
                   ? "changed"
                   : "current",
         };
