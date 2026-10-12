@@ -70,6 +70,8 @@ try {
     await page.locator("#page").selectOption(u.id + ":" + u.version);
     await idle();
     if (!offline) {
+      await expect(page.locator(".empty-canvas")).not.toContainText("${contextControls()}");
+      await expect(page.locator(".empty-canvas > details > summary").first()).toContainText("Direct requests");
       await expect(
         page.getByText(
           "No connected executor. Preparation does not authorize execution.",
