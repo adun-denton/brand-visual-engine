@@ -1,0 +1,873 @@
+{
+  "version": "codex-cli 0.162.1",
+  "transport": "owned stdio",
+  "source": "actual installed app-server request to offline receiver",
+  "environments": [],
+  "experimentalFields": [
+    "environments"
+  ],
+  "tools": [
+    {
+      "type": "namespace",
+      "name": "functions",
+      "description": "",
+      "tools": [
+        {
+          "type": "function",
+          "name": "list_mcp_resources",
+          "description": "Lists resources provided by MCP servers. Resources allow servers to share data that provides context to language models, such as files, database schemas, or application-specific information. Prefer resources over web search when possible.",
+          "strict": false,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "cursor": {
+                "type": "string",
+                "description": "Opaque cursor from a previous list_mcp_resources call; omit for the first page."
+              },
+              "server": {
+                "type": "string",
+                "description": "MCP server name. Omit to list resources from every configured server."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "type": "function",
+          "name": "list_mcp_resource_templates",
+          "description": "Lists resource templates provided by MCP servers. Parameterized resource templates allow servers to share data that takes parameters and provides context to language models, such as files, database schemas, or application-specific information. Prefer resource templates over web search when possible.",
+          "strict": false,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "cursor": {
+                "type": "string",
+                "description": "Opaque cursor from a previous list_mcp_resource_templates call; omit for the first page."
+              },
+              "server": {
+                "type": "string",
+                "description": "MCP server name. Omit to list resource templates from every configured server."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "type": "function",
+          "name": "read_mcp_resource",
+          "description": "Read a specific resource from an MCP server given the server name and resource URI.",
+          "strict": false,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "server": {
+                "type": "string",
+                "description": "MCP server name exactly as configured. Must match the 'server' field returned by list_mcp_resources."
+              },
+              "uri": {
+                "type": "string",
+                "description": "Resource URI to read. Must be one of the URIs returned by list_mcp_resources."
+              }
+            },
+            "required": [
+              "server",
+              "uri"
+            ],
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    {
+      "type": "namespace",
+      "name": "mcp__bve",
+      "description": "Tools in the mcp__bve namespace.",
+      "tools": [
+        {
+          "type": "function",
+          "name": "focus_candidate",
+          "description": "Focus a validated current candidate for reversible viewing/compare. Does not accept or adopt into a Website.",
+          "strict": false,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "actionId": {
+                "type": "string",
+                "description": "Unique action identity within this frozen turn. Repeat the same ID only to inspect the same prior receipt."
+              },
+              "input": {
+                "type": "object",
+                "properties": {
+                  "candidate": {
+                    "type": "object",
+                    "properties": {
+                      "freshness": {
+                        "type": "string",
+                        "enum": [
+                          "pinned"
+                        ]
+                      },
+                      "id": {
+                        "type": "string"
+                      },
+                      "version": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "version",
+                      "freshness"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "candidate"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "actionId",
+              "input"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "type": "function",
+          "name": "prepare_design",
+          "description": "Prepare create/revise/critique with frozen exact base, included resources and optional exact locks. Returns the complete request and output schema. BVE assigns IDs/hashes.",
+          "strict": false,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "actionId": {
+                "type": "string",
+                "description": "Unique action identity within this frozen turn. Repeat the same ID only to inspect the same prior receipt."
+              },
+              "input": {
+                "type": "object",
+                "properties": {
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "locks": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "field": {
+                          "type": "string",
+                          "enum": [
+                            "text",
+                            "subtree",
+                            "style"
+                          ]
+                        },
+                        "nodeId": {
+                          "type": "string"
+                        },
+                        "value": {}
+                      },
+                      "required": [
+                        "nodeId",
+                        "field",
+                        "value"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "operation": {
+                    "type": "string",
+                    "enum": [
+                      "create",
+                      "revise",
+                      "critique"
+                    ]
+                  }
+                },
+                "required": [
+                  "operation",
+                  "instruction"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "actionId",
+              "input"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "type": "function",
+          "name": "prepare_image",
+          "description": "Prepare meaningful image work against the frozen canvas image/mask. Engine capability is explicit; does not generate or accept.",
+          "strict": false,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "actionId": {
+                "type": "string",
+                "description": "Unique action identity within this frozen turn. Repeat the same ID only to inspect the same prior receipt."
+              },
+              "input": {
+                "type": "object",
+                "properties": {
+                  "instruction": {
+                    "type": "string"
+                  },
+                  "preset": {
+                    "type": "string",
+                    "enum": [
+                      "strict-region",
+                      "preserve-form-change-finish",
+                      "explore"
+                    ]
+                  }
+                },
+                "required": [
+                  "instruction",
+                  "preset"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "actionId",
+              "input"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "type": "function",
+          "name": "read_context",
+          "description": "Read only the frozen project brief, exact page and explicitly included media. No unrelated projects or private work records.",
+          "strict": false,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "actionId": {
+                "type": "string",
+                "description": "Unique action identity within this frozen turn. Repeat the same ID only to inspect the same prior receipt."
+              },
+              "input": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "actionId",
+              "input"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "type": "function",
+          "name": "submit_candidates",
+          "description": "Submit full bve.inference-result JSON against a request prepared by this turn. Parser and preservation checks apply. Does not accept.",
+          "strict": false,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "actionId": {
+                "type": "string"
+              },
+              "input": {
+                "type": "object",
+                "properties": {
+                  "request": {
+                    "type": "object",
+                    "properties": {
+                      "freshness": {
+                        "type": "string",
+                        "enum": [
+                          "pinned"
+                        ]
+                      },
+                      "id": {
+                        "type": "string"
+                      },
+                      "version": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "version",
+                      "freshness"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "response": {
+                    "type": "object",
+                    "properties": {
+                      "candidates": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "label": {
+                              "type": "string"
+                            },
+                            "mediaRequirements": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "instruction": {
+                                    "type": "string"
+                                  },
+                                  "slot": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "slot",
+                                  "instruction"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "page": {
+                              "$ref": "#/$defs/page"
+                            },
+                            "proposedActions": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "rationale": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "label",
+                            "rationale",
+                            "page",
+                            "mediaRequirements",
+                            "proposedActions"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "findings": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "requestHash": {
+                        "type": "string"
+                      },
+                      "requestId": {
+                        "type": "string"
+                      },
+                      "schema": {
+                        "type": "string",
+                        "enum": [
+                          "bve.inference-result"
+                        ]
+                      },
+                      "version": {
+                        "type": "string",
+                        "enum": [
+                          1
+                        ]
+                      }
+                    },
+                    "required": [
+                      "schema",
+                      "version",
+                      "requestId",
+                      "requestHash",
+                      "candidates",
+                      "findings"
+                    ],
+                    "additionalProperties": false,
+                    "$defs": {
+                      "node": {
+                        "type": "object",
+                        "properties": {
+                          "alt": {
+                            "type": "string"
+                          },
+                          "children": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/$defs/node"
+                            }
+                          },
+                          "decorative": {
+                            "type": "boolean"
+                          },
+                          "href": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "container",
+                              "section",
+                              "heading",
+                              "text",
+                              "link",
+                              "list",
+                              "media"
+                            ]
+                          },
+                          "level": {
+                            "type": "integer"
+                          },
+                          "slot": {
+                            "type": "string"
+                          },
+                          "style": {
+                            "$ref": "#/$defs/style"
+                          },
+                          "text": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "kind"
+                        ],
+                        "additionalProperties": false,
+                        "allOf": [
+                          {},
+                          {},
+                          {},
+                          {},
+                          {},
+                          {},
+                          {}
+                        ]
+                      },
+                      "page": {
+                        "type": "object",
+                        "properties": {
+                          "language": {
+                            "type": "string"
+                          },
+                          "media": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "string"
+                                }
+                              ]
+                            }
+                          },
+                          "responsive": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "maxWidth": {
+                                  "type": "integer"
+                                },
+                                "nodeId": {
+                                  "type": "string"
+                                },
+                                "style": {
+                                  "$ref": "#/$defs/style"
+                                }
+                              },
+                              "required": [
+                                "maxWidth",
+                                "nodeId",
+                                "style"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "root": {
+                            "$ref": "#/$defs/node",
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "container",
+                                  "section"
+                                ]
+                              }
+                            }
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "unresolved": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "version": {
+                            "type": "string",
+                            "enum": [
+                              1
+                            ]
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "title",
+                          "language",
+                          "root",
+                          "media",
+                          "responsive",
+                          "unresolved"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "style": {
+                        "type": "object",
+                        "properties": {
+                          "alignItems": {
+                            "type": "string",
+                            "enum": [
+                              "start",
+                              "end",
+                              "center",
+                              "stretch",
+                              "baseline"
+                            ]
+                          },
+                          "aspectRatio": {
+                            "type": "string"
+                          },
+                          "background": {
+                            "type": "string"
+                          },
+                          "border": {
+                            "type": "string"
+                          },
+                          "borderRadius": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "$ref": "#/$defs/styleDimension"
+                              }
+                            ]
+                          },
+                          "color": {
+                            "type": "string"
+                          },
+                          "display": {
+                            "type": "string",
+                            "enum": [
+                              "block",
+                              "flex",
+                              "grid",
+                              "inline",
+                              "inline-block",
+                              "none"
+                            ]
+                          },
+                          "flexDirection": {
+                            "type": "string",
+                            "enum": [
+                              "row",
+                              "column",
+                              "row-reverse",
+                              "column-reverse"
+                            ]
+                          },
+                          "flexWrap": {
+                            "type": "string",
+                            "enum": [
+                              "wrap",
+                              "nowrap"
+                            ]
+                          },
+                          "fontFamily": {
+                            "type": "string"
+                          },
+                          "fontSize": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "$ref": "#/$defs/styleDimension"
+                              }
+                            ]
+                          },
+                          "fontWeight": {
+                            "type": "number"
+                          },
+                          "gap": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "$ref": "#/$defs/styleDimension"
+                              }
+                            ]
+                          },
+                          "gridColumn": {
+                            "type": "string"
+                          },
+                          "gridRow": {
+                            "type": "string"
+                          },
+                          "gridTemplateColumns": {
+                            "type": "string"
+                          },
+                          "justifyContent": {
+                            "type": "string",
+                            "enum": [
+                              "start",
+                              "end",
+                              "center",
+                              "space-between",
+                              "space-around",
+                              "space-evenly"
+                            ]
+                          },
+                          "letterSpacing": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "$ref": "#/$defs/styleDimension"
+                              }
+                            ]
+                          },
+                          "lineHeight": {
+                            "type": "number"
+                          },
+                          "margin": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "$ref": "#/$defs/styleDimension"
+                              }
+                            ]
+                          },
+                          "maxWidth": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "$ref": "#/$defs/styleDimension"
+                              }
+                            ]
+                          },
+                          "minHeight": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "$ref": "#/$defs/styleDimension"
+                              }
+                            ]
+                          },
+                          "objectFit": {
+                            "type": "string",
+                            "enum": [
+                              "cover",
+                              "contain"
+                            ]
+                          },
+                          "opacity": {
+                            "type": "number"
+                          },
+                          "padding": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "$ref": "#/$defs/styleDimension"
+                              }
+                            ]
+                          },
+                          "textAlign": {
+                            "type": "string",
+                            "enum": [
+                              "left",
+                              "right",
+                              "center",
+                              "start",
+                              "end"
+                            ]
+                          },
+                          "width": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "$ref": "#/$defs/styleDimension"
+                              }
+                            ]
+                          }
+                        },
+                        "additionalProperties": false
+                      },
+                      "styleDimension": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "request",
+                  "response"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "actionId",
+              "input"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "type": "function",
+          "name": "update_draft",
+          "description": "Revise the same brief using known user facts, unresolved questions and visible creative assumptions. Requires current project; no acceptance.",
+          "strict": false,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "actionId": {
+                "type": "string",
+                "description": "Unique action identity within this frozen turn. Repeat the same ID only to inspect the same prior receipt."
+              },
+              "input": {
+                "type": "object",
+                "properties": {
+                  "assumptions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "brief": {
+                    "type": "object",
+                    "properties": {
+                      "audience": {
+                        "type": "string"
+                      },
+                      "commitments": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "content": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "exclusions": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "intent": {
+                        "type": "string"
+                      },
+                      "offer": {
+                        "type": "string"
+                      },
+                      "palette": {
+                        "anyOf": [
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        ]
+                      },
+                      "response": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "unresolved": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "brief"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "actionId",
+              "input"
+            ],
+            "additionalProperties": false
+          }
+        }
+      ]
+    }
+  ],
+  "forbidden": [
+    "exec_command",
+    "shell_command",
+    "apply_patch",
+    "write_stdin",
+    "view_image",
+    "spawn_agent",
+    "browser",
+    "computer",
+    "account",
+    "process/spawn",
+    "accept_page"
+  ],
+  "accountCalls": 0,
+  "passed": true
+}

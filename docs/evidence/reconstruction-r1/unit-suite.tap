@@ -1,0 +1,1924 @@
+TAP version 13
+# Subtest: BVE-009-R2: legacy refinement projects only deliberately included references into native and offline API inputs
+ok 1 - BVE-009-R2: legacy refinement projects only deliberately included references into native and offline API inputs
+  ---
+  duration_ms: 276.704492
+  type: 'test'
+  ...
+# Subtest: BVE-009-R2: AI refinement projects only deliberately included references into native and offline API inputs
+ok 2 - BVE-009-R2: AI refinement projects only deliberately included references into native and offline API inputs
+  ---
+  duration_ms: 289.486726
+  type: 'test'
+  ...
+# Subtest: production exploration records pending request with no fixed candidate fallback; AI intake binds renderable decisions and rejects stale/unsafe/locked output
+ok 3 - production exploration records pending request with no fixed candidate fallback; AI intake binds renderable decisions and rejects stale/unsafe/locked output
+  ---
+  duration_ms: 47.87295
+  type: 'test'
+  ...
+# Subtest: asset role/version isolation, same bytes under two directions, stale placement and pinned accepted export survive closed copy
+ok 4 - asset role/version isolation, same bytes under two directions, stale placement and pinned accepted export survive closed copy
+  ---
+  duration_ms: 355.540833
+  type: 'test'
+  ...
+# Subtest: foreign/missing/corrupt assets and forged AI decisions fail without promotion
+ok 5 - foreign/missing/corrupt assets and forged AI decisions fail without promotion
+  ---
+  duration_ms: 55.818915
+  type: 'test'
+  ...
+# Subtest: API directions require separate approval before reserve/send; returned structured output requires explicit apply
+ok 6 - API directions require separate approval before reserve/send; returned structured output requires explicit apply
+  ---
+  duration_ms: 58.556659
+  type: 'test'
+  ...
+# Subtest: AI API late preserves exact output/history without draft or acceptance promotion
+ok 7 - AI API late preserves exact output/history without draft or acceptance promotion
+  ---
+  duration_ms: 29.80105
+  type: 'test'
+  ...
+# Subtest: AI API cancelled preserves exact output/history without draft or acceptance promotion
+ok 8 - AI API cancelled preserves exact output/history without draft or acceptance promotion
+  ---
+  duration_ms: 29.315853
+  type: 'test'
+  ...
+# Subtest: AI API restart-uncertain preserves exact output/history without draft or acceptance promotion
+ok 9 - AI API restart-uncertain preserves exact output/history without draft or acceptance promotion
+  ---
+  duration_ms: 30.823851
+  type: 'test'
+  ...
+# Subtest: chosen AI references are scoped/exact and unchosen reference metadata stays out of request and direction state
+ok 10 - chosen AI references are scoped/exact and unchosen reference metadata stays out of request and direction state
+  ---
+  duration_ms: 68.469971
+  type: 'test'
+  ...
+# Subtest: Branded AI output retains mounted origins/locks and never promotes local proposed decisions into VisualOS
+ok 11 - Branded AI output retains mounted origins/locks and never promotes local proposed decisions into VisualOS
+  ---
+  duration_ms: 33.699579
+  type: 'test'
+  ...
+# Subtest: OAuth state, declined permission and incomplete/client-mismatched callbacks fail before token exchange
+ok 12 - OAuth state, declined permission and incomplete/client-mismatched callbacks fail before token exchange
+  ---
+  duration_ms: 6.063608
+  type: 'test'
+  ...
+# Subtest: OAuth verifies signature, nonce, issuer, audience, expiry and plan permission; protects credentials and persistent budget
+ok 13 - OAuth verifies signature, nonce, issuer, audience, expiry and plan permission; protects credentials and persistent budget
+  ---
+  duration_ms: 153.915888
+  type: 'test'
+  ...
+# Subtest: shutdown with active chat polling drains HTTP before closing private stores; repeated close shares completion
+ok 14 - shutdown with active chat polling drains HTTP before closing private stores; repeated close shares completion
+  ---
+  duration_ms: 58.731593
+  type: 'test'
+  ...
+# Subtest: account driver cancellation boundary: already
+ok 15 - account driver cancellation boundary: already
+  ---
+  duration_ms: 9.955238
+  type: 'test'
+  ...
+# Subtest: account driver cancellation boundary: auth
+ok 16 - account driver cancellation boundary: auth
+  ---
+  duration_ms: 1.519054
+  type: 'test'
+  ...
+# Subtest: account driver cancellation boundary: initialize
+ok 17 - account driver cancellation boundary: initialize
+  ---
+  duration_ms: 5.375812
+  type: 'test'
+  ...
+# Subtest: account driver cancellation boundary: thread
+ok 18 - account driver cancellation boundary: thread
+  ---
+  duration_ms: 18.297433
+  type: 'test'
+  ...
+# Subtest: account driver cancellation boundary: images
+ok 19 - account driver cancellation boundary: images
+  ---
+  duration_ms: 4.231322
+  type: 'test'
+  ...
+# Subtest: account driver cancellation boundary: turn-start
+ok 20 - account driver cancellation boundary: turn-start
+  ---
+  duration_ms: 1.492525
+  type: 'test'
+  ...
+# Subtest: account driver cancellation boundary: running
+ok 21 - account driver cancellation boundary: running
+  ---
+  duration_ms: 2.691367
+  type: 'test'
+  ...
+# Subtest: account driver cancellation boundary: completed
+ok 22 - account driver cancellation boundary: completed
+  ---
+  duration_ms: 7.75666
+  type: 'test'
+  ...
+# Subtest: initial workspace reports stored/expired sign-in locally without claiming account health or exposing credentials
+ok 23 - initial workspace reports stored/expired sign-in locally without claiming account health or exposing credentials
+  ---
+  duration_ms: 58.152267
+  type: 'test'
+  ...
+# Subtest: a configured account driver does not imply healthy sign-in; completed text does not imply candidates
+ok 24 - a configured account driver does not imply healthy sign-in; completed text does not imply candidates
+  ---
+  duration_ms: 13.175216
+  type: 'test'
+  ...
+# Subtest: chat intake, arbitrary alternatives, exact refinement, explicit acceptance, restart and export
+ok 25 - chat intake, arbitrary alternatives, exact refinement, explicit acceptance, restart and export
+  ---
+  duration_ms: 402.163721
+  type: 'test'
+  ...
+# Subtest: disconnected intake retains unknowns and never creates fake candidates
+ok 26 - disconnected intake retains unknowns and never creates fake candidates
+  ---
+  duration_ms: 23.196853
+  type: 'test'
+  ...
+# Subtest: scoped context excludes unchecked references, operational records and other projects; no acceptance/shell tool
+ok 27 - scoped context excludes unchecked references, operational records and other projects; no acceptance/shell tool
+  ---
+  duration_ms: 54.382667
+  type: 'test'
+  ...
+# Subtest: action receipts deduplicate mutation and reject changed/missing/foreign request bindings
+ok 28 - action receipts deduplicate mutation and reject changed/missing/foreign request bindings
+  ---
+  duration_ms: 70.140984
+  type: 'test'
+  ...
+# Subtest: direct controls, stale project/base and cancellation prevent redirection or activation
+ok 29 - direct controls, stale project/base and cancellation prevent redirection or activation
+  ---
+  duration_ms: 227.905148
+  type: 'test'
+  ...
+# Subtest: image geometry binds original pixels and returned original permission is explicit
+ok 30 - image geometry binds original pixels and returned original permission is explicit
+  ---
+  duration_ms: 156.946811
+  type: 'test'
+  ...
+# Subtest: uncertain restart retains receipts and does not replay; failed quota/auth has no automatic retries
+ok 31 - uncertain restart retains receipts and does not replay; failed quota/auth has no automatic retries
+  ---
+  duration_ms: 32.053948
+  type: 'test'
+  ...
+# Subtest: injected image transport receives exact source/mask and returns guarded reusable original, while outside changes reject
+ok 32 - injected image transport receives exact source/mask and returns guarded reusable original, while outside changes reject
+  ---
+  duration_ms: 288.956554
+  type: 'test'
+  ...
+# Subtest: turn identity cannot collide across projects or change its message; completed focus cannot override newer operator selection
+ok 33 - turn identity cannot collide across projects or change its message; completed focus cannot override newer operator selection
+  ---
+  duration_ms: 99.932985
+  type: 'test'
+  ...
+# Subtest: composition drafts, reviews and comparisons remain separate from exact acceptance
+ok 34 - composition drafts, reviews and comparisons remain separate from exact acceptance
+  ---
+  duration_ms: 562.261623
+  type: 'test'
+  ...
+# Subtest: local text and exact asset replacement create immutable versions, preserve unaffected section reviews and accepted snapshot
+ok 35 - local text and exact asset replacement create immutable versions, preserve unaffected section reviews and accepted snapshot
+  ---
+  duration_ms: 459.197011
+  type: 'test'
+  ...
+# Subtest: global changes invalidate only effective dependencies; explicit overrides survive; metadata and order invalidate all
+ok 36 - global changes invalidate only effective dependencies; explicit overrides survive; metadata and order invalidate all
+  ---
+  duration_ms: 764.099096
+  type: 'test'
+  ...
+# Subtest: stale concurrent saves and stale acceptance conflict without replacing newer work or ledger
+ok 37 - stale concurrent saves and stale acceptance conflict without replacing newer work or ledger
+  ---
+  duration_ms: 398.661612
+  type: 'test'
+  ...
+# Subtest: context revisions require rebase to current direction and fresh reviews; historical exports remain pinned
+ok 38 - context revisions require rebase to current direction and fresh reviews; historical exports remain pinned
+  ---
+  duration_ms: 482.037533
+  type: 'test'
+  ...
+# Subtest: changed accepted-image pointer never substitutes placed bytes
+ok 39 - changed accepted-image pointer never substitutes placed bytes
+  ---
+  duration_ms: 355.094948
+  type: 'test'
+  ...
+# Subtest: foreign and wrong-scope images reject without writes
+ok 40 - foreign and wrong-scope images reject without writes
+  ---
+  duration_ms: 461.849466
+  type: 'test'
+  ...
+# Subtest: corrupt and missing placed bytes fail clearly on preview/export without accepting a newer revision
+ok 41 - corrupt and missing placed bytes fail clearly on preview/export without accepting a newer revision
+  ---
+  duration_ms: 337.777713
+  type: 'test'
+  ...
+# Subtest: validation rejects scripts, unsafe links, arbitrary style, bad contrast, duplicate IDs and absent accessibility notes
+ok 42 - validation rejects scripts, unsafe links, arbitrary style, bad contrast, duplicate IDs and absent accessibility notes
+  ---
+  duration_ms: 246.184663
+  type: 'test'
+  ...
+# Subtest: handoff contains deliberate bounded contents, original checksummed assets and same safe renderer, never runtime/provider/private records
+ok 43 - handoff contains deliberate bounded contents, original checksummed assets and same safe renderer, never runtime/provider/private records
+  ---
+  duration_ms: 418.587077
+  type: 'test'
+  ...
+# Subtest: forged binding and review signatures fail ordinary workspace reads even with fresh integrity
+ok 44 - forged binding and review signatures fail ordinary workspace reads even with fresh integrity
+  ---
+  duration_ms: 233.156615
+  type: 'test'
+  ...
+# Subtest: closed root/copy restores comparison, reviews, accepted provenance and byte-identical handoff
+ok 45 - closed root/copy restores comparison, reviews, accepted provenance and byte-identical handoff
+  ---
+  duration_ms: 421.883935
+  type: 'test'
+  ...
+# Subtest: composition preserves locked intent, required content and palette with explicit rejection before persistence
+ok 46 - composition preserves locked intent, required content and palette with explicit rejection before persistence
+  ---
+  duration_ms: 341.513062
+  type: 'test'
+  ...
+# Subtest: private reference originals and unknown asset pointers cannot be placed as approved composition files
+ok 47 - private reference originals and unknown asset pointers cannot be placed as approved composition files
+  ---
+  duration_ms: 262.956398
+  type: 'test'
+  ...
+# Subtest: current-input guard rejects a concurrent brief revision during image decoding without an acceptance write
+ok 48 - current-input guard rejects a concurrent brief revision during image decoding without an acceptance write
+  ---
+  duration_ms: 379.482088
+  type: 'test'
+  ...
+# Subtest: literal script-looking text is escaped in preview and handoff and cannot add executable markup
+ok 49 - literal script-looking text is escaped in preview and handoff and cannot add executable markup
+  ---
+  duration_ms: 425.75852
+  type: 'test'
+  ...
+# Subtest: global page contrast remains required when every section has readable overrides; invalid save preserves draft, acceptance and ledger
+ok 50 - global page contrast remains required when every section has readable overrides; invalid save preserves draft, acceptance and ledger
+  ---
+  duration_ms: 355.061028
+  type: 'test'
+  ...
+# Subtest: two distinct owned hero images survive immutable save, review, acceptance and pinned export
+ok 51 - two distinct owned hero images survive immutable save, review, acceptance and pinned export
+  ---
+  duration_ms: 430.59876
+  type: 'test'
+  ...
+# Subtest: same Website contract supports sparse Branded and Freeroam without inventing approval
+ok 52 - same Website contract supports sparse Branded and Freeroam without inventing approval
+  ---
+  duration_ms: 39.352271
+  type: 'test'
+  ...
+# Subtest: context persists all origins while local override wins, derived remains distinct, explicit unresolved stays honest
+ok 53 - context persists all origins while local override wins, derived remains distinct, explicit unresolved stays honest
+  ---
+  duration_ms: 13.603964
+  type: 'test'
+  ...
+# Subtest: gate rejects forged context provenance even with a recomputed packet checksum
+ok 54 - gate rejects forged context provenance even with a recomputed packet checksum
+  ---
+  duration_ms: 8.22424
+  type: 'test'
+  ...
+# Subtest: only Website is implemented; kernel contracts have no Website/provider imports
+ok 55 - only Website is implemented; kernel contracts have no Website/provider imports
+  ---
+  duration_ms: 0.707846
+  type: 'test'
+  ...
+# Subtest: nine coherent candidates vary all four relative families, preserve shared locks, and never count as quality scores
+ok 56 - nine coherent candidates vary all four relative families, preserve shared locks, and never count as quality scores
+  ---
+  duration_ms: 25.058843
+  type: 'test'
+  ...
+# Subtest: human selection versions a bundle and tighter refinement centers on selected multi-family state
+ok 57 - human selection versions a bundle and tighter refinement centers on selected multi-family state
+  ---
+  duration_ms: 19.480431
+  type: 'test'
+  ...
+# Subtest: templates serialize and roundtrip independently of provider prompts
+ok 58 - templates serialize and roundtrip independently of provider prompts
+  ---
+  duration_ms: 2.163777
+  type: 'test'
+  ...
+# Subtest: capability resolution validates request types and records unavailable or manual routes honestly
+ok 59 - capability resolution validates request types and records unavailable or manual routes honestly
+  ---
+  duration_ms: 3.196824
+  type: 'test'
+  ...
+# Subtest: ContractGate rejects schema/type/required/permission/integrity/version errors before persistence
+ok 60 - ContractGate rejects schema/type/required/permission/integrity/version errors before persistence
+  ---
+  duration_ms: 3.576524
+  type: 'test'
+  ...
+# Subtest: missing, stale and cross-project dependencies fail while pinned prior versions stay usable
+ok 61 - missing, stale and cross-project dependencies fail while pinned prior versions stay usable
+  ---
+  duration_ms: 13.357265
+  type: 'test'
+  ...
+# Subtest: malformed nested shape, unresolved without Placeholder, unknown module and incorrect owners fail
+ok 62 - malformed nested shape, unresolved without Placeholder, unknown module and incorrect owners fail
+  ---
+  duration_ms: 5.499175
+  type: 'test'
+  ...
+# Subtest: preservation contracts reject edits and review-on-change reports invalidation without semantic scoring
+ok 63 - preservation contracts reject edits and review-on-change reports invalidation without semantic scoring
+  ---
+  duration_ms: 3.62771
+  type: 'test'
+  ...
+# Subtest: bundle candidate membership, shared lock, source, count and relative bounds are enforced
+ok 64 - bundle candidate membership, shared lock, source, count and relative bounds are enforced
+  ---
+  duration_ms: 11.79066
+  type: 'test'
+  ...
+# Subtest: acceptance is local, explicit, append audited and compare-and-swap protected
+ok 65 - acceptance is local, explicit, append audited and compare-and-swap protected
+  ---
+  duration_ms: 18.71444
+  type: 'test'
+  ...
+# Subtest: acceptance rollback preserves selected pointer and ledger if database write fails
+ok 66 - acceptance rollback preserves selected pointer and ledger if database write fails
+  ---
+  duration_ms: 12.892067
+  type: 'test'
+  ...
+# Subtest: packet and stored corruption are detected without silently repairing history
+ok 67 - packet and stored corruption are detected without silently repairing history
+  ---
+  duration_ms: 2.900485
+  type: 'test'
+  ...
+# Subtest: future kernel storage schema is refused without changing legacy or future state
+ok 68 - future kernel storage schema is refused without changing legacy or future state
+  ---
+  duration_ms: 0.674767
+  type: 'test'
+  ...
+# Subtest: metadata contains only stable provenance pointers and reconnects without mounting context
+ok 69 - metadata contains only stable provenance pointers and reconnects without mounting context
+  ---
+  duration_ms: 16.008511
+  type: 'test'
+  ...
+# Subtest: a separate process reconstructs both modes, bundles, decisions, provenance and unresolved fields
+ok 70 - a separate process reconstructs both modes, bundles, decisions, provenance and unresolved fields
+  ---
+  duration_ms: 559.330984
+  type: 'test'
+  ...
+# Subtest: checkout paths containing spaces run original suite including child-process restart
+ok 71 - checkout paths containing spaces run original suite including child-process restart
+  ---
+  duration_ms: 588.904965
+  type: 'test'
+  ...
+# Subtest: explicit legacy import preserves bytes, masks, version/job/decision links and cannot imply new approval
+ok 72 - explicit legacy import preserves bytes, masks, version/job/decision links and cannot imply new approval
+  ---
+  duration_ms: 15.953981
+  type: 'test'
+  ...
+# Subtest: serialized fixtures are generated from the same contracts and enter all runtime gates
+ok 73 - serialized fixtures are generated from the same contracts and enter all runtime gates
+  ---
+  duration_ms: 32.937251
+  type: 'test'
+  ...
+# Subtest: failed explicit import rolls back all kernel packets and audit events
+ok 74 - failed explicit import rolls back all kernel packets and audit events
+  ---
+  duration_ms: 5.114837
+  type: 'test'
+  ...
+# Subtest: execution records store capability and observed executor evidence separately without inventing provider settings
+ok 75 - execution records store capability and observed executor evidence separately without inventing provider settings
+  ---
+  duration_ms: 18.931659
+  type: 'test'
+  ...
+# Subtest: count 1 and 6, concurrent/repeated Execute are bounded and mixed invalid output preserves neighbors
+ok 76 - count 1 and 6, concurrent/repeated Execute are bounded and mixed invalid output preserves neighbors
+  ---
+  duration_ms: 663.191626
+  type: 'test'
+  ...
+# Subtest: missing executor, invalid grants/capabilities and wrong bindings consume no reservation
+ok 77 - missing executor, invalid grants/capabilities and wrong bindings consume no reservation
+  ---
+  duration_ms: 37.51056
+  type: 'test'
+  ...
+# Subtest: expiry and revocation prevent dispatch, with immutable grant terms
+ok 78 - expiry and revocation prevent dispatch, with immutable grant terms
+  ---
+  duration_ms: 40.209668
+  type: 'test'
+  ...
+# Subtest: ambiguous send and restart never resubmit; exact submission status returns historical evidence and manual retry uses new grant
+ok 79 - ambiguous send and restart never resubmit; exact submission status returns historical evidence and manual retry uses new grant
+  ---
+  duration_ms: 180.465704
+  type: 'test'
+  ...
+# Subtest: scoped cancellation intent is distinct from confirmation and late output remains historical
+ok 80 - scoped cancellation intent is distinct from confirmation and late output remains historical
+  ---
+  duration_ms: 192.525478
+  type: 'test'
+  ...
+# Subtest: result replay is idempotent and conflicting payload fails without writes
+ok 81 - result replay is idempotent and conflicting payload fails without writes
+  ---
+  duration_ms: 91.953391
+  type: 'test'
+  ...
+# Subtest: storage failure is distinguishable from malformed media; retry intake atomically commits candidate and receipt
+ok 82 - storage failure is distinguishable from malformed media; retry intake atomically commits candidate and receipt
+  ---
+  duration_ms: 141.288039
+  type: 'test'
+  ...
+# Subtest: crashes before/after reservation and on possible send retain accounting without implicit resend
+ok 83 - crashes before/after reservation and on possible send retain accounting without implicit resend
+  ---
+  duration_ms: 186.829527
+  type: 'test'
+  ...
+# Subtest: call allowances bound status and cancel; grant reuse cannot create another execution
+ok 84 - call allowances bound status and cancel; grant reuse cannot create another execution
+  ---
+  duration_ms: 140.967064
+  type: 'test'
+  ...
+# Subtest: immutable compile closes exact included sources, excludes fresh inspiration, and survives replacement and closed restore
+ok 85 - immutable compile closes exact included sources, excludes fresh inspiration, and survives replacement and closed restore
+  ---
+  duration_ms: 252.084354
+  type: 'test'
+  ...
+# Subtest: unsupported exact locks or source influence fail before reservation, with existing V01 spec unchanged
+ok 86 - unsupported exact locks or source influence fail before reservation, with existing V01 spec unchanged
+  ---
+  duration_ms: 131.711336
+  type: 'test'
+  ...
+# Subtest: foreign project/spec/grant, malformed envelope and wrong result dimensions fail without adoption
+ok 87 - foreign project/spec/grant, malformed envelope and wrong result dimensions fail without adoption
+  ---
+  duration_ms: 193.159244
+  type: 'test'
+  ...
+# Subtest: cancellation racing possible send prevents remaining slots and does not adopt late bytes
+ok 88 - cancellation racing possible send prevents remaining slots and does not adopt late bytes
+  ---
+  duration_ms: 113.091962
+  type: 'test'
+  ...
+# Subtest: database failure during intake leaves no partial candidate or receipt and permits identical recovery
+ok 89 - database failure during intake leaves no partial candidate or receipt and permits identical recovery
+  ---
+  duration_ms: 130.7365
+  type: 'test'
+  ...
+# Subtest: revocation racing first send blocks undispatched slots and stale selection makes output historical
+ok 90 - revocation racing first send blocks undispatched slots and stale selection makes output historical
+  ---
+  duration_ms: 208.329947
+  type: 'test'
+  ...
+# Subtest: bounded timeout and status failure remain uncertain without resends or automatic polls
+ok 91 - bounded timeout and status failure remain uncertain without resends or automatic polls
+  ---
+  duration_ms: 274.320411
+  type: 'test'
+  ...
+# Subtest: direct kernel writes reject counter rollback, frozen request mutation, semantic-kind change and unauthorized reservations
+ok 92 - direct kernel writes reject counter rollback, frozen request mutation, semantic-kind change and unauthorized reservations
+  ---
+  duration_ms: 60.190896
+  type: 'test'
+  ...
+# Subtest: fresh inspiration is absent from compiled transport sources and V01 synthetic batches cannot execute
+ok 93 - fresh inspiration is absent from compiled transport sources and V01 synthetic batches cannot execute
+  ---
+  duration_ms: 64.410255
+  type: 'test'
+  ...
+# Subtest: explicit failed receipt, unknown status and cancellation denial retain independent evidence
+ok 94 - explicit failed receipt, unknown status and cancellation denial retain independent evidence
+  ---
+  duration_ms: 540.915489
+  type: 'test'
+  ...
+# Subtest: R2 delivered late acknowledgement becomes one historical receipt with zero polls, adoption or continuation; closed reopen retains it
+ok 95 - R2 delivered late acknowledgement becomes one historical receipt with zero polls, adoption or continuation; closed reopen retains it
+  ---
+  duration_ms: 146.239494
+  type: 'test'
+  ...
+# Subtest: R2 concurrent explicit reconciliation and delivered receipt are idempotent; conflicting late identity/payload rejects
+ok 96 - R2 concurrent explicit reconciliation and delivered receipt are idempotent; conflicting late identity/payload rejects
+  ---
+  duration_ms: 508.764136
+  type: 'test'
+  ...
+# Subtest: R2 invalid late media and late failure get independent historical receipts; late rejection is exposed without unhandled rejection
+ok 97 - R2 invalid late media and late failure get independent historical receipts; late rejection is exposed without unhandled rejection
+  ---
+  duration_ms: 372.16245
+  type: 'test'
+  ...
+# Subtest: R2 late asset and transaction storage failure retains response for deliberate no-call retry, not a fabricated invalid receipt
+ok 98 - R2 late asset and transaction storage failure retains response for deliberate no-call retry, not a fabricated invalid receipt
+  ---
+  duration_ms: 322.418915
+  type: 'test'
+  ...
+# Subtest: R2 late status result and cancellation confirmation are retained without further calls or outcome mutation
+ok 99 - R2 late status result and cancellation confirmation are retained without further calls or outcome mutation
+  ---
+  duration_ms: 225.007856
+  type: 'test'
+  ...
+# Subtest: R2 service shutdown stops accepting unreceived responses; reopen remains uncertain and non-resending
+ok 100 - R2 service shutdown stops accepting unreceived responses; reopen remains uncertain and non-resending
+  ---
+  duration_ms: 79.995829
+  type: 'test'
+  ...
+# Subtest: R2 shutdown drains intake already processing before closing storage and preserves its exact historical receipt
+ok 101 - R2 shutdown drains intake already processing before closing storage and preserves its exact historical receipt
+  ---
+  duration_ms: 149.766081
+  type: 'test'
+  ...
+# Subtest: two independent page work units, multi-selection notes, resize, reopen and media-only raster closure
+ok 102 - two independent page work units, multi-selection notes, resize, reopen and media-only raster closure
+  ---
+  duration_ms: 145.958246
+  type: 'test'
+  ...
+# Subtest: corrupt/foreign media, descriptor, role, dependency and mask combinations fail closed at kernel
+ok 103 - corrupt/foreign media, descriptor, role, dependency and mask combinations fail closed at kernel
+  ---
+  duration_ms: 38.179488
+  type: 'test'
+  ...
+# Subtest: supported raster formats retain encoded geometry and exact bytes
+ok 104 - supported raster formats retain encoded geometry and exact bytes
+  ---
+  duration_ms: 50.549384
+  type: 'test'
+  ...
+# Subtest: spec immutability, count bounds, independent direction/brand and preservation conflicts
+ok 105 - spec immutability, count bounds, independent direction/brand and preservation conflicts
+  ---
+  duration_ms: 129.235239
+  type: 'test'
+  ...
+# Subtest: valid/invalid/valid per-attempt atomic retention, envelope rejection, receipt idempotency and no acceptance
+ok 106 - valid/invalid/valid per-attempt atomic retention, envelope rejection, receipt idempotency and no acceptance
+  ---
+  duration_ms: 62.590033
+  type: 'test'
+  ...
+# Subtest: cancellation, uncertain late receipts, restart without replay, manual retry lineage and closed restore
+ok 107 - cancellation, uncertain late receipts, restart without replay, manual retry lineage and closed restore
+  ---
+  duration_ms: 35.251392
+  type: 'test'
+  ...
+# Subtest: Level2 requested/inferred/observed remain version-bound and unsupported observations fail
+ok 108 - Level2 requested/inferred/observed remain version-bound and unsupported observations fail
+  ---
+  duration_ms: 21.401089
+  type: 'test'
+  ...
+# Subtest: legacy accepted page packets, bytes, hashes, pointers and standalone exports survive new records and closed-root restore
+ok 109 - legacy accepted page packets, bytes, hashes, pointers and standalone exports survive new records and closed-root restore
+  ---
+  duration_ms: 63.543653
+  type: 'test'
+  ...
+# Subtest: old anchors and notes retain their exact raster revision after replacement and standalone reconstruction
+ok 110 - old anchors and notes retain their exact raster revision after replacement and standalone reconstruction
+  ---
+  duration_ms: 55.823767
+  type: 'test'
+  ...
+# Subtest: concurrent duplicates collect one receipt, result and event set; transaction failure retains no partial attempt
+ok 111 - concurrent duplicates collect one receipt, result and event set; transaction failure retains no partial attempt
+  ---
+  duration_ms: 77.064484
+  type: 'test'
+  ...
+# Subtest: running restart requires explicit uncertainty recovery; no replay and late evidence remains reference-only
+ok 112 - running restart requires explicit uncertainty recovery; no replay and late evidence remains reference-only
+  ---
+  duration_ms: 39.163412
+  type: 'test'
+  ...
+# Subtest: direct forged receipt scope and stale freeze fail at persistence, with unsupported exact promises unavailable
+ok 113 - direct forged receipt scope and stale freeze fail at persistence, with unsupported exact promises unavailable
+  ---
+  duration_ms: 52.239192
+  type: 'test'
+  ...
+# Subtest: closed v1 legacy SQLite and RGB media remain byte-identical after additive V01 and matching-code restore
+ok 114 - closed v1 legacy SQLite and RGB media remain byte-identical after additive V01 and matching-code restore
+  ---
+  duration_ms: 56.621053
+  type: 'test'
+  ...
+# Subtest: whole images retain storage bounds, regions retain 4 MP bound, and brand revisions cannot alter frozen pixels or values
+ok 115 - whole images retain storage bounds, regions retain 4 MP bound, and brand revisions cannot alter frozen pixels or values
+  ---
+  duration_ms: 133.034235
+  type: 'test'
+  ...
+# Subtest: storage corruption leaves packets, events and slot unchanged until explicit fixture repair
+ok 116 - storage corruption leaves packets, events and slot unchanged until explicit fixture repair
+  ---
+  duration_ms: 40.37156
+  type: 'test'
+  ...
+# Subtest: V01 semantic identities cannot revise between kinds or cross legacy boundaries
+ok 117 - V01 semantic identities cannot revise between kinds or cross legacy boundaries
+  ---
+  duration_ms: 38.529654
+  type: 'test'
+  ...
+# Subtest: ordinary and repeated BVE shutdown releases accepted zero-byte TCP preconnections without client disconnect
+ok 118 - ordinary and repeated BVE shutdown releases accepted zero-byte TCP preconnections without client disconnect
+  ---
+  duration_ms: 44.891435
+  type: 'test'
+  ...
+# Subtest: an admitted BVE upload completes during drain and survives closed-copy restart with accepted export unchanged
+ok 119 - an admitted BVE upload completes during drain and survives closed-copy restart with accepted export unchanged
+  ---
+  duration_ms: 167.64069
+  type: 'test'
+  ...
+# Subtest: drain preserves the complete queued HTTP response before closing its connection
+ok 120 - drain preserves the complete queued HTTP response before closing its connection
+  ---
+  duration_ms: 9.904513
+  type: 'test'
+  ...
+# Subtest: a stalled request body is disconnected at the transport deadline without closing over unfinished handler work
+ok 121 - a stalled request body is disconnected at the transport deadline without closing over unfinished handler work
+  ---
+  duration_ms: 103.548929
+  type: 'test'
+  ...
+# Subtest: response completion does not close stores over asynchronous handler work
+ok 122 - response completion does not close stores over asynchronous handler work
+  ---
+  duration_ms: 29.390413
+  type: 'test'
+  ...
+# Subtest: BVE-IW-R1 subprocess: missing request rejects without crash or writes
+ok 123 - BVE-IW-R1 subprocess: missing request rejects without crash or writes
+  ---
+  duration_ms: 625.709174
+  type: 'test'
+  ...
+# Subtest: BVE-IW-R1 subprocess: foreign preview rejects without crash or writes
+ok 124 - BVE-IW-R1 subprocess: foreign preview rejects without crash or writes
+  ---
+  duration_ms: 612.377473
+  type: 'test'
+  ...
+# Subtest: BVE-IW-R1 subprocess: corrupt preview rejects without crash or writes
+ok 125 - BVE-IW-R1 subprocess: corrupt preview rejects without crash or writes
+  ---
+  duration_ms: 429.116146
+  type: 'test'
+  ...
+# Subtest: BVE-IW-R1 subprocess: JSON state augmentation rejects without crash or writes
+ok 126 - BVE-IW-R1 subprocess: JSON state augmentation rejects without crash or writes
+  ---
+  duration_ms: 556.338845
+  type: 'test'
+  ...
+# Subtest: new intake rejects absent inherited names and accepts own null/resolved/repeated needs without blacklisting
+ok 127 - new intake rejects absent inherited names and accepts own null/resolved/repeated needs without blacklisting
+  ---
+  duration_ms: 2011.136223
+  type: 'test'
+  ...
+# Subtest: non-own need in candidate2 rejects service/HTTP/tool atomically; error replay and explicit correction stay separate
+ok 128 - non-own need in candidate2 rejects service/HTTP/tool atomically; error replay and explicit correction stay separate
+  ---
+  duration_ms: 229.607208
+  type: 'test'
+  ...
+# Subtest: exact R7 historical packets, accepted export/media bytes and successful receipts survive R8; fresh malformed intake rejects
+ok 129 - exact R7 historical packets, accepted export/media bytes and successful receipts survive R8; fresh malformed intake rejects
+  ---
+  duration_ms: 279.656679
+  type: 'test'
+  ...
+# Subtest: independent page-family boundaries classify shape and semantic-only rejection
+ok 130 - independent page-family boundaries classify shape and semantic-only rejection
+  ---
+  duration_ms: 34.953591
+  type: 'test'
+  ...
+# Subtest: generated relationship guidance stays valid without changing style authority
+ok 131 - generated relationship guidance stays valid without changing style authority
+  ---
+  duration_ms: 0.579496
+  type: 'test'
+  ...
+# Subtest: node/path diagnostics identify expected non-style rules without echoing unrelated content
+ok 132 - node/path diagnostics identify expected non-style rules without echoing unrelated content
+  ---
+  duration_ms: 1.166463
+  type: 'test'
+  ...
+# Subtest: preservation stays exact and retains a lock path, node identity and expected field
+ok 133 - preservation stays exact and retains a lock path, node identity and expected field
+  ---
+  duration_ms: 0.807573
+  type: 'test'
+  ...
+# Subtest: adjacent response envelopes enforce existing value/count boundaries in schema
+ok 134 - adjacent response envelopes enforce existing value/count boundaries in schema
+  ---
+  duration_ms: 1.833579
+  type: 'test'
+  ...
+# Subtest: service envelope boundaries remain accepted/rejected independently of schema
+ok 135 - service envelope boundaries remain accepted/rejected independently of schema
+  ---
+  duration_ms: 785.246168
+  type: 'test'
+  ...
+# Subtest: malformed second page rejects service, HTTP and tool atomically with idempotent error receipts
+ok 136 - malformed second page rejects service, HTTP and tool atomically with idempotent error receipts
+  ---
+  duration_ms: 177.139681
+  type: 'test'
+  ...
+# Subtest: arbitrary local section counts, nested grids, responsive rules and escaped text render without artifact dependencies
+ok 137 - arbitrary local section counts, nested grids, responsive rules and escaped text render without artifact dependencies
+  ---
+  duration_ms: 4.499377
+  type: 'test'
+  ...
+# Subtest: scoped create exchange is exact, atomic, idempotent and never implicitly accepts
+ok 138 - scoped create exchange is exact, atomic, idempotent and never implicitly accepts
+  ---
+  duration_ms: 144.478808
+  type: 'test'
+  ...
+# Subtest: exact preservation locks reject changed text; manual revisions and AI changes preserve accepted snapshots
+ok 139 - exact preservation locks reject changed text; manual revisions and AI changes preserve accepted snapshots
+  ---
+  duration_ms: 138.070455
+  type: 'test'
+  ...
+# Subtest: cancelled return remains historical and cannot overwrite selected page
+ok 140 - cancelled return remains historical and cannot overwrite selected page
+  ---
+  duration_ms: 106.233439
+  type: 'test'
+  ...
+# Subtest: base-changed return remains historical and cannot overwrite selected page
+ok 141 - base-changed return remains historical and cannot overwrite selected page
+  ---
+  duration_ms: 96.117835
+  type: 'test'
+  ...
+# Subtest: project-changed return remains historical and cannot overwrite selected page
+ok 142 - project-changed return remains historical and cannot overwrite selected page
+  ---
+  duration_ms: 92.233551
+  type: 'test'
+  ...
+# Subtest: independent media exact bindings, reference isolation, corruption and forged dependencies fail closed
+ok 143 - independent media exact bindings, reference isolation, corruption and forged dependencies fail closed
+  ---
+  duration_ms: 97.280767
+  type: 'test'
+  ...
+# Subtest: Website assembly selects exact accepted pages; later acceptance never adopts itself
+ok 144 - Website assembly selects exact accepted pages; later acceptance never adopts itself
+  ---
+  duration_ms: 76.326836
+  type: 'test'
+  ...
+# Subtest: full closed-root recovery preserves session records, accepted pointers and byte-identical exports
+ok 145 - full closed-root recovery preserves session records, accepted pointers and byte-identical exports
+  ---
+  duration_ms: 59.529058
+  type: 'test'
+  ...
+# Subtest: portable import reconstructs without the original project or ledger and never inherits acceptance
+ok 146 - portable import reconstructs without the original project or ledger and never inherits acceptance
+  ---
+  duration_ms: 35.843306
+  type: 'test'
+  ...
+# Subtest: legacy conversion is an unaccepted additive proposal with an explicit loss record; old export remains byte-identical
+ok 147 - legacy conversion is an unaccepted additive proposal with an explicit loss record; old export remains byte-identical
+  ---
+  duration_ms: 455.557301
+  type: 'test'
+  ...
+# Subtest: private JSON creation, replacement, Unicode/literal paths and permissions survive reopening without temporary remnants
+ok 148 - private JSON creation, replacement, Unicode/literal paths and permissions survive reopening without temporary remnants
+  ---
+  duration_ms: 12.072676
+  type: 'test'
+  ...
+# Subtest: broadened file access is rejected on read and rotation without altering original bytes
+ok 149 - broadened file access is rejected on read and rotation without altering original bytes
+  ---
+  duration_ms: 3.656632
+  type: 'test'
+  ...
+# Subtest: Windows denies an actual anonymous-token read of a private file
+ok 150 - Windows denies an actual anonymous-token read of a private file # SKIP
+  ---
+  duration_ms: 0.274686
+  type: 'test'
+  ...
+# Subtest: unprotected directories and inherited Windows permissions fail closed rather than being silently repaired
+ok 151 - unprotected directories and inherited Windows permissions fail closed rather than being silently repaired
+  ---
+  duration_ms: 0.877026
+  type: 'test'
+  ...
+# Subtest: hard-linked files and linked directory ancestors cannot read or redirect private writes
+ok 152 - hard-linked files and linked directory ancestors cannot read or redirect private writes
+  ---
+  duration_ms: 2.095776
+  type: 'test'
+  ...
+# Subtest: unsupported storage helper errors expose no file contents or command payload
+ok 153 - unsupported storage helper errors expose no file contents or command payload
+  ---
+  duration_ms: 0.784279
+  type: 'test'
+  ...
+# Subtest: real account policy requires protected storage and preserves its bounded budget across restart without any provider call
+ok 154 - real account policy requires protected storage and preserves its bounded budget across restart without any provider call
+  ---
+  duration_ms: 5.719911
+  type: 'test'
+  ...
+# Subtest: a Git worktree or repository ancestor cannot contain coordinator policy
+ok 155 - a Git worktree or repository ancestor cannot contain coordinator policy
+  ---
+  duration_ms: 0.560157
+  type: 'test'
+  ...
+# Subtest: R1 original missing sole note is ledger-discovered with explicit missing/unknown scope in fresh page/project snapshots, download and reopen
+ok 156 - R1 original missing sole note is ledger-discovered with explicit missing/unknown scope in fresh page/project snapshots, download and reopen
+  ---
+  duration_ms: 122.807817
+  type: 'test'
+  ...
+# Subtest: R1 missing historical revision and standalone work unit remain exact unavailable evidence; foreign loss never enters scope, paging/bounds include loss
+ok 157 - R1 missing historical revision and standalone work unit remain exact unavailable evidence; foreign loss never enters scope, paging/bounds include loss
+  ---
+  duration_ms: 57.503666
+  type: 'test'
+  ...
+# Subtest: R2 original consistent omission rejects at KernelStore.put atomically, while valid snapshots and bookkeeping remain current
+ok 158 - R2 original consistent omission rejects at KernelStore.put atomically, while valid snapshots and bookkeeping remain current
+  ---
+  duration_ms: 52.4808
+  type: 'test'
+  ...
+# Subtest: R2 selected cross-page closure, event/acceptance, coverage lies and unrelated additions reject even with coherent counts/digests/dependencies
+ok 159 - R2 selected cross-page closure, event/acceptance, coverage lies and unrelated additions reject even with coherent counts/digests/dependencies
+  ---
+  duration_ms: 279.845394
+  type: 'test'
+  ...
+# Subtest: R2 historical validation retains old snapshots after newer notes; new incomplete snapshots validate canonically and refresh is explicit
+ok 160 - R2 historical validation retains old snapshots after newer notes; new incomplete snapshots validate canonically and refresh is explicit
+  ---
+  duration_ms: 73.157423
+  type: 'test'
+  ...
+# Subtest: capsule bookkeeping never stales source; exact notes preserve revisions, conflict, scope, schemas and semantic kinds
+ok 161 - capsule bookkeeping never stales source; exact notes preserve revisions, conflict, scope, schemas and semantic kinds
+  ---
+  duration_ms: 119.796097
+  type: 'test'
+  ...
+# Subtest: cross-page sources retain exact closure without false membership; replacements keep capsule and note links unchanged; fresh reader survives closed reopen
+ok 162 - cross-page sources retain exact closure without false membership; replacements keep capsule and note links unchanged; fresh reader survives closed reopen
+  ---
+  duration_ms: 234.719119
+  type: 'test'
+  ...
+# Subtest: owner-checked routes reject foreign, forged, unsupported and latest pointers; downloads expose only previewed scope and do not mutate authority
+ok 163 - owner-checked routes reject foreign, forged, unsupported and latest pointers; downloads expose only previewed scope and do not mutate authority
+  ---
+  duration_ms: 87.899708
+  type: 'test'
+  ...
+# Subtest: missing and corrupt canonical records and media are explicit; no latest fallback or foreign-project decode
+ok 164 - missing and corrupt canonical records and media are explicit; no latest fallback or foreign-project decode
+  ---
+  duration_ms: 126.46542
+  type: 'test'
+  ...
+# Subtest: large history is stable, paged with honest omitted counts; snapshot overflow rejects instead of dropping selected evidence
+ok 165 - large history is stable, paged with honest omitted counts; snapshot overflow rejects instead of dropping selected evidence
+  ---
+  duration_ms: 253.265995
+  type: 'test'
+  ...
+# Subtest: pending, partial invalid and cancelled/uncertain late historical execution is indexed without grants, hidden calls or adoption
+ok 166 - pending, partial invalid and cancelled/uncertain late historical execution is indexed without grants, hidden calls or adoption
+  ---
+  duration_ms: 257.203082
+  type: 'test'
+  ...
+# Subtest: V04 preserves closed legacy SQLite/RGB bytes, accepted pointers and standalone exports; acceptance currency is canonical
+ok 167 - V04 preserves closed legacy SQLite/RGB bytes, accepted pointers and standalone exports; acceptance currency is canonical
+  ---
+  duration_ms: 87.139634
+  type: 'test'
+  ...
+# Subtest: approved brand boundary and per-spec influence stay separate; unrelated accepted/proposal brands are not retrievable
+ok 168 - approved brand boundary and per-spec influence stay separate; unrelated accepted/proposal brands are not retrievable
+  ---
+  duration_ms: 59.971986
+  type: 'test'
+  ...
+# Subtest: actually delivered late historical evidence survives fresh index/reopen; process-only active/cache is excluded and grants never resurrect
+ok 169 - actually delivered late historical evidence survives fresh index/reopen; process-only active/cache is excluded and grants never resurrect
+  ---
+  duration_ms: 234.805722
+  type: 'test'
+  ...
+# Subtest: snapshot and evidence size limits and paged note/capsule history reject or report explicit partial coverage
+ok 170 - snapshot and evidence size limits and paged note/capsule history reject or report explicit partial coverage
+  ---
+  duration_ms: 241.223529
+  type: 'test'
+  ...
+# Subtest: test-only fixture acknowledges store closure and drains child/stdio before copying; failed startup cleans up
+ok 171 - test-only fixture acknowledges store closure and drains child/stdio before copying; failed startup cleans up
+  ---
+  duration_ms: 770.16408
+  type: 'test'
+  ...
+# Subtest: assistant adapter accepts documented reasoning metadata plus one final proposal without persisting reasoning
+ok 172 - assistant adapter accepts documented reasoning metadata plus one final proposal without persisting reasoning
+  ---
+  duration_ms: 48.215924
+  type: 'test'
+  ...
+# Subtest: assistant adapter preserves refusal classification and evidence beside reasoning
+ok 173 - assistant adapter preserves refusal classification and evidence beside reasoning
+  ---
+  duration_ms: 25.711436
+  type: 'test'
+  ...
+# Subtest: assistant adapter rejects tools, ambiguous messages and malformed content despite legal reasoning
+ok 174 - assistant adapter rejects tools, ambiguous messages and malformed content despite legal reasoning
+  ---
+  duration_ms: 22.842517
+  type: 'test'
+  ...
+# Subtest: reasoning-plus-proposal persists exact source and evidence through reopen with separate human review
+ok 175 - reasoning-plus-proposal persists exact source and evidence through reopen with separate human review
+  ---
+  duration_ms: 104.604994
+  type: 'test'
+  ...
+# Subtest: reasoning-plus-refusal and unsupported envelope persist distinct failures without proposal or acceptance changes
+ok 176 - reasoning-plus-refusal and unsupported envelope persist distinct failures without proposal or acceptance changes
+  ---
+  duration_ms: 94.302562
+  type: 'test'
+  ...
+# Subtest: API generation serializes one bounded call and stores exact original bytes with honest metadata
+ok 177 - API generation serializes one bounded call and stores exact original bytes with honest metadata
+  ---
+  duration_ms: 68.237589
+  type: 'test'
+  ...
+# Subtest: API edit sends owned original plus reference bytes and creates immutable parent lineage
+ok 178 - API edit sends owned original plus reference bytes and creates immutable parent lineage
+  ---
+  duration_ms: 124.354232
+  type: 'test'
+  ...
+# Subtest: missing credentials and missing approved budget refuse before reservation or transport
+ok 179 - missing credentials and missing approved budget refuse before reservation or transport
+  ---
+  duration_ms: 57.988301
+  type: 'test'
+  ...
+# Subtest: unsupported controls, generation image references and foreign input reject without writes
+ok 180 - unsupported controls, generation image references and foreign input reject without writes
+  ---
+  duration_ms: 58.595869
+  type: 'test'
+  ...
+# Subtest: duplicate and concurrent submits claim one attempt and one reservation
+ok 181 - duplicate and concurrent submits claim one attempt and one reservation
+  ---
+  duration_ms: 51.207691
+  type: 'test'
+  ...
+# Subtest: stale brief rejects submission without claiming a call or altering acceptance
+ok 182 - stale brief rejects submission without claiming a call or altering acceptance
+  ---
+  duration_ms: 20.699432
+  type: 'test'
+  ...
+# Subtest: rate limit, refusal, provider rejection and server ambiguity have distinct outcomes without retries
+ok 183 - rate limit, refusal, provider rejection and server ambiguity have distinct outcomes without retries
+  ---
+  duration_ms: 151.736702
+  type: 'test'
+  ...
+# Subtest: ambiguous transport and timeout preserve uncertain spend across reopen and never resend
+ok 184 - ambiguous transport and timeout preserve uncertain spend across reopen and never resend
+  ---
+  duration_ms: 111.368531
+  type: 'test'
+  ...
+# Subtest: malformed, oversized, corrupt and wrong-format provider outputs never create usable candidates
+ok 185 - malformed, oversized, corrupt and wrong-format provider outputs never create usable candidates
+  ---
+  duration_ms: 286.026814
+  type: 'test'
+  ...
+# Subtest: assistant wire contract has no tools, chosen image inputs, strict schema and separate human edited review
+ok 186 - assistant wire contract has no tools, chosen image inputs, strict schema and separate human edited review
+  ---
+  duration_ms: 87.320571
+  type: 'test'
+  ...
+# Subtest: assistant refusal, invalid schema, trusted-reviewed injection and tool results reject
+ok 187 - assistant refusal, invalid schema, trusted-reviewed injection and tool results reject
+  ---
+  duration_ms: 116.701134
+  type: 'test'
+  ...
+# Subtest: assistant reference/brief revisions prevent stale human review
+ok 188 - assistant reference/brief revisions prevent stale human review
+  ---
+  duration_ms: 54.877078
+  type: 'test'
+  ...
+# Subtest: late response after local cancel is retained and cannot overwrite accepted work
+ok 189 - late response after local cancel is retained and cannot overwrite accepted work
+  ---
+  duration_ms: 62.859241
+  type: 'test'
+  ...
+# Subtest: late current-input result requires explicit historical review; pinned inputs remain readable
+ok 190 - late current-input result requires explicit historical review; pinned inputs remain readable
+  ---
+  duration_ms: 54.660418
+  type: 'test'
+  ...
+# Subtest: run call/reservation limits are shared across projects and survive restart; reconciliation retains history
+ok 191 - run call/reservation limits are shared across projects and survive restart; reconciliation retains history
+  ---
+  duration_ms: 43.450605
+  type: 'test'
+  ...
+# Subtest: same-section native/API comparison selection and independent acceptance survive copied closed-root recovery
+ok 192 - same-section native/API comparison selection and independent acceptance survive copied closed-root recovery
+  ---
+  duration_ms: 73.637355
+  type: 'test'
+  ...
+# Subtest: wrong-project, wrong-source and wrong-section consumption boundaries reject without acceptance writes
+ok 193 - wrong-project, wrong-source and wrong-section consumption boundaries reject without acceptance writes
+  ---
+  duration_ms: 29.262784
+  type: 'test'
+  ...
+# Subtest: provider HTTP endpoints retain origin/token checks and original-byte fidelity with no credential exposure
+ok 194 - provider HTTP endpoints retain origin/token checks and original-byte fidelity with no credential exposure
+  ---
+  duration_ms: 82.404729
+  type: 'test'
+  ...
+# Subtest: process interruption recovers one uncertain attempt and reservation without any automatic transport
+ok 195 - process interruption recovers one uncertain attempt and reservation without any automatic transport
+  ---
+  duration_ms: 258.208218
+  type: 'test'
+  ...
+# Subtest: storage failure after returned bytes retains provider evidence and spend without candidate acceptance
+ok 196 - storage failure after returned bytes retains provider evidence and spend without candidate acceptance
+  ---
+  duration_ms: 34.576515
+  type: 'test'
+  ...
+# Subtest: before-send input failure releases reservation but preserves consumed call and original attempt
+ok 197 - before-send input failure releases reservation but preserves consumed call and original attempt
+  ---
+  duration_ms: 42.785003
+  type: 'test'
+  ...
+# Subtest: reference role tampering and immutable request revisions fail consumption
+ok 198 - reference role tampering and immutable request revisions fail consumption
+  ---
+  duration_ms: 35.47372
+  type: 'test'
+  ...
+# Subtest: uncertain run blocks another submission until explicit reconciliation, retaining reservation and first history
+ok 199 - uncertain run blocks another submission until explicit reconciliation, retaining reservation and first history
+  ---
+  duration_ms: 64.095637
+  type: 'test'
+  ...
+# Subtest: two independent service instances cannot claim the same queued attempt twice
+ok 200 - two independent service instances cannot claim the same queued attempt twice
+  ---
+  duration_ms: 19.580739
+  type: 'test'
+  ...
+# Subtest: paid submission stays disabled despite an old configured key/policy, before reservation or transport
+ok 201 - paid submission stays disabled despite an old configured key/policy, before reservation or transport
+  ---
+  duration_ms: 32.011065
+  type: 'test'
+  ...
+# Subtest: Library png: exact original, strict deterministic closed package, pinned replacement, idempotent reuse and closed reopen
+ok 202 - Library png: exact original, strict deterministic closed package, pinned replacement, idempotent reuse and closed reopen
+  ---
+  duration_ms: 670.379445
+  type: 'test'
+  ...
+# Subtest: Library jpeg: exact original, strict deterministic closed package, pinned replacement, idempotent reuse and closed reopen
+ok 203 - Library jpeg: exact original, strict deterministic closed package, pinned replacement, idempotent reuse and closed reopen
+  ---
+  duration_ms: 513.724038
+  type: 'test'
+  ...
+# Subtest: Library webp: exact original, strict deterministic closed package, pinned replacement, idempotent reuse and closed reopen
+ok 204 - Library webp: exact original, strict deterministic closed package, pinned replacement, idempotent reuse and closed reopen
+  ---
+  duration_ms: 1049.898676
+  type: 'test'
+  ...
+# Subtest: EXIF orientation: stored versus displayed dimensions and metadata survive original/package/reuse unchanged
+ok 205 - EXIF orientation: stored versus displayed dimensions and metadata survive original/package/reuse unchanged
+  ---
+  duration_ms: 176.677835
+  type: 'test'
+  ...
+# Subtest: Foreign project/page/source, substituted hashes, unsupported extent and stale request revisions reject without canonical writes
+ok 206 - Foreign project/page/source, substituted hashes, unsupported extent and stale request revisions reject without canonical writes
+  ---
+  duration_ms: 162.282013
+  type: 'test'
+  ...
+# Subtest: Generic writers cannot fabricate provenance, rights, orientation, source membership, roles or semantic revisions
+ok 207 - Generic writers cannot fabricate provenance, rights, orientation, source membership, roles or semantic revisions
+  ---
+  duration_ms: 307.044872
+  type: 'test'
+  ...
+# Subtest: Missing/corrupt original and structurally plausible but undecodable pixels fail before Library writes, including a generic writer
+ok 208 - Missing/corrupt original and structurally plausible but undecodable pixels fail before Library writes, including a generic writer
+  ---
+  duration_ms: 251.893304
+  type: 'test'
+  ...
+# Subtest: Reuse transaction failure and async project drift preserve no partial candidate/membership/Library entries
+ok 209 - Reuse transaction failure and async project drift preserve no partial candidate/membership/Library entries
+  ---
+  duration_ms: 139.155825
+  type: 'test'
+  ...
+# Subtest: Library evidence participates in independently enforced memory completeness and missing-primary discovery; read-only exports do not stale capsules
+ok 210 - Library evidence participates in independently enforced memory completeness and missing-primary discovery; read-only exports do not stale capsules
+  ---
+  duration_ms: 294.608733
+  type: 'test'
+  ...
+# Subtest: Original/package routes protect ownership, token and origin; malformed paths, manifests and oversized closure reject
+ok 211 - Original/package routes protect ownership, token and origin; malformed paths, manifests and oversized closure reject
+  ---
+  duration_ms: 201.782637
+  type: 'test'
+  ...
+# Subtest: Reference-only and arbitrary historical payloads are ineligible; eligible Library actions preserve existing selection and formal accepted pointer
+ok 212 - Reference-only and arbitrary historical payloads are ineligible; eligible Library actions preserve existing selection and formal accepted pointer
+  ---
+  duration_ms: 159.952881
+  type: 'test'
+  ...
+# Subtest: Save identity survives new source memberships; Library paging is deterministic and bounds are explicit
+ok 213 - Save identity survives new source memberships; Library paging is deterministic and bounds are explicit
+  ---
+  duration_ms: 248.872841
+  type: 'test'
+  ...
+# Subtest: count1/count6 prepare/intake/review/export/revise/cold reopen stay chat-closed and media-only
+ok 214 - count1/count6 prepare/intake/review/export/revise/cold reopen stay chat-closed and media-only
+  ---
+  duration_ms: 973.138864
+  type: 'test'
+  ...
+# Subtest: Brand off excludes project defaults, base context, chat and notes; explicit approved Brand/evidence is frozen
+ok 215 - Brand off excludes project defaults, base context, chat and notes; explicit approved Brand/evidence is frozen
+  ---
+  duration_ms: 628.081
+  type: 'test'
+  ...
+# Subtest: unset count, wrong page/project/integrity, unavailable raster and invented context reject before freezing
+ok 216 - unset count, wrong page/project/integrity, unavailable raster and invented context reject before freezing
+  ---
+  duration_ms: 457.849412
+  type: 'test'
+  ...
+# Subtest: references remain unplaceable; deliberate placeable media is the only output asset closure
+ok 217 - references remain unplaceable; deliberate placeable media is the only output asset closure
+  ---
+  duration_ms: 551.952664
+  type: 'test'
+  ...
+# Subtest: malformed second candidate and all binding/slot/provenance errors reject atomically; conflicting receipts reject
+ok 218 - malformed second candidate and all binding/slot/provenance errors reject atomically; conflicting receipts reject
+  ---
+  duration_ms: 367.314946
+  type: 'test'
+  ...
+# Subtest: cancelled, superseded and source-stale valid results are historical; new explicit operation permits deliberate reuse
+ok 219 - cancelled, superseded and source-stale valid results are historical; new explicit operation permits deliberate reuse
+  ---
+  duration_ms: 679.767849
+  type: 'test'
+  ...
+# Subtest: final-gate races roll back all proposals/receipts; acceptance CAS and review rollback are atomic
+ok 220 - final-gate races roll back all proposals/receipts; acceptance CAS and review rollback are atomic
+  ---
+  duration_ms: 376.844246
+  type: 'test'
+  ...
+# Subtest: HTTP token/ownership/exact bindings and production unavailability retain zero partial persistence
+ok 221 - HTTP token/ownership/exact bindings and production unavailability retain zero partial persistence
+  ---
+  duration_ms: 451.186793
+  type: 'test'
+  ...
+# Subtest: direct persistence forgeries reject coherent context/source/output changes and reconstruction kind swaps
+ok 222 - direct persistence forgeries reject coherent context/source/output changes and reconstruction kind swaps
+  ---
+  duration_ms: 217.339466
+  type: 'test'
+  ...
+# Subtest: memory indexes all reconstruction evidence, rejects coherent omission, retains old capsules and discovers lost primary versions
+ok 223 - memory indexes all reconstruction evidence, rejects coherent omission, retains old capsules and discovers lost primary versions
+  ---
+  duration_ms: 340.389493
+  type: 'test'
+  ...
+# Subtest: accepted semantic export stays byte-exact with source raster and Brand unavailable in a closed disposable copy
+ok 224 - accepted semantic export stays byte-exact with source raster and Brand unavailable in a closed disposable copy
+  ---
+  duration_ms: 254.662153
+  type: 'test'
+  ...
+# Subtest: two-project/two-page ownership stays exact even when raster bytes are identical
+ok 225 - two-project/two-page ownership stays exact even when raster bytes are identical
+  ---
+  duration_ms: 282.715655
+  type: 'test'
+  ...
+# Subtest: shared preservation locks survive explicit base reconstruction; direct forged output context rolls back atomically
+ok 226 - shared preservation locks survive explicit base reconstruction; direct forged output context rolls back atomically
+  ---
+  duration_ms: 325.857662
+  type: 'test'
+  ...
+# Subtest: source-byte loss in final intake gate rejects every proposal and receipt
+ok 227 - source-byte loss in final intake gate rejects every proposal and receipt
+  ---
+  duration_ms: 207.133639
+  type: 'test'
+  ...
+# Subtest: shutdown aborts an owned offline fixture before HTTP drain and never stores an ignored late delivery
+ok 228 - shutdown aborts an owned offline fixture before HTTP drain and never stores an ignored late delivery
+  ---
+  duration_ms: 263.762904
+  type: 'test'
+  ...
+# Subtest: new preparation/output JSON schemas reuse the unchanged semantic candidate grammar
+ok 229 - new preparation/output JSON schemas reuse the unchanged semantic candidate grammar
+  ---
+  duration_ms: 317.436572
+  type: 'test'
+  ...
+# Subtest: direct kernel reconstruction acceptance cannot bypass the atomic review boundary
+ok 230 - direct kernel reconstruction acceptance cannot bypass the atomic review boundary
+  ---
+  duration_ms: 308.696428
+  type: 'test'
+  ...
+# Subtest: ledger-known lost reconstruction control cannot fall back or reuse a canonical version
+ok 231 - ledger-known lost reconstruction control cannot fall back or reuse a canonical version
+  ---
+  duration_ms: 240.925937
+  type: 'test'
+  ...
+# Subtest: R1 exact reversed destinations and unrelated companion primaries reject without durable writes
+ok 232 - R1 exact reversed destinations and unrelated companion primaries reject without durable writes
+  ---
+  duration_ms: 74.291782
+  type: 'test'
+  ...
+# Subtest: R1 companion misuse rejects empty/existing reviews, wrong proposal/project/unit and unsupported mirror destinations
+ok 233 - R1 companion misuse rejects empty/existing reviews, wrong proposal/project/unit and unsupported mirror destinations
+  ---
+  duration_ms: 274.533191
+  type: 'test'
+  ...
+# Subtest: R1 stale primary/mirror CAS and failing companion review roll back both selections and all events
+ok 234 - R1 stale primary/mirror CAS and failing companion review roll back both selections and all events
+  ---
+  duration_ms: 231.103537
+  type: 'test'
+  ...
+# Subtest: R1 valid paired acceptance stores two selections and one new review, reopens and exports without source
+ok 235 - R1 valid paired acceptance stores two selections and one new review, reopens and exports without source
+  ---
+  duration_ms: 246.095902
+  type: 'test'
+  ...
+# Subtest: R1 ordinary legacy page and Website acceptance without companions preserve successful behavior
+ok 236 - R1 ordinary legacy page and Website acceptance without companions preserve successful behavior
+  ---
+  duration_ms: 72.675753
+  type: 'test'
+  ...
+# Subtest: production binary RGBA composite supports 1254-square, preserves RGB and alpha outside, and retains the fixture semantics
+ok 237 - production binary RGBA composite supports 1254-square, preserves RGB and alpha outside, and retains the fixture semantics
+  ---
+  duration_ms: 297.731561
+  type: 'test'
+  ...
+# Subtest: PNG JPEG WebP canonical rasters and EXIF orientation use displayed source coordinates without flattening alpha
+ok 238 - PNG JPEG WebP canonical rasters and EXIF orientation use displayed source coordinates without flattening alpha
+  ---
+  duration_ms: 30.974549
+  type: 'test'
+  ...
+# Subtest: selection rejects source/version/dimension/coordinate/mask mismatches without writes; annotations preserve original bytes
+ok 239 - selection rejects source/version/dimension/coordinate/mask mismatches without writes; annotations preserve original bytes
+  ---
+  duration_ms: 171.121192
+  type: 'test'
+  ...
+# Subtest: native region bundle includes byte-exact source, bound binary/PNG mask, scoped reference roles and unknown native metadata
+ok 240 - native region bundle includes byte-exact source, bound binary/PNG mask, scoped reference roles and unknown native metadata
+  ---
+  duration_ms: 140.6892
+  type: 'test'
+  ...
+# Subtest: native raw and strict composite stay distinct, verify outside RGBA and survive closed-root recovery with acceptance history
+ok 241 - native raw and strict composite stay distinct, verify outside RGBA and survive closed-root recovery with acceptance history
+  ---
+  duration_ms: 302.926176
+  type: 'test'
+  ...
+# Subtest: geometry-changing raw results remain recoverable but block strict composite and acceptance without ledger/pointer changes
+ok 242 - geometry-changing raw results remain recoverable but block strict composite and acceptance without ledger/pointer changes
+  ---
+  duration_ms: 210.787927
+  type: 'test'
+  ...
+# Subtest: late result remains tied to its historical mask and cannot accept after a newer selection
+ok 243 - late result remains tied to its historical mask and cannot accept after a newer selection
+  ---
+  duration_ms: 220.290913
+  type: 'test'
+  ...
+# Subtest: concurrent selection revisions and composites have one winner and explicit conflict, retaining both original inputs
+ok 244 - concurrent selection revisions and composites have one winner and explicit conflict, retaining both original inputs
+  ---
+  duration_ms: 202.566776
+  type: 'test'
+  ...
+# Subtest: competing region acceptance retains both candidates and cannot overwrite the first decision
+ok 245 - competing region acceptance retains both candidates and cannot overwrite the first decision
+  ---
+  duration_ms: 263.961849
+  type: 'test'
+  ...
+# Subtest: unsupported preset/native/API controls and wrong reference roles/types reject before operation or execution writes
+ok 246 - unsupported preset/native/API controls and wrong reference roles/types reject before operation or execution writes
+  ---
+  duration_ms: 126.16325
+  type: 'test'
+  ...
+# Subtest: regional API uses the retained one-call adapter without mask, keeps requested recipe/reference evidence and separate local composition
+ok 247 - regional API uses the retained one-call adapter without mask, keeps requested recipe/reference evidence and separate local composition
+  ---
+  duration_ms: 188.702387
+  type: 'test'
+  ...
+# Subtest: 1254-square native import, bound mask and strict RGBA composition exceed the old fixture limit without JSON rasters
+ok 248 - 1254-square native import, bound mask and strict RGBA composition exceed the old fixture limit without JSON rasters
+  ---
+  duration_ms: 1121.79913
+  type: 'test'
+  ...
+# Subtest: ordinary image acceptance cannot bypass the regional preservation or freshness boundary
+ok 249 - ordinary image acceptance cannot bypass the regional preservation or freshness boundary
+  ---
+  duration_ms: 151.984619
+  type: 'test'
+  ...
+# Subtest: acceptance revalidates module inputs inside the kernel transaction after an independent connection advances the project
+ok 250 - acceptance revalidates module inputs inside the kernel transaction after an independent connection advances the project
+  ---
+  duration_ms: 151.668472
+  type: 'test'
+  ...
+# Subtest: selection and operation consumption reject wrong project/type/scope/recipe bindings without writes
+ok 251 - selection and operation consumption reject wrong project/type/scope/recipe bindings without writes
+  ---
+  duration_ms: 78.63601
+  type: 'test'
+  ...
+# Subtest: cancelled native regional returns remain bound to their original mask without becoming eligible for acceptance
+ok 252 - cancelled native regional returns remain bound to their original mask without becoming eligible for acceptance
+  ---
+  duration_ms: 130.546465
+  type: 'test'
+  ...
+# Subtest: regional job/operation preparation and result/composite publication are atomic under storage failure; verified orphan assets are reusable
+ok 253 - regional job/operation preparation and result/composite publication are atomic under storage failure; verified orphan assets are reusable
+  ---
+  duration_ms: 161.835088
+  type: 'test'
+  ...
+# Subtest: Branded regional iteration preserves its shared context and approval while Website decisions stay local
+ok 254 - Branded regional iteration preserves its shared context and approval while Website decisions stay local
+  ---
+  duration_ms: 160.558185
+  type: 'test'
+  ...
+# Subtest: a replacement-source selection invalidates older mask streams; competing initial section saves have one transaction winner
+ok 255 - a replacement-source selection invalidates older mask streams; competing initial section saves have one transaction winner
+  ---
+  duration_ms: 322.620998
+  type: 'test'
+  ...
+# Subtest: regional renderer restores the latest operation-bound comparison after outputs append and ignores foreign or mismatched bindings
+ok 256 - regional renderer restores the latest operation-bound comparison after outputs append and ignores foreign or mismatched bindings
+  ---
+  duration_ms: 275.797776
+  type: 'test'
+  ...
+# Subtest: F1: stale current dependency cannot replace an existing selection or append ledger events, including after reopen
+ok 257 - F1: stale current dependency cannot replace an existing selection or append ledger events, including after reopen
+  ---
+  duration_ms: 30.58688
+  type: 'test'
+  ...
+# Subtest: F1: advancing an explicitly current context also prevents acceptance without writes
+ok 258 - F1: advancing an explicitly current context also prevents acceptance without writes
+  ---
+  duration_ms: 19.91953
+  type: 'test'
+  ...
+# Subtest: F1 control: intentionally pinned historical inputs and an older artifact revision remain acceptable
+ok 259 - F1 control: intentionally pinned historical inputs and an older artifact revision remain acceptable
+  ---
+  duration_ms: 19.063084
+  type: 'test'
+  ...
+# Subtest: F1: associated bundle project freshness is rechecked, while a versioned pinned bundle succeeds
+ok 260 - F1: associated bundle project freshness is rechecked, while a versioned pinned bundle succeeds
+  ---
+  duration_ms: 26.32897
+  type: 'test'
+  ...
+# Subtest: F1: bundle context, explicit dependencies and base-state freshness fail atomically after advancement
+ok 261 - F1: bundle context, explicit dependencies and base-state freshness fail atomically after advancement
+  ---
+  duration_ms: 35.439209
+  type: 'test'
+  ...
+# Subtest: F2: metadata construction rejects known wrong project and referenced types
+ok 262 - F2: metadata construction rejects known wrong project and referenced types
+  ---
+  duration_ms: 12.261356
+  type: 'test'
+  ...
+# Subtest: F2: import and reconnect reject foreign project, wrong ledger and metadata envelope ownership
+ok 263 - F2: import and reconnect reject foreign project, wrong ledger and metadata envelope ownership
+  ---
+  duration_ms: 15.135422
+  type: 'test'
+  ...
+# Subtest: F2: foreign and unrelated same-project bundles are rejected at construction, import and reconnect
+ok 264 - F2: foreign and unrelated same-project bundles are rejected at construction, import and reconnect
+  ---
+  duration_ms: 29.012745
+  type: 'test'
+  ...
+# Subtest: F2: each available pointer must have the declared object type and lookup identity
+ok 265 - F2: each available pointer must have the declared object type and lookup identity
+  ---
+  duration_ms: 17.524182
+  type: 'test'
+  ...
+# Subtest: F2 controls: correct historical provenance and wholly or partially missing portable pointers remain valid without mounting
+ok 266 - F2 controls: correct historical provenance and wholly or partially missing portable pointers remain valid without mounting
+  ---
+  duration_ms: 14.271895
+  type: 'test'
+  ...
+# Subtest: F2: previously stored wrong ownership is rejected after reopen despite a genuine artifact checksum
+ok 267 - F2: previously stored wrong ownership is rejected after reopen despite a genuine artifact checksum
+  ---
+  duration_ms: 10.378404
+  type: 'test'
+  ...
+# Subtest: fictional fixture is complete, source-backed, unresolved, and deterministic
+ok 268 - fictional fixture is complete, source-backed, unresolved, and deterministic
+  ---
+  duration_ms: 6.300608
+  type: 'test'
+  ...
+# Subtest: asset bytes and parent identity remain immutable across decisions
+ok 269 - asset bytes and parent identity remain immutable across decisions
+  ---
+  duration_ms: 4.295106
+  type: 'test'
+  ...
+# Subtest: strict region composite changes inside and preserves all outside channels and corner mark
+ok 270 - strict region composite changes inside and preserves all outside channels and corner mark
+  ---
+  duration_ms: 2.251246
+  type: 'test'
+  ...
+# Subtest: bad raster data and geometry-changing edits fail before persistence
+ok 271 - bad raster data and geometry-changing edits fail before persistence
+  ---
+  duration_ms: 2.906695
+  type: 'test'
+  ...
+# Subtest: regions cannot be reused on another version even when dimensions match
+ok 272 - regions cannot be reused on another version even when dimensions match
+  ---
+  duration_ms: 1.937983
+  type: 'test'
+  ...
+# Subtest: cross-section parents, job sources, acceptance, and references are rejected
+ok 273 - cross-section parents, job sources, acceptance, and references are rejected
+  ---
+  duration_ms: 1.653313
+  type: 'test'
+  ...
+# Subtest: generation can start without a source; output remains an unaccepted candidate
+ok 274 - generation can start without a source; output remains an unaccepted candidate
+  ---
+  duration_ms: 1.910893
+  type: 'test'
+  ...
+# Subtest: late completion attaches to its original source without replacing the newer selection
+ok 275 - late completion attaches to its original source without replacing the newer selection
+  ---
+  duration_ms: 11.87181
+  type: 'test'
+  ...
+# Subtest: all deterministic outcome fixtures have explicit non-accepted results
+ok 276 - all deterministic outcome fixtures have explicit non-accepted results
+  ---
+  duration_ms: 3.820825
+  type: 'test'
+  ...
+# Subtest: duplicate and cancelled results cannot overwrite history or retry an unknown outcome
+ok 277 - duplicate and cancelled results cannot overwrite history or retry an unknown outcome
+  ---
+  duration_ms: 3.312534
+  type: 'test'
+  ...
+# Subtest: invalid completion rolls back job; valid retry collects once
+ok 278 - invalid completion rolls back job; valid retry collects once
+  ---
+  duration_ms: 4.037755
+  type: 'test'
+  ...
+# Subtest: native/provider unknown metadata remains null and live collection is unavailable
+ok 279 - native/provider unknown metadata remains null and live collection is unavailable
+  ---
+  duration_ms: 2.108405
+  type: 'test'
+  ...
+# Subtest: missing or corrupt assets are detected before acceptance or developer handoff
+ok 280 - missing or corrupt assets are detected before acceptance or developer handoff
+  ---
+  duration_ms: 3.012551
+  type: 'test'
+  ...
+# Subtest: handoff matches accepted checksums, preserves section text, flags missing assets and overrides
+ok 281 - handoff matches accepted checksums, preserves section text, flags missing assets and overrides
+  ---
+  duration_ms: 2.213731
+  type: 'test'
+  ...
+# Subtest: a fresh process recovers accepted state and marks in-flight work unknown without submission
+ok 282 - a fresh process recovers accepted state and marks in-flight work unknown without submission
+  ---
+  duration_ms: 243.52141
+  type: 'test'
+  ...
+# Subtest: future schema is refused without rewriting its version
+ok 283 - future schema is refused without rewriting its version
+  ---
+  duration_ms: 0.798299
+  type: 'test'
+  ...
+# Subtest: database failure after file write leaves no output or acceptance and retry reuses safe bytes
+ok 284 - database failure after file write leaves no output or acceptance and retry reuses safe bytes
+  ---
+  duration_ms: 3.195661
+  type: 'test'
+  ...
+# Subtest: section-local acceptance preserves every other section and global style
+ok 285 - section-local acceptance preserves every other section and global style
+  ---
+  duration_ms: 2.369791
+  type: 'test'
+  ...
+# Subtest: all 48 single-pixel masks preserve every outside channel: 6912 independent channel assertions
+ok 286 - all 48 single-pixel masks preserve every outside channel: 6912 independent channel assertions
+  ---
+  duration_ms: 3.185666
+  type: 'test'
+  ...
+# Subtest: all27 style families have independent JSON Schema/parser valid and invalid boundary parity
+ok 287 - all27 style families have independent JSON Schema/parser valid and invalid boundary parity
+  ---
+  duration_ms: 12.510854
+  type: 'test'
+  ...
+# Subtest: generated guidance example and full inference node/responsive styles use the same constraints
+ok 288 - generated guidance example and full inference node/responsive styles use the same constraints
+  ---
+  duration_ms: 6.142195
+  type: 'test'
+  ...
+# Subtest: scalar grammar and bound parity span leading zeros, all units and exact ceiling neighbors
+ok 289 - scalar grammar and bound parity span leading zeros, all units and exact ceiling neighbors
+  ---
+  duration_ms: 74.449464
+  type: 'test'
+  ...
+# Subtest: malformed second candidate and responsive styles write nothing; rejected chat receipts remain truthful and idempotent
+ok 290 - malformed second candidate and responsive styles write nothing; rejected chat receipts remain truthful and idempotent
+  ---
+  duration_ms: 89.418611
+  type: 'test'
+  ...
+# Subtest: visual HTTP protects token/origin, rejects malformed and unowned/stale operations without writes
+ok 291 - visual HTTP protects token/origin, rejects malformed and unowned/stale operations without writes
+  ---
+  duration_ms: 127.174753
+  type: 'test'
+  ...
+# Subtest: visual imports fully decode exact formats, reject raw markup and corrupt closure
+ok 292 - visual imports fully decode exact formats, reject raw markup and corrupt closure
+  ---
+  duration_ms: 346.376548
+  type: 'test'
+  ...
+# Subtest: visual preparation freezes all four influence combinations and counts 1/6 without execution or brand leakage
+ok 293 - visual preparation freezes all four influence combinations and counts 1/6 without execution or brand leakage
+  ---
+  duration_ms: 174.631368
+  type: 'test'
+  ...
+# Subtest: selection CAS, page ownership, annotation sanitation and unsupported exact regions reject without mutation
+ok 294 - selection CAS, page ownership, annotation sanitation and unsupported exact regions reject without mutation
+  ---
+  duration_ms: 121.572752
+  type: 'test'
+  ...
+# Subtest: prepared spec and batch roll back together when final packet fails gate
+ok 295 - prepared spec and batch roll back together when final packet fails gate
+  ---
+  duration_ms: 41.583647
+  type: 'test'
+  ...
+# Subtest: requested inventory keeps six direct and 21 Tune concepts, static unavailable dynamics and strict types
+ok 296 - requested inventory keeps six direct and 21 Tune concepts, static unavailable dynamics and strict types
+  ---
+  duration_ms: 54.012361
+  type: 'test'
+  ...
+# Subtest: geometry uses displayed raster bounds including letterbox and zoom, rejects outside points
+ok 297 - geometry uses displayed raster bounds including letterbox and zoom, rejects outside points
+  ---
+  duration_ms: 0.427331
+  type: 'test'
+  ...
+# Subtest: project revision during async image import rejects before media, membership or candidate writes
+ok 298 - project revision during async image import rejects before media, membership or candidate writes
+  ---
+  duration_ms: 46.916086
+  type: 'test'
+  ...
+# Subtest: manual retry and cancellation preserve partial results, reference-only uncertainty and explicit lineage
+ok 299 - manual retry and cancellation preserve partial results, reference-only uncertainty and explicit lineage
+  ---
+  duration_ms: 545.30365
+  type: 'test'
+  ...
+# Subtest: multiple saved selection sets require exact choice and incompatible exact locks never partially write
+ok 300 - multiple saved selection sets require exact choice and incompatible exact locks never partially write
+  ---
+  duration_ms: 123.829026
+  type: 'test'
+  ...
+# Subtest: same-project cross-page exact source closures edit and freeze without changing membership; invalid/foreign/corrupt sources reject
+ok 301 - same-project cross-page exact source closures edit and freeze without changing membership; invalid/foreign/corrupt sources reject
+  ---
+  duration_ms: 376.44764
+  type: 'test'
+  ...
+# Subtest: effect category and semantic strength freeze independently while legacy strength labels retain their meaning
+ok 302 - effect category and semantic strength freeze independently while legacy strength labels retain their meaning
+  ---
+  duration_ms: 117.206096
+  type: 'test'
+  ...
+# Subtest: editing an existing V01 mask source retains its preservation predicate without offering new mask authoring
+ok 303 - editing an existing V01 mask source retains its preservation predicate without offering new mask authoring
+  ---
+  duration_ms: 3393.862928
+  type: 'test'
+  ...
+# Subtest: both hydration modes persist sparse context; explicit mount preserves old Freeroam revision
+ok 304 - both hydration modes persist sparse context; explicit mount preserves old Freeroam revision
+  ---
+  duration_ms: 20.793522
+  type: 'test'
+  ...
+# Subtest: service current-input acceptance rejects after brief revision without audit/pointer writes; historical reads and comparisons survive
+ok 305 - service current-input acceptance rejects after brief revision without audit/pointer writes; historical reads and comparisons survive
+  ---
+  duration_ms: 127.396461
+  type: 'test'
+  ...
+# Subtest: references validate owner/type and revise without losing accepted history; reviewed proposals keep sources and uncertainty
+ok 306 - references validate owner/type and revise without losing accepted history; reviewed proposals keep sources and uncertainty
+  ---
+  duration_ms: 66.854574
+  type: 'test'
+  ...
+# Subtest: PNG JPEG WebP fully decode; corrupt, truncated, excessive dimensions, animated and oversize inputs reject
+ok 307 - PNG JPEG WebP fully decode; corrupt, truncated, excessive dimensions, animated and oversize inputs reject
+  ---
+  duration_ms: 23.447846
+  type: 'test'
+  ...
+# Subtest: invalid, oversize and wrong original bindings persist invalid outcomes with unchanged acceptance
+ok 308 - invalid, oversize and wrong original bindings persist invalid outcomes with unchanged acceptance
+  ---
+  duration_ms: 47.668383
+  type: 'test'
+  ...
+# Subtest: wrong-project native import, wrong scope acceptance and stale job version fail without acceptance changes
+ok 309 - wrong-project native import, wrong scope acceptance and stale job version fail without acceptance changes
+  ---
+  duration_ms: 62.591134
+  type: 'test'
+  ...
+# Subtest: duplicate result stays one candidate; late return original binding cannot overwrite newer accepted work
+ok 310 - duplicate result stays one candidate; late return original binding cannot overwrite newer accepted work
+  ---
+  duration_ms: 92.85564
+  type: 'test'
+  ...
+# Subtest: abandoned/cancelled returns retained against original job but cannot be accepted
+ok 311 - abandoned/cancelled returns retained against original job but cannot be accepted
+  ---
+  duration_ms: 101.951387
+  type: 'test'
+  ...
+# Subtest: fresh service and closed-root copied restore reconstruct brief references comparisons proposals native links and acceptance; legacy unchanged
+ok 312 - fresh service and closed-root copied restore reconstruct brief references comparisons proposals native links and acceptance; legacy unchanged
+  ---
+  duration_ms: 98.739372
+  type: 'test'
+  ...
+# Subtest: portable metadata known mismatches reject; missing pointers do not mount context
+ok 313 - portable metadata known mismatches reject; missing pointers do not mount context
+  ---
+  duration_ms: 32.960337
+  type: 'test'
+  ...
+# Subtest: HTTP host/origin/token/method/nested/file boundaries reject; valid browser requests persist and fresh session token changes
+ok 314 - HTTP host/origin/token/method/nested/file boundaries reject; valid browser requests persist and fresh session token changes
+  ---
+  duration_ms: 83.932085
+  type: 'test'
+  ...
+# Subtest: HTTP jpeg reference/result downloads preserve original bytes while previews normalize; owner/type/corruption reject
+ok 315 - HTTP jpeg reference/result downloads preserve original bytes while previews normalize; owner/type/corruption reject
+  ---
+  duration_ms: 158.099959
+  type: 'test'
+  ...
+# Subtest: HTTP webp reference/result downloads preserve original bytes while previews normalize; owner/type/corruption reject
+ok 316 - HTTP webp reference/result downloads preserve original bytes while previews normalize; owner/type/corruption reject
+  ---
+  duration_ms: 166.413757
+  type: 'test'
+  ...
+# Subtest: HTTP png reference/result downloads preserve original bytes while previews normalize; owner/type/corruption reject
+ok 317 - HTTP png reference/result downloads preserve original bytes while previews normalize; owner/type/corruption reject
+  ---
+  duration_ms: 225.659123
+  type: 'test'
+  ...
+# Subtest: corrupted returned image fails read and acceptance with no acceptance writes
+ok 318 - corrupted returned image fails read and acceptance with no acceptance writes
+  ---
+  duration_ms: 36.65814
+  type: 'test'
+  ...
+# Subtest: native packet-group failure leaves no output/pointer and retry reuses verified orphan bytes
+ok 319 - native packet-group failure leaves no output/pointer and retry reuses verified orphan bytes
+  ---
+  duration_ms: 54.325163
+  type: 'test'
+  ...
+1..319
+# tests 319
+# suites 0
+# pass 318
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 13091.242416

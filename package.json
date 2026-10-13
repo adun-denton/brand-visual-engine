@@ -33,7 +33,9 @@
     "test:chat:permissions": "node scripts/chat-permission-preflight.ts",
     "test:combined:compatibility": "node scripts/combined-compatibility-check.ts",
     "test:combined:memory": "node scripts/combined-memory-probes.ts",
-    "test:browser:combined": "node scripts/combined-browser-check.ts"
+    "test:browser:combined": "node scripts/combined-browser-check.ts",
+    "test:browser:reconstruction": "node scripts/reconstruction-browser-check.ts",
+    "test:reconstruction:compatibility": "node scripts/reconstruction-compatibility-check.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.58.2",

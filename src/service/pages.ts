@@ -1,3 +1,4 @@
+import {parseSemanticCandidates} from '../modules/website/semantic-candidates.ts';
 import { pageGuidance, pageLimits as limits } from "../modules/website/page-contracts.ts";
 import { styleGuidance } from "../modules/website/style-contracts.ts";
 import { randomUUID } from "node:crypto";
@@ -211,7 +212,7 @@ export class Pages {
       ),
     );
   }
-  private pagePacket(
+  proposal(
     pid: string,
     state: PageState,
     base: Stored<PageState> | null = null,
@@ -522,43 +523,7 @@ export class Pages {
         };
       throw new InputError("Unknown or invented media handle");
     };
-    let candidateIndex = 0;
-    const candidates = list(
-      response["candidates"],
-      (v) => {
-        const index = candidateIndex++;
-        const field = <T>(path: string, expected: string, parse: () => T) => pageAt(path, undefined, expected, parse);
-        try {
-          const c = field("candidate", "label,rationale,page,mediaRequirements,proposedActions only", () => record(v, ["label", "rationale", "page", "mediaRequirements", "proposedActions"]));
-          field("candidate.label", "nonblank label; max200 UTF-16 units", () => string(c["label"], limits.title));
-          const page = parsePage(c["page"], resolve);
-          preservation(page, s.locks);
-          let needIndex = 0;
-          const needs = field("candidate.mediaRequirements", "array of at most100 media needs", () => list(c["mediaRequirements"], v => {
-            const path = `candidate.mediaRequirements[${needIndex++}]`;
-            const n = field(path, "slot,instruction only", () => record(v, ["slot", "instruction"]));
-            const slot = field(path + ".slot", "existing slot in this same page (own page.media property); max160 UTF-16 units", () => {
-              const value = string(n["slot"], limits.identity);
-              if (!Object.hasOwn(page.media, value)) throw new InputError("Media need targets an unknown slot");
-              return value;
-            });
-            return slot + ": " + field(path + ".instruction", "nonblank instruction; max4000 UTF-16 units", () => string(n["instruction"]));
-          }, limits.entries));
-          let actionIndex = 0;
-          const actions = field("candidate.proposedActions", "array of at most32 proposed-only actions", () => list(c["proposedActions"], v =>
-            "Proposed only: " + field(`candidate.proposedActions[${actionIndex++}]`, "nonblank action; max4000 UTF-16 units", () => string(v)), limits.actions));
-          return {
-            page, context: s.context, locks: s.locks,
-            rationale: field("candidate.rationale", "nonblank rationale; max4000 UTF-16 units", () => string(c["rationale"])),
-            notes: [...needs, ...actions],
-          };
-        } catch (error) {
-          if (error instanceof InputError) throw new InputError(`Candidate ${index + 1}: ${error.message}`, error.status);
-          throw error;
-        }
-      },
-      limits.candidates,
-    );
+    const candidates = parseSemanticCandidates(response["candidates"],s.context,s.locks,resolve);
     if (s.operation !== "critique" && !candidates.length)
       throw new InputError("Create/revise needs a candidate");
     const findings = list(response["findings"], (v) => string(v), 100);
@@ -579,7 +544,7 @@ export class Pages {
         ? this.page(pid, s.base)
         : null;
     const proposals = candidates.map((c) =>
-      this.pagePacket(
+      this.proposal(
         pid,
         {
           page: c.page,
@@ -664,7 +629,7 @@ export class Pages {
     const content = structuredClone(page.payload.state.page);
     content.media[slot] = { asset: reference(m), image: m.payload.state.image };
     preservation(content, page.payload.state.locks);
-    const next = this.pagePacket(
+    const next = this.proposal(
       pid,
       { ...page.payload.state, page: content },
       page,
@@ -680,7 +645,7 @@ export class Pages {
     const base = this.page(pid, ref(r["artifact"]));
     const page = parsePage(r["page"]);
     preservation(page, base.payload.state.locks);
-    const next = this.pagePacket(pid, { ...base.payload.state, page }, base);
+    const next = this.proposal(pid, { ...base.payload.state, page }, base);
     const { integrity: _, ...body } = next;
     this.workspace.kernel.putMany(
       [
@@ -911,7 +876,7 @@ export class Pages {
     state.rationale =
       "Imported portable source evidence; local review required. " +
       string(r["reason"]);
-    const page = this.pagePacket(pid, state, null, "local-operator");
+    const page = this.proposal(pid, state, null, "local-operator");
     const receipt = this.make(
       pid,
       "work-record",
@@ -1021,7 +986,7 @@ export class Pages {
         ([k]) => !["references", "comparison"].includes(k),
       ),
     );
-    const page = this.pagePacket(pid, {
+    const page = this.proposal(pid, {
       page: content,
       context,
       locks: [],

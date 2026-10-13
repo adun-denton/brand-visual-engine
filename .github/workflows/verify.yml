@@ -28,6 +28,9 @@ jobs:
       - run: npm run test:combined:compatibility
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-combined-compatibility-evidence
+      - run: npm run test:reconstruction:compatibility
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-reconstruction-compatibility-evidence
       - run: npm run test:combined:memory
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-combined-memory-evidence
@@ -102,11 +105,17 @@ jobs:
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-combined-browser-evidence
           BVE_CANDIDATE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      - run: npm run test:browser:reconstruction
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-reconstruction-browser-evidence
+          BVE_CANDIDATE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: offline-browser-evidence-${{ matrix.os }}
           path: |
+            ${{ runner.temp }}/bve-reconstruction-compatibility-evidence
+            ${{ runner.temp }}/bve-reconstruction-browser-evidence
             ${{ runner.temp }}/bve-combined-compatibility-evidence
             ${{ runner.temp }}/bve-combined-memory-evidence
             ${{ runner.temp }}/bve-combined-browser-evidence

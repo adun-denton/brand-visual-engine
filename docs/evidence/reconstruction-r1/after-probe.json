@@ -1,0 +1,35 @@
+{
+  "kernelStoreBlob": "f9ca13b9951f6f54b5bc4cc5505aa92b4432bb77",
+  "softwareHead": "d2a99c4dfcb223709050d888eb1297fb22704318",
+  "probeSha256": "8f6859f784f745df0cad84d7884edebecba65258c23935bd26c535b8cdd2650b",
+  "primaryRejected": true,
+  "reversedOutcome": "rejected",
+  "rejection": "Paired acceptance requires a reconstruction primary destination",
+  "reviewRecords": 0,
+  "primaryAccepted": null,
+  "mirroredAccepted": null,
+  "persistedAfterReopen": null,
+  "tableHashesBefore": {
+    "packets": "65ec5a39e4f5606e9c5737f93e1ec484ce759842dbeb981ca1664216ce5d2515",
+    "selections": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "events": "086e81b18ed5630d6adc2d4b19d72066ed400a07fdefbacae8f3d9ad3ff694f4"
+  },
+  "tableHashesAfter": {
+    "packets": "65ec5a39e4f5606e9c5737f93e1ec484ce759842dbeb981ca1664216ce5d2515",
+    "selections": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "events": "086e81b18ed5630d6adc2d4b19d72066ed400a07fdefbacae8f3d9ad3ff694f4"
+  },
+  "tableHashesReopened": {
+    "packets": "65ec5a39e4f5606e9c5737f93e1ec484ce759842dbeb981ca1664216ce5d2515",
+    "selections": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "events": "086e81b18ed5630d6adc2d4b19d72066ed400a07fdefbacae8f3d9ad3ff694f4"
+  },
+  "rejectedWritesByteEquivalent": true,
+  "coldReopenByteEquivalent": true,
+  "authoredSynthetic": true,
+  "accountCalls": 0,
+  "modelCalls": 0,
+  "imageProviderCalls": 0,
+  "gpuCalls": 0,
+  "protectedRootAccesses": 0
+}

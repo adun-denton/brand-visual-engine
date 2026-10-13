@@ -119,12 +119,18 @@ export class KernelStore {
     });
   }
   accept(projectId: string, slot: string, artifactRef: VersionRef, expected: VersionRef | null,
-      actor: string, reason: string, bundleRef: VersionRef | null = null, acceptanceGuard?: () => void): LedgerEvent {
+      actor: string, reason: string, bundleRef: VersionRef | null = null, acceptanceGuard?: () => void, companions?: { mirror: {slot:string;expected:VersionRef|null}; records:NodePacket<unknown>[] }): LedgerEvent {
     return this.transaction(() => {
       if (!this.services.grantedPermissions.includes('accept')) throw new Error('acceptance permission denied');
       const artifact = this.get(artifactRef);
       if (!['design-artifact', 'website-assembly'].includes(artifact.type) || artifact.projectId !== projectId) throw new Error('artifact acceptance scope mismatch');
       if (!slot.trim()) throw new Error('acceptance slot required');
+      if(companions&&!slot.startsWith('reconstruction:'))throw new Error('Paired acceptance requires a reconstruction primary destination');
+      if(slot.startsWith('reconstruction:')){
+        const review=companions?.records[0]?.payload as {kind?:string;state?:{workUnit?:VersionRef;proposal?:VersionRef}}|undefined;
+        if(!companions||companions.mirror.slot!=='page:'+artifactRef.id||companions.records.length!==1||review?.kind!=='reconstruction-review'||review.state?.workUnit?.id!==slot.slice('reconstruction:'.length)||review.state.proposal?.id!==artifactRef.id||review.state.proposal?.version!==artifactRef.version)throw new Error('Reconstruction acceptance requires its atomic bound review and page acceptance');
+        if(this.lookup(reference(companions.records[0]!)))throw new Error('Reconstruction acceptance requires a new single-use review');
+      }
       revalidatePacket(artifact, writePort(artifact.type), this.environment());
       if (artifactRef.freshness === 'current' && this.currentVersion(artifact.id) !== artifact.version) throw new Error('stale acceptance artifact');
       const current = this.selected(projectId, slot);
@@ -140,6 +146,13 @@ export class KernelStore {
       const event = this.event(projectId, artifactRef, 'acceptance', actor, reason, bundleRef ? [bundleRef] : []);
       this.db.prepare('INSERT INTO kernel_selections VALUES(?,?,?) ON CONFLICT(project_id,slot) DO UPDATE SET body=excluded.body')
         .run(projectId, slot, JSON.stringify(artifactRef));
+      if(companions){
+        const mirror=this.selected(projectId,companions.mirror.slot),expectedMirror=companions.mirror.expected;
+        if((mirror?.id??null)!==(expectedMirror?.id??null)||(mirror?.version??null)!==(expectedMirror?.version??null))throw new Error('stale mirrored acceptance');
+        this.event(projectId,artifactRef,'acceptance',actor,reason);
+        this.db.prepare('INSERT INTO kernel_selections VALUES(?,?,?) ON CONFLICT(project_id,slot) DO UPDATE SET body=excluded.body').run(projectId,companions.mirror.slot,JSON.stringify(artifactRef));
+        for(const record of companions.records)this.insert(record,writePort(record.type));
+      }
       return event;
     });
   }
