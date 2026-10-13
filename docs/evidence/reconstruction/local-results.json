@@ -1,0 +1,88 @@
+{
+  "base": "210509a1b2cdd36c2e290f6c7ce3752a1eff79fb",
+  "baseTree": "f6ce87408cd5f042ea55d759486b222c7f6236a0",
+  "node": "24.19.0",
+  "localChromium": "153",
+  "unitSummary": [
+    "# tests 314",
+    "# pass 313",
+    "# fail 0",
+    "# cancelled 0",
+    "# skipped 1"
+  ],
+  "newUnitTests": 18,
+  "newUnitPass": 18,
+  "retainedBrowserCommands": 15,
+  "retainedBrowserPass": 15,
+  "newBrowserPass": true,
+  "migrationPass": true,
+  "commands": [
+    {
+      "command": "npm ci --ignore-scripts",
+      "result": "pass"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "pass"
+    },
+    {
+      "command": "npm run build",
+      "result": "pass"
+    },
+    {
+      "command": "node --test --test-reporter=tap tests/*.test.ts",
+      "result": "pass"
+    },
+    {
+      "command": "npm run smoke",
+      "result": "pass"
+    },
+    {
+      "command": "npm run smoke:design-os",
+      "result": "pass"
+    },
+    {
+      "command": "node scripts/serialize-design-fixtures.ts; git diff --exit-code -- fixtures/design-os.json",
+      "result": "pass"
+    },
+    {
+      "command": "npm run test:combined:compatibility",
+      "result": "pass"
+    },
+    {
+      "command": "npm run test:combined:memory",
+      "result": "pass"
+    },
+    {
+      "command": "npm run test:page-contract",
+      "result": "pass"
+    },
+    {
+      "command": "npm run test:chat:permissions",
+      "result": "pass"
+    },
+    {
+      "command": "npm run test:chat:protocol",
+      "result": "pass"
+    },
+    {
+      "command": "npm run test:browser:reconstruction",
+      "result": "pass"
+    },
+    {
+      "command": "npm run test:reconstruction:compatibility",
+      "result": "pass"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass"
+    }
+  ],
+  "ci": "Exact-head Linux/Windows run returned separately; local evidence is pre-publication.",
+  "accountCalls": 0,
+  "modelCalls": 0,
+  "imageProviderCalls": 0,
+  "gpuCalls": 0,
+  "protectedRootAccesses": 0,
+  "actualGeneration": false
+}

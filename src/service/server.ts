@@ -1,3 +1,4 @@
+import {Reconstruction,type OfflineReconstructionInjection} from './reconstruction.ts';
 import { ProjectMemory } from "./project-memory.ts";
 import { RasterLibrary } from './raster-library.ts';
 import { exactRef, hash } from "../modules/website/exploration-contracts.ts";
@@ -29,6 +30,7 @@ export interface RunningApp {
   compositions: Compositions;
   pages: Pages;
   visual: VisualWorkspace;
+  reconstruction: Reconstruction;
   memory: ProjectMemory;
   library: RasterLibrary;
   chat: Chat;
@@ -44,6 +46,7 @@ export async function startApp(
     directionFixture?: boolean;
     aiResponseFixture?: boolean;
     executionFixture?: OfflineExecutionInjection;
+    reconstructionFixture?: OfflineReconstructionInjection;
     chatDriver?: ChatDriver;
     chatImageDriver?: ChatImageDriver;
   },
@@ -56,6 +59,7 @@ export async function startApp(
   const pages = new Pages(workspace);
   const directions = new AIDirections(workspace);
   const visual = new VisualWorkspace(workspace,workspaceOptions?.executionFixture);
+  const reconstruction=new Reconstruction(workspace,pages,visual,workspaceOptions?.reconstructionFixture);
   const memory = new ProjectMemory(workspace);
   const library = new RasterLibrary(workspace);
   let origin = '';
@@ -114,6 +118,13 @@ export async function startApp(
       )
         throw new InputError('Local host/origin required', 403);
       if (req.method === 'GET') {
+        if(path.startsWith('/api/v1/visual/reconstruction/')){
+          const pid=id(url.searchParams.get('project')),action=path.slice('/api/v1/visual/reconstruction/'.length);
+          if(action==='state'){json(200,reconstruction.state(pid,exactRef(JSON.parse(url.searchParams.get('unit')??'null'))),false);return;}
+          if(action==='preview'){const out=await reconstruction.preview(pid,exactRef(JSON.parse(url.searchParams.get('request')??'null')),exactRef(JSON.parse(url.searchParams.get('result')??'null')),exactRef(JSON.parse(url.searchParams.get('proposal')??'null')));res.setHeader('Content-Security-Policy',"default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; frame-ancestors 'self'");res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(out);return;}
+          throw new InputError('Unknown reconstruction read route',404);
+        }
+
         if(path.startsWith('/api/v1/visual/library/')){
           const pid=id(url.searchParams.get('project')),action=path.slice('/api/v1/visual/library/'.length);
           if(action==='state'){json(200,await library.state(pid,Number(url.searchParams.get('offset')??0),Number(url.searchParams.get('limit')??20)),false);return;}
@@ -331,6 +342,17 @@ export async function startApp(
         throw new InputError('Invalid JSON');
       }
       let result: unknown;
+      if(path.startsWith('/api/v1/visual/reconstruction/')){
+        const outer=record(input,['projectId','input']),pid=id(outer['projectId']),action=path.slice('/api/v1/visual/reconstruction/'.length),value=outer['input'];
+        if(action==='prepare')result=await reconstruction.prepare(pid,value);
+        else if(action==='fixture-run')result=await reconstruction.execute(pid,value);
+        else if(action==='apply')result=await reconstruction.apply(pid,value);
+        else if(action==='cancel')result=reconstruction.cancel(pid,value);
+        else if(action==='accept')result=reconstruction.accept(pid,value);
+        else if(action==='export'){const out=await reconstruction.export(pid,value);res.writeHead(200,{'Content-Type':'application/x-tar','Content-Disposition':'attachment; filename="semantic-page.tar"'});res.end(out.bytes);return;}
+        else throw new InputError('Unknown reconstruction command',404);
+        json(200,result,false);return;
+      }
       if (path === '/api/v1/visual/create') {
         json(200, visual.create(input), false);
         return;
@@ -582,6 +604,7 @@ export async function startApp(
     compositions,
     pages,
     visual,
+    reconstruction,
     memory,
     library,
     chat,
@@ -591,10 +614,12 @@ export async function startApp(
       closing = true;
       // Stop HTTP admission/drain readers before closing private chat persistence.
       const drained = http.close();
+      const reconstructed=reconstruction.close();
       closePromise = (async () => {
         await providers.close();
         await drained;
         await visual.executions.close();
+        await reconstructed;
         await chat.close();
         workspace.close();
       })();

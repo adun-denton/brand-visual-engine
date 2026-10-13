@@ -1,4 +1,4 @@
-import { object, versionRef } from '../kernel/gate.ts';
+import { object, versionRef } from '../kernel/validation-primitives.ts';
 import type { VersionRef } from '../kernel/contracts.ts';
 export class InputError extends Error {
   status: number;

@@ -1,3 +1,7 @@
+import {object,text,list,versionRef} from './validation-primitives.ts';
+export {object,text,list,versionRef} from './validation-primitives.ts';
+import {reconstructionGate} from './reconstruction-gate.ts';
+import {reconstructionRoles} from '../modules/website/reconstruction-contracts.ts';
 import { memoryGate } from "./memory-gate.ts";
 import { libraryGate } from './library-gate.ts';
 import { libraryRoles } from '../modules/website/library-contracts.ts';
@@ -27,16 +31,9 @@ export interface GateEnvironment {
 }
 export const writePort = (type: PacketType): PortContract => ({ packetType: type, schemaVersion: 1,
   requiredFields: [], requiredPermissions: ['write'], preserve: [], reviewOnChange: [] });
-export function object(value: unknown): Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value) || Object.getPrototypeOf(value) !== Object.prototype) throw new Error('expected object');
-  return value as Record<string, unknown>;
-}
-export function text(value: unknown): string {
-  if (typeof value !== 'string' || !value.trim()) throw new Error('required string'); return value;
-}
-export function list(value: unknown): unknown[] {
-  if (!Array.isArray(value)) throw new Error('expected array'); return Array.from(value);
-}
+
+
+
 function strings(value: unknown): string[] { return list(value).map(text); }
 function positive(value: unknown): number {
   if (!Number.isSafeInteger(value) || Number(value) < 1) throw new Error('invalid version/count'); return Number(value);
@@ -45,10 +42,7 @@ function boolean(value: unknown): void { if (typeof value !== 'boolean') throw n
 function member(value: unknown, options: string[]): string {
   if (!options.includes(text(value))) throw new Error('unsupported enum'); return value as string;
 }
-export function versionRef(value: unknown): VersionRef {
-  const r = object(value); return { id: text(r['id']), version: positive(r['version']),
-    freshness: member(r['freshness'], ['pinned', 'current']) as VersionRef['freshness'] };
-}
+
 function placeholders(value: unknown): void {
   for (const item of list(value)) {
     const p = object(item); text(p['key']); text(p['expected']); text(p['reason']);
@@ -195,6 +189,7 @@ export function contractGate(input: unknown, port: PortContract, env: GateEnviro
     const before = atPath(previous.payload, path), after = atPath(p['payload'], path);
     if (before === undefined || after === undefined || canonical(before) !== canonical(after)) throw new Error('preservation contract failed');
   }
+  reconstructionGate(p as unknown as NodePacket<unknown>, previous, env);
   libraryGate(p as unknown as NodePacket<unknown>, previous, env);
   memoryGate(p as unknown as NodePacket<unknown>, previous, env);
   executionGate(p as unknown as NodePacket<unknown>, previous, env);
@@ -208,7 +203,7 @@ export function contractGate(input: unknown, port: PortContract, env: GateEnviro
     const owner = ownerVersion === null ? null : env.lookup({ id: p['projectId'] as string, version: ownerVersion, freshness: 'pinned' });
     if (owner?.type !== 'module-project' || object(owner.payload)['moduleId'] !== payload['moduleId']) throw new Error('artifact owner mismatch');
   }
-  const expectedRole: Record<string, PacketType> = { ...libraryRoles, ...memoryRoles, ...executionRoles, ...explorationRoles, 'website-page': 'design-artifact', 'page-media': 'media-asset', 'inference-request': 'work-record', 'inference-result': 'work-record', 'page-migration': 'work-record', 'page-media-origin': 'work-record', 'page-import':'work-record', 'website-assembly': 'website-assembly' };
+  const expectedRole: Record<string, PacketType> = { ...reconstructionRoles, ...libraryRoles, ...memoryRoles, ...executionRoles, ...explorationRoles, 'website-page': 'design-artifact', 'page-media': 'media-asset', 'inference-request': 'work-record', 'inference-result': 'work-record', 'page-migration': 'work-record', 'page-media-origin': 'work-record', 'page-import':'work-record', 'website-assembly': 'website-assembly' };
   if (expectedRole[String(payload['kind'])] && expectedRole[String(payload['kind'])] !== type) throw new Error('semantic record role mismatch');
   if (['media-asset', 'work-record', 'website-assembly'].includes(type) && !expectedRole[String(payload['kind'])]) throw new Error('unsupported semantic record kind');
   if (payload['kind'] === 'website-page') {

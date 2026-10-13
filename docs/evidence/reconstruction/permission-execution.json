@@ -1,0 +1,65 @@
+{
+  "version": "codex-cli 0.162.1",
+  "source": "actual pinned app-server permission layer and production bridge/grants; synthetic Responses",
+  "receipts": [
+    {
+      "scenario": "unconfigured",
+      "outputs": [
+        "[{\"type\":\"input_text\",\"text\":\"Wall time: 0.0159 seconds\\nOutput:\"},{\"type\":\"input_text\",\"text\":\"MCP tool call requires approval, but approval policy is never\"}]"
+      ],
+      "actions": 0,
+      "rounds": 2,
+      "passed": true
+    },
+    {
+      "scenario": "allowed",
+      "outputs": [
+        "[{\"type\":\"input_text\",\"text\":\"Wall time: 0.0879 seconds\\nOutput:\"},{\"type\":\"input_text\",\"text\":\"{\\\"project\\\":{\\\"id\\\":\\\"website-7f8b6420-0edf-4cdb-a6ba-cfd9fd4e58d1\\\",\\\"version\\\":1,\\\"freshness\\\":\\\"pinned\\\"},\\\"view\\\":\\\"studio\\\",\\\"brief\\\":{\\\"title\\\":\\\"Design conversation\\\",\\\"intent\\\":\\\"Mechanical scoped permission control\\\",\\\"audience\\\":\\\"\\\",\\\"offer\\\":\\\"\\\",\\\"response\\\":\\\"\\\",\\\"content\\\":[],\\\"density\\\":null,\\\"unresolved\\\":[\\\"Audience, offer details and desired action remain unknown until clarified.\\\"]},\\\"base\\\":null,\\\"resources\\\":[],\\\"target\\\":null,\\\"providers\\\":{\\\"persistenceFailed\\\":false,\\\"verificationMode\\\":\\\"live-unverified\\\",\\\"configured\\\":false,\\\"imageModel\\\":\\\"gpt-image-2.5-sunburst-2026-09-08\\\",\\\"assistantModel\\\":\\\"gpt-6-luna\\\",\\\"imageSupported\\\":true,\\\"assistantSupported\\\":true,\\\"authorized\\\":false,\\\"directionGenerationApproved\\\":false,\\\"available\\\":false,\\\"paidExecutionDisabled\\\":true,\\\"accountAccess\\\":\\\"unverified\\\",\\\"recipe\\\":\\\"website-api-v1-2026-10-08\\\",\\\"budget\\\":null},\\\"inference\\\":{\\\"pages\\\":[],\\\"media\\\":[],\\\"requests\\\":[],\\\"results\\\":[],\\\"websites\\\":[],\\\"accepted\\\":{},\\\"acceptedWebsite\\\":null,\\\"signatures\\\":{},\\\"findings\\\":{},\\\"execution\\\":{\\\"session\\\":\\\"manual-request-result-exchange\\\",\\\"local\\\":\\\"not-configured\\\",\\\"paid\\\":\\\"disabled\\\"}}}\"}]",
+        "[{\"type\":\"input_text\",\"text\":\"Wall time: 0.0198 seconds\\nOutput:\"},{\"type\":\"input_text\",\"text\":\"{\\\"project\\\":{\\\"id\\\":\\\"website-7f8b6420-0edf-4cdb-a6ba-cfd9fd4e58d1\\\",\\\"version\\\":2,\\\"freshness\\\":\\\"pinned\\\"},\\\"brief\\\":{\\\"intent\\\":\\\"Synthetic permission write\\\",\\\"unresolved\\\":[\\\"Prices/address/hours unknown\\\"]},\\\"providers\\\":{\\\"persistenceFailed\\\":false,\\\"verificationMode\\\":\\\"live-unverified\\\",\\\"configured\\\":false,\\\"imageModel\\\":\\\"gpt-image-2.5-sunburst-2026-09-08\\\",\\\"assistantModel\\\":\\\"gpt-6-luna\\\",\\\"imageSupported\\\":true,\\\"assistantSupported\\\":true,\\\"authorized\\\":false,\\\"directionGenerationApproved\\\":false,\\\"available\\\":false,\\\"paidExecutionDisabled\\\":true,\\\"accountAccess\\\":\\\"unverified\\\",\\\"recipe\\\":\\\"website-api-v1-2026-10-08\\\",\\\"budget\\\":null},\\\"inference\\\":{\\\"pages\\\":[],\\\"media\\\":[],\\\"requests\\\":[],\\\"results\\\":[],\\\"websites\\\":[],\\\"accepted\\\":{},\\\"acceptedWebsite\\\":null,\\\"signatures\\\":{},\\\"findings\\\":{},\\\"execution\\\":{\\\"session\\\":\\\"manual-request-result-exchange\\\",\\\"local\\\":\\\"not-configured\\\",\\\"paid\\\":\\\"disabled\\\"}}}\"}]",
+        "[{\"type\":\"input_text\",\"text\":\"Wall time: 0.0093 seconds\\nOutput:\"},{\"type\":\"input_text\",\"text\":\"{\\\"project\\\":{\\\"id\\\":\\\"website-7f8b6420-0edf-4cdb-a6ba-cfd9fd4e58d1\\\",\\\"version\\\":2,\\\"freshness\\\":\\\"pinned\\\"},\\\"brief\\\":{\\\"intent\\\":\\\"Synthetic permission write\\\",\\\"unresolved\\\":[\\\"Prices/address/hours unknown\\\"]},\\\"providers\\\":{\\\"persistenceFailed\\\":false,\\\"verificationMode\\\":\\\"live-unverified\\\",\\\"configured\\\":false,\\\"imageModel\\\":\\\"gpt-image-2.5-sunburst-2026-09-08\\\",\\\"assistantModel\\\":\\\"gpt-6-luna\\\",\\\"imageSupported\\\":true,\\\"assistantSupported\\\":true,\\\"authorized\\\":false,\\\"directionGenerationApproved\\\":false,\\\"available\\\":false,\\\"paidExecutionDisabled\\\":true,\\\"accountAccess\\\":\\\"unverified\\\",\\\"recipe\\\":\\\"website-api-v1-2026-10-08\\\",\\\"budget\\\":null},\\\"inference\\\":{\\\"pages\\\":[],\\\"media\\\":[],\\\"requests\\\":[],\\\"results\\\":[],\\\"websites\\\":[],\\\"accepted\\\":{},\\\"acceptedWebsite\\\":null,\\\"signatures\\\":{},\\\"findings\\\":{},\\\"execution\\\":{\\\"session\\\":\\\"manual-request-result-exchange\\\",\\\"local\\\":\\\"not-configured\\\",\\\"paid\\\":\\\"disabled\\\"}}}\"}]"
+      ],
+      "actions": 2,
+      "rounds": 4,
+      "passed": true
+    },
+    {
+      "scenario": "foreign-grant",
+      "outputs": [
+        "[{\"type\":\"input_text\",\"text\":\"Wall time: 0.1097 seconds\\nOutput:\"},{\"type\":\"input_text\",\"text\":\"{\\\"error\\\":\\\"Reload the local app before sending changes\\\"}\"}]"
+      ],
+      "actions": 0,
+      "rounds": 2,
+      "passed": true
+    },
+    {
+      "scenario": "stale-grant",
+      "outputs": [
+        "[{\"type\":\"input_text\",\"text\":\"Wall time: 0.0922 seconds\\nOutput:\"},{\"type\":\"input_text\",\"text\":\"{\\\"error\\\":\\\"Turn is no longer active\\\"}\"}]"
+      ],
+      "actions": 0,
+      "rounds": 2,
+      "passed": true
+    },
+    {
+      "scenario": "unknown-tool",
+      "outputs": [
+        "\"unsupported call: mcp__bvenot_a_bve_tool\""
+      ],
+      "actions": 0,
+      "rounds": 2,
+      "passed": true
+    },
+    {
+      "scenario": "forbidden-tool",
+      "outputs": [
+        "\"unsupported call: exec_command\""
+      ],
+      "actions": 0,
+      "rounds": 2,
+      "passed": true
+    }
+  ],
+  "accountCalls": 0,
+  "imageCalls": 0,
+  "passed": true
+}

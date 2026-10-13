@@ -1,0 +1,34 @@
+{
+  "results": [
+    {
+      "lineage": "v05",
+      "source": "d11fa566a9c798aa6b2706ad542a30a5a1905abb",
+      "tables": [
+        "kernel.sqlite:kernel_events",
+        "kernel.sqlite:kernel_packets",
+        "kernel.sqlite:kernel_selections"
+      ],
+      "files": 8,
+      "pass": true
+    },
+    {
+      "lineage": "r8",
+      "source": "c6edf5218a1d98870b87a8029270e233c012468d",
+      "tables": [
+        "chat-private/sessions.sqlite:actions",
+        "chat-private/sessions.sqlite:image_jobs",
+        "chat-private/sessions.sqlite:sessions",
+        "kernel.sqlite:kernel_events",
+        "kernel.sqlite:kernel_packets",
+        "kernel.sqlite:kernel_selections"
+      ],
+      "files": 4,
+      "pass": true
+    }
+  ],
+  "accountCalls": 0,
+  "modelCalls": 0,
+  "imageProviderCalls": 0,
+  "gpuCalls": 0,
+  "protectedRootAccesses": 0
+}
