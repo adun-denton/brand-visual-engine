@@ -21,6 +21,7 @@ try {
   await page.goto(app.origin);await page.locator('#project').selectOption(p.project.id);await idle();await page.locator('#page').selectOption(unit.id+':1');await idle();
   await expect(page.locator('#auxiliary-toggle')).toContainText('Open');await expect(page.locator('.auxiliary-panel')).toHaveCount(0);
   await open();await page.locator('#native-prepare [name=width]').fill('800');await page.locator('#native-prepare [name=height]').fill('1100');await page.locator('#native-prepare [name=slots]').fill('1');await page.locator('#native-prepare [name=lifetime]').fill('3600');await page.locator('#native-prepare [name=evidence]').selectOption('synthetic-fixture');await page.getByRole('button',{name:'Prepare manual grant',exact:true}).click();await idle();await open();
+  await expect(page.getByRole('button',{name:'Export request',exact:true})).toBeVisible();
   const firstDownload=page.waitForEvent('download');await page.getByRole('button',{name:'Export request',exact:true}).click();const download=await firstDownload;await idle();await open();
   const saved=join(evidence,'authored-request.tar');await download.saveAs(saved);
   const state=v.native.state(p.project.id,reference(unit)),run=state.runs[0]!.run,pkg=run.payload.state.slots[0]!.release!;

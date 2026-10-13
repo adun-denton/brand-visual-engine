@@ -1,0 +1,22 @@
+{
+  "base": "87c9484e83a12b570d632fbbe1c2e070a36a3319",
+  "tree": "8842b781c4bb9c24843f707d9ca01affd127009c",
+  "originalTables": [
+    "chat-private/sessions.sqlite:actions",
+    "chat-private/sessions.sqlite:image_jobs",
+    "chat-private/sessions.sqlite:sessions",
+    "kernel.sqlite:kernel_events",
+    "kernel.sqlite:kernel_packets",
+    "kernel.sqlite:kernel_selections"
+  ],
+  "originalFiles": 9,
+  "originalRowsBytesExportsAcceptanceChatReceiptsCapsulesPreserved": true,
+  "additiveNativeEvidenceAndColdReopen": true,
+  "originalAuxiliaryTurns": 1,
+  "nativeInvocations": 0,
+  "accountCalls": 0,
+  "modelCalls": 0,
+  "imageProviderCalls": 0,
+  "gpuCalls": 0,
+  "protectedRootAccesses": 0
+}
