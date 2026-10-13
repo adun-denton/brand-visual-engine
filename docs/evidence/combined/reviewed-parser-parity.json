@@ -1,0 +1,10 @@
+{
+  "base": "83a1e476166b8205eeb883cf910b2bde75dcd316",
+  "cases": 3067,
+  "accepted": 777,
+  "rejected": 2290,
+  "acceptanceDivergences": 0,
+  "normalizedOutputDivergences": 0,
+  "synthetic": true,
+  "accountCalls": 0
+}

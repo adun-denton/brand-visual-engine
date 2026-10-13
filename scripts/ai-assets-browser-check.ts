@@ -55,9 +55,11 @@ const checkpoint = (name: string) => {
   console.log(JSON.stringify({ check: 'ai-assets-stage', stage }));
 };
 const view = async (name: string) => {
+  console.log("AI-assets view:", name);
   await page.getByRole('button', { name, exact: true }).click();
 };
 const submit = async (selector: string, message: string) => {
+  console.log("AI-assets submit:", selector);
   await page
     .locator(selector + ' button')
     .last()
@@ -85,7 +87,8 @@ const download = async (selector: string, name: string) => {
 };
 try {
   checkpoint('initial entry');
-  await page.goto(app.origin, { waitUntil: 'domcontentloaded' });
+  await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
+  await page.goto(app.origin + "/legacy", { waitUntil: 'domcontentloaded' });
   await page.locator('#create [name=title]').fill('AI asset loop rehearsal');
   await page.locator('#create button[type=submit]').click();
   await expect(page.locator('.workspace-title h1')).toHaveText(
@@ -354,7 +357,9 @@ try {
   checkpoint('close browser context');
   await context.close();
   checkpoint('close owned app');
+  console.log("AI-assets closing original runtime");
   await app.close();
+  console.log("AI-assets original runtime closed");
   app = null;
   checkpoint('copy closed root');
   const copy = root + '-closed-copy';
@@ -369,7 +374,8 @@ try {
   });
   page = await context.newPage();
   configurePage();
-  await page.goto(app.origin, { waitUntil: 'domcontentloaded' });
+  await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
+  await page.goto(app.origin + "/legacy", { waitUntil: 'domcontentloaded' });
   await page
     .getByRole('button', { name: 'AI asset loop rehearsal', exact: true })
     .click();

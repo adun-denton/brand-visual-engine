@@ -12,9 +12,12 @@ jobs:
       matrix:
         os: [ubuntu-24.04, windows-2025]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24.19.0'
@@ -22,11 +25,28 @@ jobs:
       - run: npm run build
       - run: npm run typecheck
       - run: npm test
+      - run: npm run test:combined:compatibility
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-combined-compatibility-evidence
+      - run: npm run test:combined:memory
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-combined-memory-evidence
+      - run: npm run test:page-contract
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-page-contract-evidence
       - run: npm run smoke
       - run: npm run smoke:design-os
       - run: node scripts/serialize-design-fixtures.ts
       - run: git diff --exit-code -- fixtures/design-os.json
       - run: git diff --check
+      - run: npm install --ignore-scripts --no-save --package-lock=false @openai/codex@0.162.1
+      - run: npm run test:chat:permissions
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-permission-evidence
+      - run: npm run test:chat:protocol
+        env:
+          BVE_CODEX_BINARY: ${{ github.workspace }}/node_modules/@openai/codex-${{ runner.os == 'Windows' && 'win32' || 'linux' }}-x64/vendor/${{ runner.os == 'Windows' && 'x86_64-pc-windows-msvc' || 'x86_64-unknown-linux-musl' }}/bin/codex${{ runner.os == 'Windows' && '.exe' || '' }}
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-catalogue-evidence
       - run: npx playwright install --with-deps chromium
         if: runner.os == 'Linux'
       - run: npx playwright install chromium
@@ -72,11 +92,24 @@ jobs:
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-library-browser-evidence
           BVE_CANDIDATE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      - run: npm run test:browser:chat
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-chat-browser-evidence
+      - run: npm run test:browser:page-contract
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-page-contract-evidence
+      - run: npm run test:browser:combined
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-combined-browser-evidence
+          BVE_CANDIDATE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: offline-browser-evidence-${{ matrix.os }}
           path: |
+            ${{ runner.temp }}/bve-combined-compatibility-evidence
+            ${{ runner.temp }}/bve-combined-memory-evidence
+            ${{ runner.temp }}/bve-combined-browser-evidence
             ${{ runner.temp }}/bve-browser-evidence
             ${{ runner.temp }}/bve-provider-browser-evidence
             ${{ runner.temp }}/bve-region-browser-evidence
@@ -89,4 +122,8 @@ jobs:
             ${{ runner.temp }}/bve-execution-browser-evidence
             ${{ runner.temp }}/bve-memory-browser-evidence
             ${{ runner.temp }}/bve-library-browser-evidence
+            ${{ runner.temp }}/bve-chat-browser-evidence
+            ${{ runner.temp }}/bve-permission-evidence
+            ${{ runner.temp }}/bve-catalogue-evidence
+            ${{ runner.temp }}/bve-page-contract-evidence
           if-no-files-found: error

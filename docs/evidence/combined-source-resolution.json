@@ -1,0 +1,1688 @@
+{
+  "common": {
+    "commit": "8d61b09d21089f64f496c24da4fc671797c81407",
+    "tree": "555464dc428cf3551fbf6ced32a73492f07c6f4d"
+  },
+  "v05": {
+    "commit": "d11fa566a9c798aa6b2706ad542a30a5a1905abb",
+    "tree": "255bd24bc2c35e0709217cf628b6aa2c58ab75fa"
+  },
+  "r8": {
+    "commit": "c6edf5218a1d98870b87a8029270e233c012468d",
+    "tree": "7916974727b113e89cfb466b8bd01b736d081583"
+  },
+  "commonAncestor": "8d61b09d21089f64f496c24da4fc671797c81407",
+  "method": "Binary-preserving three-way application of exact common-to-R8 delta on V05; ordinary single-parent commit; no merge/rebase/source ref movement",
+  "sharedChangedPaths": [
+    ".github/workflows/verify.yml",
+    "package.json",
+    "scripts/ai-assets-browser-check.ts",
+    "src/service/server.ts",
+    "src/service/workspace.ts",
+    "src/web/index.html"
+  ],
+  "perFileResolution": [
+    {
+      "path": ".github/workflows/verify.yml",
+      "common": {
+        "mode": "100644",
+        "blob": "a1097addca01d51f3239abc8538ddec75965713f"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "c63d6b78ad90ca3bae5fd34f878b7ed67f85e9fc"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "adbdddc51453d665e0d2d34f0a696b0d20aef897"
+      },
+      "candidateBlob": "69cb5602ecf73c90d15c8293ea0f9227deb66ed2",
+      "mode": "100644",
+      "resolution": "Union of fourteen browser gates, parser/binary controls and visual evidence; add compatibility, original-memory and cross-surface checks; checkout exact PR head; retain platform matrix."
+    },
+    {
+      "path": "README.md",
+      "common": {
+        "mode": "100644",
+        "blob": "2439c5c4bc3521c79513b3aaceab2dfafc650412"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "2439c5c4bc3521c79513b3aaceab2dfafc650412"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "cb0986d0aabb251471fd7b67c223dfe65227fcb7"
+      },
+      "candidateBlob": "e646d952a9ecbd9b47272d79589cf7062106eb7b",
+      "mode": "100644",
+      "resolution": "R8 replay plus root-route documentation"
+    },
+    {
+      "path": "docs/chat-page-contract-repair.md",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "a714ab29dd1016f1bb63616acea90c3211c7bbb0"
+      },
+      "candidateBlob": "a714ab29dd1016f1bb63616acea90c3211c7bbb0",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "docs/chat-permission-repair.md",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "ff19b07ec6df8c212b9bec21a8bd28c95bf9fbe8"
+      },
+      "candidateBlob": "ff19b07ec6df8c212b9bec21a8bd28c95bf9fbe8",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "docs/chat-review-repairs.md",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "14ce70d3e62160d77b20f8f7d9c777aadf1fb244"
+      },
+      "candidateBlob": "14ce70d3e62160d77b20f8f7d9c777aadf1fb244",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "docs/chat-shutdown-repair.md",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "3c320de69125c00cf7e4d0908886c5eccf36a3b7"
+      },
+      "candidateBlob": "3c320de69125c00cf7e4d0908886c5eccf36a3b7",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "docs/chat-style-contract-repair.md",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "68c6609828389b72b17e256693159dcb8f508941"
+      },
+      "candidateBlob": "68c6609828389b72b17e256693159dcb8f508941",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "docs/chat-windows-storage.md",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "3ebc5838fb088c647d62dd605c2141262eb8109b"
+      },
+      "candidateBlob": "3ebc5838fb088c647d62dd605c2141262eb8109b",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "docs/chat-workspace-result.md",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "857c6df79d05fb089cad1483fbfed8274e31f5ac"
+      },
+      "candidateBlob": "857c6df79d05fb089cad1483fbfed8274e31f5ac",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "docs/chat-workspace.md",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "54de8c4cd2fe6e21a3efa8fe4c5b485439d1e0c8"
+      },
+      "candidateBlob": "54de8c4cd2fe6e21a3efa8fe4c5b485439d1e0c8",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "docs/evidence/chat-protocol-check.json",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "6add1678d8896a40b834e1109d08d85abb8a7ac0"
+      },
+      "candidateBlob": "6add1678d8896a40b834e1109d08d85abb8a7ac0",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "docs/execution-orchestration-result.md",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "5c691e1e1fab4653dd190b2478ff4a96907b4200"
+      },
+      "r8": null,
+      "candidateBlob": "5c691e1e1fab4653dd190b2478ff4a96907b4200",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "docs/execution-orchestration.md",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "366a57fb66c9e292142cdfa65601ea694b6e75be"
+      },
+      "r8": null,
+      "candidateBlob": "366a57fb66c9e292142cdfa65601ea694b6e75be",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "docs/image-first-foundation-repairs.md",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "5d70705f8b1671a0471a085cc510dd4ce848a89e"
+      },
+      "r8": null,
+      "candidateBlob": "5d70705f8b1671a0471a085cc510dd4ce848a89e",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "docs/image-first-foundation-result.md",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "232199de4154f18e791a5b3297489bff91ac6282"
+      },
+      "r8": null,
+      "candidateBlob": "232199de4154f18e791a5b3297489bff91ac6282",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "docs/image-first-foundation.md",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "4e370ac7f059eb8ca28622dbd6a7327504f3ecc4"
+      },
+      "r8": null,
+      "candidateBlob": "4e370ac7f059eb8ca28622dbd6a7327504f3ecc4",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "docs/project-memory-result.md",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "e33ed1030ffdcdd75026229209b8a49427e5ee35"
+      },
+      "r8": null,
+      "candidateBlob": "e33ed1030ffdcdd75026229209b8a49427e5ee35",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "docs/project-memory.md",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "a96fb86308a5822e123bebbb490d873892086bc0"
+      },
+      "r8": null,
+      "candidateBlob": "a96fb86308a5822e123bebbb490d873892086bc0",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "docs/raster-library-result.md",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "f1259899310e413ec8408d36e7a83e4b4716cd80"
+      },
+      "r8": null,
+      "candidateBlob": "f1259899310e413ec8408d36e7a83e4b4716cd80",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "docs/raster-library.md",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "2eede14632390a498c7c24f5b704b1b20b2bd80b"
+      },
+      "r8": null,
+      "candidateBlob": "2eede14632390a498c7c24f5b704b1b20b2bd80b",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "docs/visual-workspace-result.md",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "5998daa74735aac7100abc35ca5734d6314d33ea"
+      },
+      "r8": null,
+      "candidateBlob": "5998daa74735aac7100abc35ca5734d6314d33ea",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "docs/visual-workspace.md",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "df66bfe091e5dc009fee623f65b0d3bd99a01a92"
+      },
+      "r8": null,
+      "candidateBlob": "df66bfe091e5dc009fee623f65b0d3bd99a01a92",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "package-lock.json",
+      "common": {
+        "mode": "100644",
+        "blob": "2e55616719563ee0da127584a8c33233e53b4cd9"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "2e55616719563ee0da127584a8c33233e53b4cd9"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "0ccbb4d724f16d379ec14248fa9a3321a0f5d2fb"
+      },
+      "candidateBlob": "0ccbb4d724f16d379ec14248fa9a3321a0f5d2fb",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "package.json",
+      "common": {
+        "mode": "100644",
+        "blob": "57bfbaaadaa048661685cb2cbda82df131d1b239"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "967d7d4d385282e95ff9106038113f5e138bb8f6"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "f700e2e09200c7088b95ce9864a0d52dc7f3a4f6"
+      },
+      "candidateBlob": "5efb2c487cb3aa9cae65c3de6c7f4aa6246ddce6",
+      "mode": "100644",
+      "resolution": "Union of all commands and exact dependency versions, plus three focused integration commands; use R8 lockfile additions only."
+    },
+    {
+      "path": "scripts/ai-assets-browser-check.ts",
+      "common": {
+        "mode": "100644",
+        "blob": "ac4af3e4d3082a54a2483f5c6650dd51c764a30a"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "9b4013d8012e77f85eb8bd7e6a94b258bcda4628"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "1b34132945160f2d6008b630a1607fe501092673"
+      },
+      "candidateBlob": "ab2e980fb7f0cd737a130cc0bae566611705ea32",
+      "mode": "100644",
+      "resolution": "Retain V05 checkpoints, closed context before root copy and fresh-context reopen; add R8 advanced-mode setup to both contexts; target /legacy."
+    },
+    {
+      "path": "scripts/browser-check.ts",
+      "common": {
+        "mode": "100644",
+        "blob": "b6c2dd50fa1663af5f47619963e48e5bedb5e8d5"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "b6c2dd50fa1663af5f47619963e48e5bedb5e8d5"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "ffb6f34279e0ba1e401bafd7d9219a854b05bc61"
+      },
+      "candidateBlob": "462b2950cfe4e35f03b3112b4516b03e8047d9b0",
+      "mode": "100644",
+      "resolution": "R8 replay with legacy harness entry URL updated; assertions retained"
+    },
+    {
+      "path": "scripts/build.ts",
+      "common": {
+        "mode": "100644",
+        "blob": "411ac1184796ee07cea45824ddffe964f53bbe4b"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "b8cb8ae681ac6b99dc3af426bc76d386597b2f40"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "411ac1184796ee07cea45824ddffe964f53bbe4b"
+      },
+      "candidateBlob": "b8cb8ae681ac6b99dc3af426bc76d386597b2f40",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "scripts/chat-adverse-browser.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "f6c4b653d0b753c655c480ece369ce6bbfc0b9af"
+      },
+      "candidateBlob": "4ab69cd7fcaa73170dd9b3175be32c34be5ae778",
+      "mode": "100644",
+      "resolution": "R8 replay with legacy harness entry URL updated; assertions retained"
+    },
+    {
+      "path": "scripts/chat-browser-check.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "bc56f57323ce75d9df8f7797c13c2290feb0175a"
+      },
+      "candidateBlob": "d75291ad3416c51a5936c86b943bfd3734daf382",
+      "mode": "100644",
+      "resolution": "R8 replay with legacy harness entry URL updated; assertions retained"
+    },
+    {
+      "path": "scripts/chat-fixture.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "34cca123757a8f1c95afc6222f55475530cb7231"
+      },
+      "candidateBlob": "34cca123757a8f1c95afc6222f55475530cb7231",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "scripts/chat-mcp.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "00c01db48e7af54612840c010855a28875e96a5d"
+      },
+      "candidateBlob": "00c01db48e7af54612840c010855a28875e96a5d",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "scripts/chat-permission-preflight.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "00aaae74fc8db21f56dfea520e8cf3e3ef7e9cad"
+      },
+      "candidateBlob": "00aaae74fc8db21f56dfea520e8cf3e3ef7e9cad",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "scripts/chat-protocol-preflight.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "5c66af5fe180fc87ace77b46c5f34b29b8644f30"
+      },
+      "candidateBlob": "5c66af5fe180fc87ace77b46c5f34b29b8644f30",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "scripts/composition-browser-check.ts",
+      "common": {
+        "mode": "100644",
+        "blob": "f17f6bca9395cee7e1d96c01ef17450961a10567"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "f17f6bca9395cee7e1d96c01ef17450961a10567"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "48e5b9e118d279ab38d35e15a09819054fb73679"
+      },
+      "candidateBlob": "161fd12d08f652401fd3ff66b4025b50685a17bd",
+      "mode": "100644",
+      "resolution": "R8 replay with legacy harness entry URL updated; assertions retained"
+    },
+    {
+      "path": "scripts/execution-browser-check.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "ce93f88ce663f6371bedd9bf31f69992a30b5717"
+      },
+      "r8": null,
+      "candidateBlob": "ce93f88ce663f6371bedd9bf31f69992a30b5717",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "scripts/execution-fixture.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "0b05e1e5928d2fa49b32feaa4baa28e33d1c6839"
+      },
+      "r8": null,
+      "candidateBlob": "0b05e1e5928d2fa49b32feaa4baa28e33d1c6839",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "scripts/execution-repair-browser-check.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "3b5c527f8bce40afdb99dcb4860d5b8f40649ec3"
+      },
+      "r8": null,
+      "candidateBlob": "3b5c527f8bce40afdb99dcb4860d5b8f40649ec3",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "scripts/library-browser-check.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "91533278088367cd61c1967956f27bc5b434d2e7"
+      },
+      "r8": null,
+      "candidateBlob": "91533278088367cd61c1967956f27bc5b434d2e7",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "scripts/memory-browser-check.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "d30389f9d128a5a561a1aeabaecd5d3d722cd62e"
+      },
+      "r8": null,
+      "candidateBlob": "d30389f9d128a5a561a1aeabaecd5d3d722cd62e",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "scripts/memory-repair-browser-check.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "7c773b84401c1cf0a51fae6b0ca2952555aab74f"
+      },
+      "r8": null,
+      "candidateBlob": "7c773b84401c1cf0a51fae6b0ca2952555aab74f",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "scripts/page-contract-browser-check.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "06d3da1dce7d18d60fb659e5fd7e077defa3aa58"
+      },
+      "candidateBlob": "82b82430da9da5843a8031d163618e62bb10cbb0",
+      "mode": "100644",
+      "resolution": "R8 replay with legacy harness entry URL updated; assertions retained"
+    },
+    {
+      "path": "scripts/page-contract-check.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "3ad01869cdd68d70e130ff690089809a04db7319"
+      },
+      "candidateBlob": "3ad01869cdd68d70e130ff690089809a04db7319",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "scripts/page-contract-fixture.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "9ccb304dc6a9724cd904279290b2135f66ff3776"
+      },
+      "candidateBlob": "9ccb304dc6a9724cd904279290b2135f66ff3776",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "scripts/pages-browser-check.ts",
+      "common": {
+        "mode": "100644",
+        "blob": "c9f21c2ce2cd08258a9c92c86b7bf9cedb3f2fe6"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "c9f21c2ce2cd08258a9c92c86b7bf9cedb3f2fe6"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "3b8e81f6caf9a4877466e5ffa2ddc84f556f0d03"
+      },
+      "candidateBlob": "7820c2ec8539401e3dfb918e5adcbc6514f44138",
+      "mode": "100644",
+      "resolution": "R8 replay with legacy harness entry URL updated; assertions retained"
+    },
+    {
+      "path": "scripts/prepare-chat-policy.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "f58588920392658b70815fac953be9d476324eeb"
+      },
+      "candidateBlob": "f58588920392658b70815fac953be9d476324eeb",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "scripts/provider-browser-check.ts",
+      "common": {
+        "mode": "100644",
+        "blob": "231f9991c924cdfa0c7b37d1d788b38340981755"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "231f9991c924cdfa0c7b37d1d788b38340981755"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "6711ddca92afe01833446d5c8fb01ada96d5fc51"
+      },
+      "candidateBlob": "6465de7356219ff571b2cd08a3ad2390c282a322",
+      "mode": "100644",
+      "resolution": "R8 replay with legacy harness entry URL updated; assertions retained"
+    },
+    {
+      "path": "scripts/readiness-browser-check.ts",
+      "common": {
+        "mode": "100644",
+        "blob": "ad56d4c1411d7de0ff52b2bcef7b1ac8aaef41b0"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "ad56d4c1411d7de0ff52b2bcef7b1ac8aaef41b0"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "5a27d1457e35b0c871b78f1709b5ceeb0884a5f1"
+      },
+      "candidateBlob": "17427ae67e0144195e2ace2066324af538740c45",
+      "mode": "100644",
+      "resolution": "R8 replay with legacy harness entry URL updated; assertions retained"
+    },
+    {
+      "path": "scripts/region-browser-check.ts",
+      "common": {
+        "mode": "100644",
+        "blob": "092a3f8b3ca64d323d09b93e216c699f7fda3cfa"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "092a3f8b3ca64d323d09b93e216c699f7fda3cfa"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "16fc66ae239dc440a754b22c76fb9c94e3dc6d28"
+      },
+      "candidateBlob": "13d02c70468fda4e6e10dc2541b36215e6997fa6",
+      "mode": "100644",
+      "resolution": "R8 replay with legacy harness entry URL updated; assertions retained"
+    },
+    {
+      "path": "scripts/review-repairs-browser-check.ts",
+      "common": {
+        "mode": "100644",
+        "blob": "76873e512537e3c96fa481d45902d6051048b642"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "76873e512537e3c96fa481d45902d6051048b642"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "979023f2c5d97c996afdc768ee5056993391cc4f"
+      },
+      "candidateBlob": "22916a3d470991bfff2256594839cdc3591384a7",
+      "mode": "100644",
+      "resolution": "R8 replay with legacy harness entry URL updated; assertions retained"
+    },
+    {
+      "path": "scripts/visual-browser-check.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "f7db00819e1a9c23cba642836645749a4e6c3d6b"
+      },
+      "r8": null,
+      "candidateBlob": "f7db00819e1a9c23cba642836645749a4e6c3d6b",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "scripts/visual-fixture.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "8259c7c88ff39cbe69f10f5a89ccc14418f3a7db"
+      },
+      "r8": null,
+      "candidateBlob": "8259c7c88ff39cbe69f10f5a89ccc14418f3a7db",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "scripts/visual-repair-browser-check.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "d06236f61742527c3478beb9fc3cd952b4e222e2"
+      },
+      "r8": null,
+      "candidateBlob": "d06236f61742527c3478beb9fc3cd952b4e222e2",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "scripts/visual-review.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "1f5e130e2a35791d15729cd825c5c96cda09984d"
+      },
+      "r8": null,
+      "candidateBlob": "1f5e130e2a35791d15729cd825c5c96cda09984d",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/kernel/execution-gate.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "5ae3a485aabdfcc853a845abebcb54239503eb9f"
+      },
+      "r8": null,
+      "candidateBlob": "5ae3a485aabdfcc853a845abebcb54239503eb9f",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/kernel/exploration-gate.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "298e20f15b4efed3c20c81647f6fe5357b512024"
+      },
+      "r8": null,
+      "candidateBlob": "298e20f15b4efed3c20c81647f6fe5357b512024",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/kernel/gate.ts",
+      "common": {
+        "mode": "100644",
+        "blob": "4accde20e162508af2e421e60aa105f1dfe4807a"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "7bbb8db058cb1fc7ba54a6dfc9ada4d9de7863ba"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "4accde20e162508af2e421e60aa105f1dfe4807a"
+      },
+      "candidateBlob": "7bbb8db058cb1fc7ba54a6dfc9ada4d9de7863ba",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/kernel/library-gate.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "7fc603b96262ffb1e6d5a4d2ecc256b771c3f9cb"
+      },
+      "r8": null,
+      "candidateBlob": "7fc603b96262ffb1e6d5a4d2ecc256b771c3f9cb",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/kernel/memory-gate.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "222009a48bed1a5830b480d29ada4a246c98ce7d"
+      },
+      "r8": null,
+      "candidateBlob": "222009a48bed1a5830b480d29ada4a246c98ce7d",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/kernel/memory-index.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "5bebe6547107914169a550252f4671d1f0e79f69"
+      },
+      "r8": null,
+      "candidateBlob": "5bebe6547107914169a550252f4671d1f0e79f69",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/kernel/store.ts",
+      "common": {
+        "mode": "100644",
+        "blob": "4f5f889e9e1c57c34bc47009499e251e53afddbf"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "73b9ae1ced584bf376ce62dac7d363d0ed20ed42"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "4f5f889e9e1c57c34bc47009499e251e53afddbf"
+      },
+      "candidateBlob": "73b9ae1ced584bf376ce62dac7d363d0ed20ed42",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/modules/website/design.ts",
+      "common": {
+        "mode": "100644",
+        "blob": "81ac21268cfb7b057ec46bca80ff75fac9785aed"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "3ac6007231f4458346485d3b33a8f728c18b3807"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "81ac21268cfb7b057ec46bca80ff75fac9785aed"
+      },
+      "candidateBlob": "3ac6007231f4458346485d3b33a8f728c18b3807",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/modules/website/execution-contracts.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "5531c86e6b75c5d79273d265bc7311074f5ade8f"
+      },
+      "r8": null,
+      "candidateBlob": "5531c86e6b75c5d79273d265bc7311074f5ade8f",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/modules/website/exploration-contracts.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "b19be930d094f6139078a386aeeebeb0875eb759"
+      },
+      "r8": null,
+      "candidateBlob": "b19be930d094f6139078a386aeeebeb0875eb759",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/modules/website/inference-contracts.ts",
+      "common": {
+        "mode": "100644",
+        "blob": "1696940d6c1fd50763dd00a5653a8962a56a0915"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "1696940d6c1fd50763dd00a5653a8962a56a0915"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "49e1af94d1b3f5a74a4aa93305b8fbc032c1dccb"
+      },
+      "candidateBlob": "49e1af94d1b3f5a74a4aa93305b8fbc032c1dccb",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "src/modules/website/library-contracts.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "16b3adff4ba12a8c6eb1dc904d93d97b6d2d253d"
+      },
+      "r8": null,
+      "candidateBlob": "16b3adff4ba12a8c6eb1dc904d93d97b6d2d253d",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/modules/website/memory-contracts.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "07b340d0622a549bc749d0f9487865b8d1facb48"
+      },
+      "r8": null,
+      "candidateBlob": "07b340d0622a549bc749d0f9487865b8d1facb48",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/modules/website/page-contracts.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "fda5fe76d8c857f3a913bbbc995b793c2dcf4376"
+      },
+      "candidateBlob": "fda5fe76d8c857f3a913bbbc995b793c2dcf4376",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "src/modules/website/page.ts",
+      "common": {
+        "mode": "100644",
+        "blob": "9ee26642ecc033ac8854a2755b4b7d09a5088992"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "9ee26642ecc033ac8854a2755b4b7d09a5088992"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "d82ffa93333d0f229f78fc821bb30fb125d65f87"
+      },
+      "candidateBlob": "d82ffa93333d0f229f78fc821bb30fb125d65f87",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "src/modules/website/style-contracts.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "0e149820d037cdfd2738d637274e01c095fd4366"
+      },
+      "candidateBlob": "0e149820d037cdfd2738d637274e01c095fd4366",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "src/modules/website/visual-controls.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "edaa0cf36365ee1136b6529023f4680d4ef8edc7"
+      },
+      "r8": null,
+      "candidateBlob": "edaa0cf36365ee1136b6529023f4680d4ef8edc7",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/service/assets.ts",
+      "common": {
+        "mode": "100644",
+        "blob": "c7367d8237e4da09e7ef8f1d34064fe2516d8df0"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "8c52de8ce495e1c4e48e663702574f2b4d44f036"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "c7367d8237e4da09e7ef8f1d34064fe2516d8df0"
+      },
+      "candidateBlob": "8c52de8ce495e1c4e48e663702574f2b4d44f036",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/service/chat-auth.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "effc060c844a3ac051c5a79e36aa6bf60634e1d8"
+      },
+      "candidateBlob": "effc060c844a3ac051c5a79e36aa6bf60634e1d8",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "src/service/chat-contracts.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "a3513251d426f162356a3c95ca02fbdc2bfad0e8"
+      },
+      "candidateBlob": "a3513251d426f162356a3c95ca02fbdc2bfad0e8",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "src/service/chat-mcp-config.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "a52b2424e99d40e3e2dad37711c75453e7b6a643"
+      },
+      "candidateBlob": "a52b2424e99d40e3e2dad37711c75453e7b6a643",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "src/service/chat-model-catalog.json",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "2734142cb14cd97098e87832e128fa6641cbaec6"
+      },
+      "candidateBlob": "2734142cb14cd97098e87832e128fa6641cbaec6",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "src/service/chat-process.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "75c3426399950db6a9bed9c91778bc70c0c338e8"
+      },
+      "candidateBlob": "75c3426399950db6a9bed9c91778bc70c0c338e8",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "src/service/chat-store.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "ce2421c7d17379b3bbd0369b3bf37963862093c5"
+      },
+      "candidateBlob": "ce2421c7d17379b3bbd0369b3bf37963862093c5",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "src/service/chat-tool-schema.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "c84a373e2b5f9f28f1893a211987c81ee99aa3f0"
+      },
+      "candidateBlob": "c84a373e2b5f9f28f1893a211987c81ee99aa3f0",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "src/service/chat.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "281d2c519997d3ecb16b0d2707c0566aa99f18c3"
+      },
+      "candidateBlob": "281d2c519997d3ecb16b0d2707c0566aa99f18c3",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "src/service/execution.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "d217793520f90f896a162679ada3b35ad2e79f5b"
+      },
+      "r8": null,
+      "candidateBlob": "d217793520f90f896a162679ada3b35ad2e79f5b",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/service/exploration.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "e116695b2cb93fc1eb8c04b75a970fa03c2f53e7"
+      },
+      "r8": null,
+      "candidateBlob": "e116695b2cb93fc1eb8c04b75a970fa03c2f53e7",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/service/handoff.ts",
+      "common": {
+        "mode": "100644",
+        "blob": "9b781733c06ac5fc9c84fc3b755a1248f7b25ac4"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "65846d48360358d4d4ceb6be383e6d57f4e71fed"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "9b781733c06ac5fc9c84fc3b755a1248f7b25ac4"
+      },
+      "candidateBlob": "65846d48360358d4d4ceb6be383e6d57f4e71fed",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/service/http-drain.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "503a77f9b108ac0f29983fca46644a5182f4232f"
+      },
+      "candidateBlob": "503a77f9b108ac0f29983fca46644a5182f4232f",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "src/service/image-descriptor.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "f6fd7cac7ef59667929f9691ec6d04e7a207fd75"
+      },
+      "r8": null,
+      "candidateBlob": "f6fd7cac7ef59667929f9691ec6d04e7a207fd75",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/service/pages.ts",
+      "common": {
+        "mode": "100644",
+        "blob": "f3c34ced335c3871aa4a2cc9e6a03b38eb43eea3"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "f3c34ced335c3871aa4a2cc9e6a03b38eb43eea3"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "343e8dafcdd6e44235d49a46030f7b18fe0ed01a"
+      },
+      "candidateBlob": "343e8dafcdd6e44235d49a46030f7b18fe0ed01a",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "src/service/private-storage.ps1",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "718adec4d3c02492030875c4c2ab66b3b2fb7236"
+      },
+      "candidateBlob": "718adec4d3c02492030875c4c2ab66b3b2fb7236",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "src/service/private-storage.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "93c434e5474e23dae22fc2d85b5f6d9ac13503ac"
+      },
+      "candidateBlob": "93c434e5474e23dae22fc2d85b5f6d9ac13503ac",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "src/service/project-memory.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "e535e0d6277e84b3f69ea19d7b5a1f315c656cf1"
+      },
+      "r8": null,
+      "candidateBlob": "e535e0d6277e84b3f69ea19d7b5a1f315c656cf1",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/service/raster-inspect-worker.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "f983a501d4cb63260a21c17684543f4c687d4fe0"
+      },
+      "r8": null,
+      "candidateBlob": "f983a501d4cb63260a21c17684543f4c687d4fe0",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/service/raster-library.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "7ec61608b19479f1690e2c8cca215ea2d6c2adcc"
+      },
+      "r8": null,
+      "candidateBlob": "7ec61608b19479f1690e2c8cca215ea2d6c2adcc",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/service/server.ts",
+      "common": {
+        "mode": "100644",
+        "blob": "5104da9b322feca485ea6517be8e81e6aacc0622"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "c32084aefbc2aff2409b1c21bcd179352ce7a059"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "c61362cf416140aa761b0f078a91bde4613b6df7"
+      },
+      "candidateBlob": "373f9c21427c657c9db838d8ac6be799b89e9526",
+      "mode": "100644",
+      "resolution": "Union of visual/memory/Library and semantic/chat routes and injection options; retain HTTP admission/drain and memoized close, then close raster execution, chat and both workspace stores; default / visual and deliberate /legacy."
+    },
+    {
+      "path": "src/service/visual-workspace.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "84d95d7572001176eaf98ecdc7610c963fea16e4"
+      },
+      "r8": null,
+      "candidateBlob": "84d95d7572001176eaf98ecdc7610c963fea16e4",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/service/workspace.ts",
+      "common": {
+        "mode": "100644",
+        "blob": "bdd47b2d3b71a3f15a93dbbc6b63128682ad95a4"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "c1d051136a8352573ba0b08a7c58c85328eba328"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "6dfeb65274eedd693f1f30655f4ffe32a77fad03"
+      },
+      "candidateBlob": "a5ebc6c2ab8b66411dbf82201c6d612d5f8d9fcb",
+      "mode": "100644",
+      "resolution": "Keep V05 raster validations, kernel image facts and store close; add R8 explicit intake option and truthful empty semantic draft fields. Clean three-way composition reviewed."
+    },
+    {
+      "path": "src/web/app.css",
+      "common": {
+        "mode": "100644",
+        "blob": "c2504329b0de3ff6bce483713ab18f88a208c695"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "c2504329b0de3ff6bce483713ab18f88a208c695"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "369b9837bc815c3832f47be490beaf9e5c29fd39"
+      },
+      "candidateBlob": "369b9837bc815c3832f47be490beaf9e5c29fd39",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "src/web/app.ts",
+      "common": {
+        "mode": "100644",
+        "blob": "43ba5299dcca633b11af0765f1947f53d182be9e"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "43ba5299dcca633b11af0765f1947f53d182be9e"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "7409083ae3f80f1d35a40428e9a40514f5a17758"
+      },
+      "candidateBlob": "7409083ae3f80f1d35a40428e9a40514f5a17758",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "src/web/chat.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "b17c3d76ce0be64a11bd499aff43d431c771e553"
+      },
+      "candidateBlob": "b17c3d76ce0be64a11bd499aff43d431c771e553",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "src/web/index.html",
+      "common": {
+        "mode": "100644",
+        "blob": "3171110d5d2f6e8b50ae60ac42de41799cd65ccb"
+      },
+      "v05": {
+        "mode": "100644",
+        "blob": "3831422e93733953bcd4204be2e2a6f5badaed2e"
+      },
+      "r8": {
+        "mode": "100644",
+        "blob": "2c25bc7e08e980f62aa52be8a5372917bf3248a8"
+      },
+      "candidateBlob": "39786e43cb5733609583a6806624d1ac61330533",
+      "mode": "100644",
+      "resolution": "Keep V05 visual return link and R8 conversation mount; label return and legacy title; served at /legacy."
+    },
+    {
+      "path": "src/web/visual-drafts.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "146e38f26c68496dcf642e55a02aab7c2ac11b46"
+      },
+      "r8": null,
+      "candidateBlob": "146e38f26c68496dcf642e55a02aab7c2ac11b46",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/web/visual-geometry.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "8da082d6093a43f0b4d1ef0565fedd729fb8df07"
+      },
+      "r8": null,
+      "candidateBlob": "8da082d6093a43f0b4d1ef0565fedd729fb8df07",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/web/visual.css",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "a0c380b4baff34381ad85435853bc337c444a910"
+      },
+      "r8": null,
+      "candidateBlob": "a0c380b4baff34381ad85435853bc337c444a910",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/web/visual.html",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "fa21e4eee8237c9ae1f4b702a2f7758fb7f87e2d"
+      },
+      "r8": null,
+      "candidateBlob": "fa21e4eee8237c9ae1f4b702a2f7758fb7f87e2d",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "src/web/visual.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "d7589c5a35d2b9dc0aa3a6f8eb131aff47d7970c"
+      },
+      "r8": null,
+      "candidateBlob": "0996206580fed26000a6d76d9d6059dc4518356b",
+      "mode": "100644",
+      "resolution": "Retain V05 visual implementation; change only legacy link target and label to /legacy."
+    },
+    {
+      "path": "tests/chat-auth.test.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "3e76f4b49177674dd557a2df879b00472bdeb5d3"
+      },
+      "candidateBlob": "3e76f4b49177674dd557a2df879b00472bdeb5d3",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "tests/chat-http.test.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "b0f446251fd5c987583fb666a3f123f87f29c6af"
+      },
+      "candidateBlob": "b0f446251fd5c987583fb666a3f123f87f29c6af",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "tests/chat-process.test.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "02d61feda98e862b463491935c7a76651cfe6177"
+      },
+      "candidateBlob": "02d61feda98e862b463491935c7a76651cfe6177",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "tests/chat-status.test.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "8bde03c1efb3b7488fe0268ebca402faec15be5f"
+      },
+      "candidateBlob": "8bde03c1efb3b7488fe0268ebca402faec15be5f",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "tests/chat.test.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "3522309647c2520234d3933b81fa2baf1707e702"
+      },
+      "candidateBlob": "3522309647c2520234d3933b81fa2baf1707e702",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "tests/execution.test.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "d8fd0a2e163cfa9a079c240dc91ca2d67e21e7fa"
+      },
+      "r8": null,
+      "candidateBlob": "d8fd0a2e163cfa9a079c240dc91ca2d67e21e7fa",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "tests/exploration.test.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "9b5b7878e87078caa0a56016d6e2db571fe8a4a6"
+      },
+      "r8": null,
+      "candidateBlob": "9b5b7878e87078caa0a56016d6e2db571fe8a4a6",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "tests/http-drain.test.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "c99a118cfa38beaba67d7ebc53a6e5745da3acf3"
+      },
+      "candidateBlob": "c99a118cfa38beaba67d7ebc53a6e5745da3acf3",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "tests/own-slot.test.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "5aac6778c681e2232b12e46f3e814dfd5b5af15c"
+      },
+      "candidateBlob": "5aac6778c681e2232b12e46f3e814dfd5b5af15c",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "tests/page-contracts.test.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "c1705a0dfb12c618cc87db1500227d04b9fb8303"
+      },
+      "candidateBlob": "c1705a0dfb12c618cc87db1500227d04b9fb8303",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "tests/private-storage.test.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "bbd76428e3993bc00c7e6ecc99a30c7654d9cd13"
+      },
+      "candidateBlob": "bbd76428e3993bc00c7e6ecc99a30c7654d9cd13",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "tests/project-memory-repairs.test.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "24d4bd98aa2d306c7b58cf4147fd716ce0c7b129"
+      },
+      "r8": null,
+      "candidateBlob": "24d4bd98aa2d306c7b58cf4147fd716ce0c7b129",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "tests/project-memory.test.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "d8981f40f28440de5c42c7798e8eb57de4badefc"
+      },
+      "r8": null,
+      "candidateBlob": "d8981f40f28440de5c42c7798e8eb57de4badefc",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "tests/raster-library.test.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "f29f818e2dbbff10c250ce36c4ca6d9acf11f43f"
+      },
+      "r8": null,
+      "candidateBlob": "f29f818e2dbbff10c250ce36c4ca6d9acf11f43f",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    },
+    {
+      "path": "tests/style-contracts.test.ts",
+      "common": null,
+      "v05": null,
+      "r8": {
+        "mode": "100644",
+        "blob": "485c3434bf86bb0f92af52b67d32177c18b125ee"
+      },
+      "candidateBlob": "485c3434bf86bb0f92af52b67d32177c18b125ee",
+      "mode": "100644",
+      "resolution": "Exact R8 replay"
+    },
+    {
+      "path": "tests/visual-workspace.test.ts",
+      "common": null,
+      "v05": {
+        "mode": "100644",
+        "blob": "9dfcb6eabae4afa19a798089fbbf367b7d6ede63"
+      },
+      "r8": null,
+      "candidateBlob": "9dfcb6eabae4afa19a798089fbbf367b7d6ede63",
+      "mode": "100644",
+      "resolution": "Exact V05 retention"
+    }
+  ],
+  "testInventory": {
+    "v05Files": [
+      "tests/ai-directions.test.ts",
+      "tests/compositions.test.ts",
+      "tests/design-os.test.ts",
+      "tests/execution.test.ts",
+      "tests/exploration.test.ts",
+      "tests/http-errors.test.ts",
+      "tests/pages.test.ts",
+      "tests/project-memory-repairs.test.ts",
+      "tests/project-memory.test.ts",
+      "tests/provider-fixture.test.ts",
+      "tests/providers.test.ts",
+      "tests/raster-library.test.ts",
+      "tests/regions.test.ts",
+      "tests/review-repairs.test.ts",
+      "tests/spike.test.ts",
+      "tests/visual-workspace.test.ts",
+      "tests/workspace.test.ts"
+    ],
+    "r8Files": [
+      "tests/ai-directions.test.ts",
+      "tests/chat-auth.test.ts",
+      "tests/chat-http.test.ts",
+      "tests/chat-process.test.ts",
+      "tests/chat-status.test.ts",
+      "tests/chat.test.ts",
+      "tests/compositions.test.ts",
+      "tests/design-os.test.ts",
+      "tests/http-drain.test.ts",
+      "tests/http-errors.test.ts",
+      "tests/own-slot.test.ts",
+      "tests/page-contracts.test.ts",
+      "tests/pages.test.ts",
+      "tests/private-storage.test.ts",
+      "tests/provider-fixture.test.ts",
+      "tests/providers.test.ts",
+      "tests/regions.test.ts",
+      "tests/review-repairs.test.ts",
+      "tests/spike.test.ts",
+      "tests/style-contracts.test.ts",
+      "tests/workspace.test.ts"
+    ],
+    "sharedFiles": [
+      "tests/ai-directions.test.ts",
+      "tests/compositions.test.ts",
+      "tests/design-os.test.ts",
+      "tests/http-errors.test.ts",
+      "tests/pages.test.ts",
+      "tests/provider-fixture.test.ts",
+      "tests/providers.test.ts",
+      "tests/regions.test.ts",
+      "tests/review-repairs.test.ts",
+      "tests/spike.test.ts",
+      "tests/workspace.test.ts"
+    ],
+    "unionFiles": [
+      "tests/ai-directions.test.ts",
+      "tests/chat-auth.test.ts",
+      "tests/chat-http.test.ts",
+      "tests/chat-process.test.ts",
+      "tests/chat-status.test.ts",
+      "tests/chat.test.ts",
+      "tests/compositions.test.ts",
+      "tests/design-os.test.ts",
+      "tests/execution.test.ts",
+      "tests/exploration.test.ts",
+      "tests/http-drain.test.ts",
+      "tests/http-errors.test.ts",
+      "tests/own-slot.test.ts",
+      "tests/page-contracts.test.ts",
+      "tests/pages.test.ts",
+      "tests/private-storage.test.ts",
+      "tests/project-memory-repairs.test.ts",
+      "tests/project-memory.test.ts",
+      "tests/provider-fixture.test.ts",
+      "tests/providers.test.ts",
+      "tests/raster-library.test.ts",
+      "tests/regions.test.ts",
+      "tests/review-repairs.test.ts",
+      "tests/spike.test.ts",
+      "tests/style-contracts.test.ts",
+      "tests/visual-workspace.test.ts",
+      "tests/workspace.test.ts"
+    ],
+    "missing": [],
+    "modified": [],
+    "newUnitFiles": []
+  },
+  "patchSHA256": "cc428052eeac455c99e87c1a513d82bfb76b7e8d55bdd618fdd56e25e3f25d21"
+}

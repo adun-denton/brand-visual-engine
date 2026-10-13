@@ -3,6 +3,8 @@ import { chromium, expect } from '@playwright/test';
 import { mkdtempSync, mkdirSync, writeFileSync, cpSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { once } from 'node:events';
+import { connect } from 'node:net';
 import { startApp } from '../src/service/server.ts';
 import type { RunningApp } from '../src/service/server.ts';
 import { reference } from '../src/kernel/packets.ts';
@@ -18,9 +20,23 @@ let app:RunningApp|null=await startApp(root,0,undefined,undefined,{aiResponseFix
 const browser=await chromium.launch({headless:true,...(process.env['BVE_CHROMIUM_EXECUTABLE']?{executablePath:process.env['BVE_CHROMIUM_EXECUTABLE']}:{ }),args:['--no-sandbox','--disable-dev-shm-usage']});
 const context=await browser.newContext({viewport:{width:1440,height:1000}}), page=await context.newPage();
 const errors:string[]=[], receipts:unknown[]=[]; page.on('pageerror',e=>errors.push(e.message));
-const submit=async(selector:string,text:string)=>{await page.locator(selector).locator('button').last().click();await expect(page.locator('#app')).not.toHaveAttribute('aria-busy','true');await expect(page.locator('#notice')).toContainText(text);};
-const open=async(pid:string)=>{await page.goto(app!.origin);await page.locator(`[data-action=open][data-id="${pid}"]`).click();await expect(page.locator('#studio-prepare')).toBeVisible();};
+const submit=async(selector:string,text:string)=>{console.log('Review submit:',selector);await page.locator(selector).locator('button').last().click();await expect(page.locator('#app')).not.toHaveAttribute('aria-busy','true');await expect(page.locator('#notice')).toContainText(text);};
+const open=async(pid:string)=>{console.log('Review open:',pid);await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
+  await page.goto(app!.origin + "/legacy");await page.locator(`[data-action=open][data-id="${pid}"]`).click();await expect(page.locator('#studio-prepare')).toBeVisible();};
 const active=async()=>JSON.parse(await page.locator('#studio-active').inputValue()).id as string;
+// Keep a deliberately unused accepted connection through each retained close/reopen
+// control. The runtime must settle without depending on the client to disconnect.
+const closeRuntime=async()=>{
+ const runtime=app!, accepted=once(runtime.server,'connection');
+ const socket=connect({host:'127.0.0.1',port:Number(new URL(runtime.origin).port),allowHalfOpen:true});
+ socket.on('error',()=>{});await Promise.all([accepted,once(socket,'connect')]);
+ let timer:ReturnType<typeof setTimeout>|undefined;
+ try {
+  await Promise.race([runtime.close(),new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(Error('Review shutdown retained an unused TCP connection')),3000);})]);
+  expect(socket.bytesRead).toBe(0);expect(socket.bytesWritten).toBe(0);
+  receipts.push({scenario:'unused-tcp-shutdown',clientBytesRead:socket.bytesRead,clientBytesWritten:socket.bytesWritten,settledBeforeClientDisconnect:true});
+ } finally {clearTimeout(timer);socket.destroy();}
+};
 try {
  if(process.argv[2]!=='selection') for(const scenario of ['cancelled','base-stale','project-stale']) {
   const p=app!.workspace.create({title:'Historical '+scenario,mode:'freeroam',visualOS:null,palette:null}).project!;
@@ -55,13 +71,15 @@ try {
   expect((await app!.pages.export(p.id,accepted!)).bytes).toEqual(pkg);
   // A fresh browser context has no remembered choice: it must still exclude historical fallback.
   const fresh=await browser.newContext(), freshPage=await fresh.newPage();
-  await freshPage.goto(app!.origin);await freshPage.locator(`[data-action=open][data-id="${p.id}"]`).click();
+  await freshPage.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
+  await freshPage.goto(app!.origin + "/legacy");await freshPage.locator(`[data-action=open][data-id="${p.id}"]`).click();
   await expect(freshPage.locator('#studio-active')).toHaveValue(JSON.stringify(reference(current)));
   await fresh.close();
   await page.setViewportSize({width:390,height:844});await page.screenshot({path:join(evidence,scenario+'-narrow.png'),fullPage:true});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.setViewportSize({width:1440,height:1000});
-  const port=Number(new URL(app!.origin).port);await page.goto('about:blank');await app!.close();app=null;
+  const port=Number(new URL(app!.origin).port);await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
+  await page.goto('about:blank');console.log('Review closing runtime');await closeRuntime();app=null;console.log('Review runtime closed');
   const copy=root+'-closed-copy';cpSync(root,copy,{recursive:true});root=copy;
   app=await startApp(root,port,undefined,undefined,{aiResponseFixture:true});
   await open(p.id);expect(await active()).toBe(current.id);
@@ -117,7 +135,8 @@ try {
   await submit('.direction-place','placement');await check();
   await open(p.id);await check();
   expect(app!.workspace.state(p.id).accepted).toEqual(acceptanceBefore);
-  const port=Number(new URL(app!.origin).port);await page.goto('about:blank');await app!.close();app=null;
+  const port=Number(new URL(app!.origin).port);await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
+  await page.goto('about:blank');console.log('Review closing runtime');await closeRuntime();app=null;console.log('Review runtime closed');
   app=await startApp(root,port,undefined,undefined,{aiResponseFixture:true});await open(p.id);await check();
   receipts.push({scenario:'legacy-direction-selection',expected,placementTarget:a.payload.candidates[1],acceptanceUnchanged:true,nativeAndAPIDefaultsPreserved:true});
  }
