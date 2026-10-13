@@ -37,6 +37,9 @@ jobs:
       - run: node scripts/reconstruction-acceptance-probe.ts
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-reconstruction-acceptance-evidence
+      - run: node scripts/auxiliary-admission-probes.ts
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-auxiliary-admission-evidence
       - run: npm run test:combined:memory
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-combined-memory-evidence
@@ -124,6 +127,7 @@ jobs:
         with:
           name: offline-browser-evidence-${{ matrix.os }}
           path: |
+            ${{ runner.temp }}/bve-auxiliary-admission-evidence
             ${{ runner.temp }}/bve-auxiliary-compatibility-evidence
             ${{ runner.temp }}/bve-auxiliary-browser-evidence
             ${{ runner.temp }}/bve-reconstruction-acceptance-evidence

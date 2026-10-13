@@ -1,0 +1,24 @@
+{
+  "base": "9c1af294cb025a9dcc0212795cf602a356a1a771",
+  "tree": "17531fbb31a98477935c9d7f12b4e3f6c822e705",
+  "originalTables": [
+    "chat-private/sessions.sqlite:actions",
+    "chat-private/sessions.sqlite:image_jobs",
+    "chat-private/sessions.sqlite:sessions",
+    "kernel.sqlite:kernel_events",
+    "kernel.sqlite:kernel_packets",
+    "kernel.sqlite:kernel_selections"
+  ],
+  "originalFiles": 9,
+  "requests": 1,
+  "proposals": 2,
+  "fixtureCalls": 2,
+  "oldRootEmptyAuxiliary": true,
+  "originalRowsBytesExportsAndChatPreserved": true,
+  "additiveWritesAndColdReopen": true,
+  "accountCalls": 0,
+  "modelCalls": 0,
+  "imageProviderCalls": 0,
+  "gpuCalls": 0,
+  "protectedRootAccesses": 0
+}

@@ -26,6 +26,7 @@ import {
 } from "../kernel/auxiliary-context.ts";
 import {
   parseScope,
+  parseTurn,
   parseProposal,
   parseTarget,
   parseToken,
@@ -52,6 +53,7 @@ import {
   same,
   parseSubmission,
   type Work,
+  type ReconstructionRequest,
 } from "../modules/website/reconstruction-contracts.ts";
 import { InputError, record, id, string, list, integer } from "./validation.ts";
 import { exactImageInput } from "./session-inputs.ts";
@@ -220,6 +222,104 @@ export class Auxiliary {
           (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0) ||
           a.id.localeCompare(b.id),
       ) as Work<any>[];
+  }
+  /** Revision inventory is authority; surviving latest rows are only evidence. */
+  private turnHistory(pid: string, scope: VersionRef): Work<Turn>[] {
+    const rows = new CanonicalMemory(this.w.kernel.environment()).inventory(
+      pid,
+      false,
+    );
+    const groups = new Map<string, typeof rows>();
+    for (const row of rows) {
+      const group = groups.get(row.ref.id) ?? [];
+      group.push(row);
+      groups.set(row.ref.id, group);
+    }
+    const unavailable = () => {
+      throw new InputError(
+        "Canonical turn history unavailable; no allowance or history inferred",
+        409,
+      );
+    };
+    const turns: Work<Turn>[] = [];
+    for (const [identity, group] of groups) {
+      const available = group.filter((row) => row.packet !== null);
+      if (!available.length) unavailable(); // Kind and scope are unknown, not empty history.
+      const evidence = available.map((row) => row.packet!);
+      if (evidence.some((p) => p.projectId !== pid)) unavailable();
+      const turnPackets = evidence.filter(
+        (p) =>
+          p.type === "work-record" &&
+          (p.payload as DesignArtifact<any>).kind === "auxiliary-turn",
+      ) as Work<Turn>[];
+      if (!turnPackets.length) {
+        // A missing unclassified version could have held execution evidence.
+        if (available.length !== group.length) unavailable();
+        continue;
+      }
+      if (turnPackets.length !== evidence.length) unavailable();
+      const states = turnPackets.map((p) => parseTurn(p.payload.state));
+      const bound = states[0]!;
+      const binding = (t: Turn) => ({
+        version: t.version,
+        workUnit: t.workUnit,
+        scope: t.scope,
+        contextDigest: t.contextDigest,
+        text: t.text,
+        provenance: t.provenance,
+      });
+      if (states.some((t) => !equal(binding(t), binding(bound)))) unavailable();
+      // This same identity's immutable binding can isolate known loss to its scope.
+      if (!same(bound.scope, scope)) continue;
+      const versions = group
+        .map((row) => row.ref.version)
+        .sort((a, b) => a - b);
+      const head = versions.at(-1)!;
+      if (
+        available.length !== group.length ||
+        versions.some((v, i) => v !== i + 1) ||
+        this.w.kernel.currentVersion(identity) !== head
+      )
+        unavailable();
+      turns.push(turnPackets.find((p) => p.version === head)!);
+    }
+    const order = new Map<string, number>();
+    for (const event of this.w.kernel.ledger(pid).events)
+      if (event.kind === "revision" && !order.has(event.subject.id))
+        order.set(event.subject.id, event.sequence);
+    return turns.sort((a, b) => order.get(a.id)! - order.get(b.id)!);
+  }
+  private bridgeAuthority(
+    pid: string,
+    request: Work<ReconstructionRequest>,
+    deadline = Infinity,
+  ) {
+    if (this.closing) throw new InputError("Auxiliary session is closing", 409);
+    if (Date.now() >= deadline)
+      throw new InputError(
+        "Bridge preparation timeout; no driver dispatch",
+        409,
+      );
+    const exact = this.reconstruction.request(pid, reference(request));
+    const control = this.reconstruction.state(
+      pid,
+      request.payload.state.workUnit,
+    ).control;
+    if (
+      exact.integrity !== request.integrity ||
+      this.w.kernel.currentVersion(request.id) !== request.version ||
+      !control ||
+      !same(control.payload.state.request, reference(request)) ||
+      control.payload.state.status !== "pending" ||
+      !reconstructionHeadsCurrent(
+        this.w.kernel.environment(),
+        request.payload.state,
+      )
+    )
+      throw new InputError(
+        "Operation superseded; frozen operation is not current/pending",
+        409,
+      );
   }
   state(pid: string, unit: VersionRef) {
     focusFacts(this.w.kernel.environment(), pid, {
@@ -651,9 +751,7 @@ export class Auxiliary {
       s = parseScope(scope.payload.state),
       draft = this.currentScope(s, reference(scope));
     if (Date.now() >= s.expiresAt) throw new InputError("Scope expired", 409);
-    const existing = this.records(pid, "auxiliary-turn").filter((t) =>
-      same(t.payload.state.scope, reference(scope)),
-    );
+    const existing = this.turnHistory(pid, reference(scope));
     if (
       existing.length >= s.limits.turns ||
       existing.some((t) => t.payload.state.status !== "completed")
@@ -683,7 +781,17 @@ export class Auxiliary {
       },
       [s.workUnit, reference(scope)],
     );
-    this.commit([turn]);
+    this.commit([turn], () => {
+      this.currentScope(s, reference(scope));
+      if (
+        Date.now() >= s.expiresAt ||
+        !equal(this.turnHistory(pid, reference(scope)), existing)
+      )
+        throw new InputError(
+          "Canonical turn admission changed; fresh scope required",
+          409,
+        );
+    });
     const abort = new AbortController(),
       job: Job = {
         record: turn,
@@ -722,12 +830,27 @@ export class Auxiliary {
     }, s.limits.timeoutMs);
     job.promise = (async () => {
       try {
+        const images = await this.images(facts);
+        this.running(job, s);
+        const admitted = this.turnHistory(pid, reference(scope));
+        if (
+          admitted.length !== existing.length + 1 ||
+          !admitted.some((t) => same(reference(t), reference(turn))) ||
+          !equal(
+            admitted.filter((t) => t.id !== turn.id),
+            existing,
+          )
+        )
+          throw new InputError(
+            "Canonical turn admission changed before dispatch",
+            409,
+          );
         const output = await this.injection!.driver.run({
           mode: "auxiliary",
           context: structuredClone(s.context),
           contextDigest: s.contextDigest,
           thread: { id: scope.id, resume: false },
-          images: await this.images(facts),
+          images,
           text: turn.payload.state.text,
           history,
           draft: {
@@ -1014,6 +1137,28 @@ export class Auxiliary {
     }
     return { cancelled: true };
   }
+  /** Pure exact operation inputs; no admission, dispatch or canonical writes. */
+  async bridgeImages(request: Work<ReconstructionRequest>) {
+    const q = request.payload.state;
+    const source = this.w.assets.read(q.source.image.id);
+    return [
+      {
+        label: "Exact whole reconstruction raster",
+        role: "source",
+        ref: q.source.media,
+        input: exactImageInput(source, q.source.image.format),
+      },
+      ...q.resources.map((resource) => ({
+        label: resource.label,
+        role: resource.role,
+        ref: resource.media,
+        input: exactImageInput(
+          this.w.assets.read(resource.state.image.id),
+          resource.state.image.format,
+        ),
+      })),
+    ];
+  }
   async bridge(pid: string, input: unknown) {
     if (!this.injection)
       throw new InputError(
@@ -1036,15 +1181,10 @@ export class Auxiliary {
         "Operation already has a bridge attempt; explicit new request required",
         409,
       );
-    const control = this.reconstruction.state(pid, q.workUnit).control;
-    if (
-      !control ||
-      !same(control.payload.state.request, reference(request)) ||
-      control.payload.state.status !== "pending"
-    )
-      throw new InputError("Frozen operation is not current/pending", 409);
     const timeoutMs = integer(r["timeoutMs"], 60000);
     if (timeoutMs < 50) throw new InputError("Bridge timeout too short");
+    const deadline = Date.now() + timeoutMs;
+    this.bridgeAuthority(pid, request, deadline);
     const context = {
       mode: "reconstruction",
       request: q,
@@ -1053,6 +1193,7 @@ export class Auxiliary {
       ).then((m) => m.reconstructionOutputSchema),
       policy: "Fresh frozen operation; no auxiliary/legacy history",
     };
+    const images = await this.bridgeImages(request);
     const contextDigest = digest(context),
       bridge = this.make<Bridge>(
         pid,
@@ -1072,7 +1213,19 @@ export class Auxiliary {
         [q.workUnit, reference(request)],
         identity,
       );
-    this.commit([bridge]);
+    this.commit([bridge], () => {
+      this.bridgeAuthority(pid, request, deadline);
+      if (
+        this.w.kernel
+          .projectRefs(pid, 4096, false)
+          .some((r) => r.id === identity) ||
+        this.w.kernel.currentVersion(identity) !== null
+      )
+        throw new InputError(
+          "Operation already has a bridge attempt; explicit new request required",
+          409,
+        );
+    });
     const abort = new AbortController(),
       job: Job = {
         record: bridge,
@@ -1084,37 +1237,24 @@ export class Auxiliary {
       };
     this.jobs.set(bridge.id, job);
     const tools = this.tools(pid, job, null, context, null, null, request);
-    job.timer = setTimeout(() => {
-      try {
-        this.cancel(
-          pid,
-          { record: reference(bridge), reason: "Declared bridge timeout" },
-          "expired",
-        );
-      } catch (e) {
-        if (this.jobs.has(bridge.id)) throw e;
-      }
-    }, timeoutMs);
-    const source = this.w.assets.read(q.source.image.id);
-    const images = [
-      {
-        label: "Exact whole reconstruction raster",
-        role: "source",
-        ref: q.source.media,
-        input: exactImageInput(source, q.source.image.format),
+    job.timer = setTimeout(
+      () => {
+        try {
+          this.cancel(
+            pid,
+            { record: reference(bridge), reason: "Declared bridge timeout" },
+            "expired",
+          );
+        } catch (e) {
+          if (this.jobs.has(bridge.id)) throw e;
+        }
       },
-      ...q.resources.map((resource) => ({
-        label: resource.label,
-        role: resource.role,
-        ref: resource.media,
-        input: exactImageInput(
-          this.w.assets.read(resource.state.image.id),
-          resource.state.image.format,
-        ),
-      })),
-    ];
+      Math.max(1, deadline - Date.now()),
+    );
     job.promise = (async () => {
       try {
+        this.running(job);
+        this.bridgeAuthority(pid, request, deadline);
         const output = await this.injection!.driver.run({
           mode: "reconstruction",
           context: structuredClone(context),
