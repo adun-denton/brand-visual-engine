@@ -1400,7 +1400,7 @@
       "r8": null,
       "candidateBlob": "0996206580fed26000a6d76d9d6059dc4518356b",
       "mode": "100644",
-      "resolution": "R8 replay plus root-route documentation"
+      "resolution": "Retain V05 visual implementation; change only legacy link target and label to /legacy."
     },
     {
       "path": "tests/chat-auth.test.ts",
