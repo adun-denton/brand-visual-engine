@@ -1,0 +1,277 @@
+{
+  "repairBase": "d2a99c4dfcb223709050d888eb1297fb22704318",
+  "repairBaseTree": "c76ab2729dc2a1c22c4f8697f599ebb9307b8a38",
+  "branch": "codex/bve-vnext-v07-offline-reconstruction",
+  "target": "codex/bve-vnext-v06-combined-foundation",
+  "pullRequest": 17,
+  "productionChange": "One guard reserves companion writes for a reconstruction primary; existing matching mirror/new bound review/CAS/gate remain unchanged.",
+  "changedFiles": [
+    {
+      "path": "docs/evidence/reconstruction-r1/after-probe.json",
+      "baseBlob": null,
+      "candidateBlob": "316dfde985511ff73b872189e7c3b2e21426d0b5",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/evidence/reconstruction-r1/before-probe.json",
+      "baseBlob": null,
+      "candidateBlob": "fbdbfbd3ad46a10c5c6231e0a0240a84013cb91e",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/evidence/reconstruction-r1/local-results.json",
+      "baseBlob": null,
+      "candidateBlob": "0fc631bcc695064af9930ef59a165d5b73705ec4",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/evidence/reconstruction-r1/source-manifest.json",
+      "baseBlob": null,
+      "candidateBlob": null,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/evidence/reconstruction-r1/unit-suite.tap",
+      "baseBlob": null,
+      "candidateBlob": "4fdf9f6b99f2ef66f8ebd62e7545f6a015210320",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/offline-reconstruction-r1-result.md",
+      "baseBlob": null,
+      "candidateBlob": "dd6aa973a16d4807d05ef195029450bef592f430",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/offline-reconstruction-result.md",
+      "baseBlob": "110938e72101985ff4f80b026fe1fcc646c545bc",
+      "candidateBlob": "052b5b063ce949fe12ab973289cc5bd11777b2e5",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/offline-reconstruction.md",
+      "baseBlob": "b4aef268e7ac83458fe8ef4fa7e6f9111f2bd154",
+      "candidateBlob": "e7771884701f6a81482a812e47ebc6ab6eb149fa",
+      "mode": "100644"
+    },
+    {
+      "path": "scripts/reconstruction-acceptance-probe.ts",
+      "baseBlob": null,
+      "candidateBlob": "774969774052539c16b388f8a7cf8161d7283723",
+      "mode": "100644"
+    },
+    {
+      "path": "src/kernel/store.ts",
+      "baseBlob": "9081fcacd004521fc231ddb1a794e1188017c32b",
+      "candidateBlob": "f9ca13b9951f6f54b5bc4cc5505aa92b4432bb77",
+      "mode": "100644"
+    },
+    {
+      "path": "tests/reconstruction.test.ts",
+      "baseBlob": "b006a63cd68f3a4b1e0ab84ed62ebd2390a3b901",
+      "candidateBlob": "42b19d7adefeccf3044d6572f1fdefd72cbd992f",
+      "mode": "100644"
+    }
+  ],
+  "upstreamTestFiles": [
+    {
+      "path": "tests/ai-directions.test.ts",
+      "blob": "c46989e69acd9b075736c6e891e69eda3f1415ff",
+      "unchanged": true
+    },
+    {
+      "path": "tests/chat-auth.test.ts",
+      "blob": "3e76f4b49177674dd557a2df879b00472bdeb5d3",
+      "unchanged": true
+    },
+    {
+      "path": "tests/chat-http.test.ts",
+      "blob": "b0f446251fd5c987583fb666a3f123f87f29c6af",
+      "unchanged": true
+    },
+    {
+      "path": "tests/chat-process.test.ts",
+      "blob": "02d61feda98e862b463491935c7a76651cfe6177",
+      "unchanged": true
+    },
+    {
+      "path": "tests/chat-status.test.ts",
+      "blob": "8bde03c1efb3b7488fe0268ebca402faec15be5f",
+      "unchanged": true
+    },
+    {
+      "path": "tests/chat.test.ts",
+      "blob": "3522309647c2520234d3933b81fa2baf1707e702",
+      "unchanged": true
+    },
+    {
+      "path": "tests/compositions.test.ts",
+      "blob": "f1001dbf802e3caad79bec32c2be7a7e8daa6fd9",
+      "unchanged": true
+    },
+    {
+      "path": "tests/design-os.test.ts",
+      "blob": "322c09456e78d70d534f5e8e71791e7ca64b04c6",
+      "unchanged": true
+    },
+    {
+      "path": "tests/execution.test.ts",
+      "blob": "d8fd0a2e163cfa9a079c240dc91ca2d67e21e7fa",
+      "unchanged": true
+    },
+    {
+      "path": "tests/exploration.test.ts",
+      "blob": "9b5b7878e87078caa0a56016d6e2db571fe8a4a6",
+      "unchanged": true
+    },
+    {
+      "path": "tests/http-drain.test.ts",
+      "blob": "c99a118cfa38beaba67d7ebc53a6e5745da3acf3",
+      "unchanged": true
+    },
+    {
+      "path": "tests/http-errors.test.ts",
+      "blob": "8595319b635f2d6ab1b266028424c002b59e7fda",
+      "unchanged": true
+    },
+    {
+      "path": "tests/own-slot.test.ts",
+      "blob": "5aac6778c681e2232b12e46f3e814dfd5b5af15c",
+      "unchanged": true
+    },
+    {
+      "path": "tests/page-contracts.test.ts",
+      "blob": "c1705a0dfb12c618cc87db1500227d04b9fb8303",
+      "unchanged": true
+    },
+    {
+      "path": "tests/pages.test.ts",
+      "blob": "f727361a877d1b84e7d6c68a5517b6a53eb8ab38",
+      "unchanged": true
+    },
+    {
+      "path": "tests/private-storage.test.ts",
+      "blob": "bbd76428e3993bc00c7e6ecc99a30c7654d9cd13",
+      "unchanged": true
+    },
+    {
+      "path": "tests/project-memory-repairs.test.ts",
+      "blob": "24d4bd98aa2d306c7b58cf4147fd716ce0c7b129",
+      "unchanged": true
+    },
+    {
+      "path": "tests/project-memory.test.ts",
+      "blob": "d8981f40f28440de5c42c7798e8eb57de4badefc",
+      "unchanged": true
+    },
+    {
+      "path": "tests/provider-fixture.test.ts",
+      "blob": "a35e8db2bf35a16374d14b88002bb728397b600f",
+      "unchanged": true
+    },
+    {
+      "path": "tests/providers.test.ts",
+      "blob": "fc4b5838b66271a56d82dc48b35198da52c0af8a",
+      "unchanged": true
+    },
+    {
+      "path": "tests/raster-library.test.ts",
+      "blob": "f29f818e2dbbff10c250ce36c4ca6d9acf11f43f",
+      "unchanged": true
+    },
+    {
+      "path": "tests/regions.test.ts",
+      "blob": "e1a6260eeedd3896c2e629e709a4acecb564badf",
+      "unchanged": true
+    },
+    {
+      "path": "tests/review-repairs.test.ts",
+      "blob": "6dde7f11d4cf240da1e79762c230d616035ad0f3",
+      "unchanged": true
+    },
+    {
+      "path": "tests/spike.test.ts",
+      "blob": "310733df0bbfcee0790127f09efb3197834b803f",
+      "unchanged": true
+    },
+    {
+      "path": "tests/style-contracts.test.ts",
+      "blob": "485c3434bf86bb0f92af52b67d32177c18b125ee",
+      "unchanged": true
+    },
+    {
+      "path": "tests/visual-workspace.test.ts",
+      "blob": "9dfcb6eabae4afa19a798089fbbf367b7d6ede63",
+      "unchanged": true
+    },
+    {
+      "path": "tests/workspace.test.ts",
+      "blob": "34a56f96b41eab261dd03244061068fa1126f404",
+      "unchanged": true
+    }
+  ],
+  "originalReconstructionTests": "Original 1,157-line file is an unchanged prefix; five tests and raw-table/captured-plan helpers append only.",
+  "unchangedControls": [
+    {
+      "path": "package.json",
+      "blob": "b223f696f01e507ab37730a9c48d44a8498b94f5",
+      "unchanged": true
+    },
+    {
+      "path": "package-lock.json",
+      "blob": "0ccbb4d724f16d379ec14248fa9a3321a0f5d2fb",
+      "unchanged": true
+    },
+    {
+      "path": ".github/workflows/verify.yml",
+      "blob": "998ef4b39698d9133e6d98f68c60432a19b2caaa",
+      "unchanged": true
+    },
+    {
+      "path": "src/kernel/reconstruction-gate.ts",
+      "blob": "cd3f8943916dd5bf7adc7d7e6224b61dad385d62",
+      "unchanged": true
+    },
+    {
+      "path": "src/service/reconstruction.ts",
+      "blob": "2e1dbcc1b0161a175f9cf524710e6995facc1484",
+      "unchanged": true
+    },
+    {
+      "path": "src/modules/website/page.ts",
+      "blob": "d82ffa93333d0f229f78fc821bb30fb125d65f87",
+      "unchanged": true
+    },
+    {
+      "path": "src/modules/website/page-contracts.ts",
+      "blob": "fda5fe76d8c857f3a913bbbc995b793c2dcf4376",
+      "unchanged": true
+    },
+    {
+      "path": "src/modules/website/style-contracts.ts",
+      "blob": "0e149820d037cdfd2738d637274e01c095fd4366",
+      "unchanged": true
+    },
+    {
+      "path": "src/modules/website/inference-contracts.ts",
+      "blob": "49e1af94d1b3f5a74a4aa93305b8fbc032c1dccb",
+      "unchanged": true
+    },
+    {
+      "path": "src/modules/website/reconstruction-contracts.ts",
+      "blob": "7472ede25377174be3ce48cb97fa177e929506a6",
+      "unchanged": true
+    },
+    {
+      "path": "src/modules/website/reconstruction-schemas.ts",
+      "blob": "a00091e1394e8c0eda41692081df54c3c9e042e6",
+      "unchanged": true
+    },
+    {
+      "path": "fixtures/design-os.json",
+      "blob": "0a2cef10a36f6524d9759393bed0cde841e43710",
+      "unchanged": true
+    }
+  ],
+  "selfHashNote": "Own manifest blob omitted to avoid circular identity; published head/tree supplied in review return."
+}

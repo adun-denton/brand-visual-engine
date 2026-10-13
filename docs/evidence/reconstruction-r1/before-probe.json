@@ -1,0 +1,47 @@
+{
+  "kernelStoreBlob": "9081fcacd004521fc231ddb1a794e1188017c32b",
+  "softwareHead": "d2a99c4dfcb223709050d888eb1297fb22704318",
+  "probeSha256": "8f6859f784f745df0cad84d7884edebecba65258c23935bd26c535b8cdd2650b",
+  "primaryRejected": true,
+  "reversedOutcome": "accepted",
+  "rejection": null,
+  "reviewRecords": 0,
+  "primaryAccepted": {
+    "id": "website-page-cd4335b1-4a50-4d9e-ad0b-e024a64d407c",
+    "version": 1,
+    "freshness": "pinned"
+  },
+  "mirroredAccepted": {
+    "id": "website-page-cd4335b1-4a50-4d9e-ad0b-e024a64d407c",
+    "version": 1,
+    "freshness": "pinned"
+  },
+  "persistedAfterReopen": {
+    "id": "website-page-cd4335b1-4a50-4d9e-ad0b-e024a64d407c",
+    "version": 1,
+    "freshness": "pinned"
+  },
+  "tableHashesBefore": {
+    "packets": "b427080f31d58c7aa268eacd9bc2ae5e2b8df2c482c30428011a9ffb39dd2ed2",
+    "selections": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "events": "0c4fc9a02dae5e1939371f4eb2b01abe771f1bb275c105bf1653a2449ea07300"
+  },
+  "tableHashesAfter": {
+    "packets": "b427080f31d58c7aa268eacd9bc2ae5e2b8df2c482c30428011a9ffb39dd2ed2",
+    "selections": "3d9d9872b010774cde5c2b02de6dad51c4cb3bd7545ad15e4065f8914a0e6ed4",
+    "events": "3a107386e0a25b4e039d8c2e39ead0e497b39d34dbea570c94d796f56c1fc3a2"
+  },
+  "tableHashesReopened": {
+    "packets": "b427080f31d58c7aa268eacd9bc2ae5e2b8df2c482c30428011a9ffb39dd2ed2",
+    "selections": "3d9d9872b010774cde5c2b02de6dad51c4cb3bd7545ad15e4065f8914a0e6ed4",
+    "events": "3a107386e0a25b4e039d8c2e39ead0e497b39d34dbea570c94d796f56c1fc3a2"
+  },
+  "rejectedWritesByteEquivalent": false,
+  "coldReopenByteEquivalent": true,
+  "authoredSynthetic": true,
+  "accountCalls": 0,
+  "modelCalls": 0,
+  "imageProviderCalls": 0,
+  "gpuCalls": 0,
+  "protectedRootAccesses": 0
+}

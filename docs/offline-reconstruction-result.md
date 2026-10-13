@@ -66,3 +66,13 @@ merge or deployment. Visual usefulness and actual model reconstruction remain
 unverified by design. Local generation remains at cycle end. Existing layout/default
 count and cross-project Library choices remain unresolved as before. Canonical task
 completion and independent acceptance are left to the originating Work reviewer.
+
+## R1 acceptance boundary repair
+
+Independent review reproduced a durable mirrored-destination bypass at the
+original candidate: a legacy page primary could write a reconstruction mirror
+with no review. The original passing gates did not cover that arrangement.
+[R1 repair evidence](offline-reconstruction-r1-result.md) records the exact
+before/after probe, narrow persistence guard, paired/legacy positive controls
+and complete rollback regressions. Original evidence above remains a historical
+snapshot; independent V07 acceptance remains pending.

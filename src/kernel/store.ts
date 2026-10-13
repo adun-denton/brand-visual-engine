@@ -125,6 +125,7 @@ export class KernelStore {
       const artifact = this.get(artifactRef);
       if (!['design-artifact', 'website-assembly'].includes(artifact.type) || artifact.projectId !== projectId) throw new Error('artifact acceptance scope mismatch');
       if (!slot.trim()) throw new Error('acceptance slot required');
+      if(companions&&!slot.startsWith('reconstruction:'))throw new Error('Paired acceptance requires a reconstruction primary destination');
       if(slot.startsWith('reconstruction:')){
         const review=companions?.records[0]?.payload as {kind?:string;state?:{workUnit?:VersionRef;proposal?:VersionRef}}|undefined;
         if(!companions||companions.mirror.slot!=='page:'+artifactRef.id||companions.records.length!==1||review?.kind!=='reconstruction-review'||review.state?.workUnit?.id!==slot.slice('reconstruction:'.length)||review.state.proposal?.id!==artifactRef.id||review.state.proposal?.version!==artifactRef.version)throw new Error('Reconstruction acceptance requires its atomic bound review and page acceptance');

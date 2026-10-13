@@ -1157,3 +1157,326 @@ test("ledger-known lost reconstruction control cannot fall back or reuse a canon
   assert.equal(canonical(reopened.workspace.kernel.ledger(s.p.id)), before);
   assert.ok(reopened.workspace.kernel.get(reference(result)));
 });
+
+// Raw serialized rows prove rollback of every canonical version/event/selection,
+// not merely the currently selected references returned by a service projection.
+function acceptanceRows(root: string) {
+  const db = new DatabaseSync(join(root, "kernel.sqlite"), { readOnly: true });
+  try {
+    return JSON.stringify({
+      packets: db
+        .prepare(
+          "SELECT id,version,body FROM kernel_packets ORDER BY id,version",
+        )
+        .all(),
+      selections: db
+        .prepare(
+          "SELECT project_id,slot,body FROM kernel_selections ORDER BY project_id,slot",
+        )
+        .all(),
+      events: db
+        .prepare(
+          "SELECT project_id,sequence,body FROM kernel_events ORDER BY project_id,sequence",
+        )
+        .all(),
+    });
+  } finally {
+    db.close();
+  }
+}
+type AcceptanceArgs = Parameters<S["app"]["workspace"]["kernel"]["accept"]>;
+// Capture a genuine current service plan without writing any review or selection.
+function pairedAcceptance(
+  s: S,
+  q: Work<ReconstructionRequest>,
+  result: any,
+): AcceptanceArgs {
+  const kernel = s.app.workspace.kernel,
+    original = kernel.accept;
+  let call: AcceptanceArgs | undefined;
+  const before = acceptanceRows(s.root);
+  kernel.accept = (...args) => {
+    call = args;
+    throw new Error("Capture current synthetic acceptance plan");
+  };
+  try {
+    assert.throws(
+      () => accept(s, q, result),
+      /Capture current synthetic acceptance plan/,
+    );
+  } finally {
+    kernel.accept = original;
+  }
+  assert.equal(acceptanceRows(s.root), before);
+  assert.ok(call);
+  return call;
+}
+function copyAcceptance(call: AcceptanceArgs): AcceptanceArgs {
+  const copy = [...call] as AcceptanceArgs;
+  copy[8] = { mirror: { ...call[8]!.mirror }, records: [...call[8]!.records] };
+  return copy;
+}
+function reviewVariant(
+  call: AcceptanceArgs,
+  state: Record<string, unknown> = {},
+  projectId = call[0],
+) {
+  const review = call[8]!.records[0]!;
+  const { integrity: _, ...body } = review;
+  const payload = body.payload as { state: Record<string, unknown> };
+  return packet({
+    ...body,
+    projectId,
+    payload: { ...payload, state: { ...payload.state, ...state } },
+  });
+}
+function rejectsWithoutWrites(s: S, call: AcceptanceArgs, error: RegExp) {
+  const before = acceptanceRows(s.root);
+  assert.throws(() => s.app.workspace.kernel.accept(...call), error);
+  assert.equal(acceptanceRows(s.root), before);
+}
+
+test("R1 exact reversed destinations and unrelated companion primaries reject without durable writes", async (t) => {
+  const s = await setup(t),
+    page = await seedRepairPage(s.app.pages, s.p.id);
+  const before = acceptanceRows(s.root);
+  assert.throws(
+    () =>
+      s.app.workspace.kernel.accept(
+        s.p.id,
+        "reconstruction:" + s.u.id,
+        reference(page),
+        null,
+        "operator",
+        "Direct unreviewed probe",
+      ),
+    /atomic bound review/,
+  );
+  for (const primary of ["page:" + page.id, "website", "other-primary"]) {
+    rejectsWithoutWrites(
+      s,
+      [
+        s.p.id,
+        primary,
+        reference(page),
+        null,
+        "operator",
+        "Reversed destination probe",
+        null,
+        undefined,
+        {
+          mirror: { slot: "reconstruction:" + s.u.id, expected: null },
+          records: [],
+        },
+      ],
+      /reconstruction primary destination/,
+    );
+  }
+  assert.equal(acceptanceRows(s.root), before);
+  const reopened = await s.reopen();
+  assert.equal(acceptanceRows(s.root), before);
+  assert.equal(
+    reopened.workspace.kernel.selected(s.p.id, "reconstruction:" + s.u.id),
+    null,
+  );
+  assert.equal(
+    reopened.workspace.kernel.selected(s.p.id, "page:" + page.id),
+    null,
+  );
+  assert.equal(
+    reopened.workspace.kernel
+      .latestPackets()
+      .filter((p) => (p.payload as any).kind === "reconstruction-review")
+      .length,
+    0,
+  );
+});
+
+test("R1 companion misuse rejects empty/existing reviews, wrong proposal/project/unit and unsupported mirror destinations", async (t) => {
+  const s = await setup(t),
+    q = (await s.app.reconstruction.prepare(s.p.id, input(s, { count: 2 })))
+      .request;
+  const { result } = await apply(s, q),
+    foreign = s.app.visual.create({ title: "Other synthetic owner" }).project;
+  const call = pairedAcceptance(s, q, result),
+    second = result.payload.state.proposals[1]!.ref;
+  for (const destination of [
+    "reconstruction:" + s.u.id,
+    "reconstruction:" + s.about.id,
+    "website",
+    "other-mirror",
+    "page:" + second.id,
+  ]) {
+    const altered = copyAcceptance(call);
+    altered[8]!.mirror.slot = destination;
+    rejectsWithoutWrites(s, altered, /atomic bound review/);
+  }
+  const empty = copyAcceptance(call);
+  empty[8]!.records = [];
+  rejectsWithoutWrites(s, empty, /atomic bound review/);
+  const unrelated = copyAcceptance(call);
+  unrelated[1] = "page:" + call[2].id;
+  rejectsWithoutWrites(s, unrelated, /reconstruction primary destination/);
+  const wrongOwner = copyAcceptance(call);
+  wrongOwner[0] = foreign.id;
+  rejectsWithoutWrites(s, wrongOwner, /artifact acceptance scope mismatch/);
+  const wrongProject = copyAcceptance(call);
+  wrongProject[8]!.records = [reviewVariant(call, {}, foreign.id)];
+  rejectsWithoutWrites(s, wrongProject, /owner|scope|reference|mismatch/);
+  const wrongUnit = copyAcceptance(call);
+  wrongUnit[1] = "reconstruction:" + s.about.id;
+  wrongUnit[8]!.records = [
+    reviewVariant(call, { workUnit: reference(s.about) }),
+  ];
+  rejectsWithoutWrites(s, wrongUnit, /review source\/result mismatch/);
+  const wrongProposal = copyAcceptance(call);
+  wrongProposal[2] = second;
+  wrongProposal[8]!.mirror.slot = "page:" + second.id;
+  wrongProposal[8]!.records = [reviewVariant(call, { proposal: second })];
+  rejectsWithoutWrites(s, wrongProposal, /review source\/result mismatch/);
+  const stored = accept(s, q, result),
+    reuse = copyAcceptance(call);
+  reuse[4] = "operator";
+  reuse[3] = stored.accepted;
+  reuse[8]!.mirror.expected = stored.accepted;
+  reuse[8]!.records = [stored.review];
+  rejectsWithoutWrites(s, reuse, /new single-use review/);
+});
+
+test("R1 stale primary/mirror CAS and failing companion review roll back both selections and all events", async (t) => {
+  const s = await setup(t),
+    q = (await s.app.reconstruction.prepare(s.p.id, input(s))).request;
+  const { result } = await apply(s, q),
+    call = pairedAcceptance(s, q, result);
+  const stalePrimary = copyAcceptance(call);
+  stalePrimary[3] = reference(s.c);
+  rejectsWithoutWrites(s, stalePrimary, /stale acceptance/);
+  const staleMirror = copyAcceptance(call);
+  staleMirror[8]!.mirror.expected = reference(s.c);
+  rejectsWithoutWrites(s, staleMirror, /stale mirrored acceptance/);
+  const failingReview = copyAcceptance(call);
+  failingReview[8]!.records = [
+    reviewVariant(call, { signature: "f".repeat(64) }),
+  ];
+  rejectsWithoutWrites(s, failingReview, /review source\/result mismatch/);
+  const kernel = s.app.workspace.kernel as any,
+    original = kernel.insert;
+  kernel.insert = (p: any, port: any) => {
+    if (p.payload.kind === "reconstruction-review") {
+      assert.deepEqual(kernel.selected(s.p.id, call[1]), call[2]);
+      assert.deepEqual(kernel.selected(s.p.id, call[8]!.mirror.slot), call[2]);
+      throw new Error(
+        "Injected companion storage failure after both selections",
+      );
+    }
+    return original.call(kernel, p, port);
+  };
+  try {
+    rejectsWithoutWrites(s, call, /Injected companion storage failure/);
+  } finally {
+    kernel.insert = original;
+  }
+  const before = acceptanceRows(s.root);
+  await s.reopen();
+  assert.equal(acceptanceRows(s.root), before);
+});
+
+test("R1 valid paired acceptance stores two selections and one new review, reopens and exports without source", async (t) => {
+  const s = await setup(t),
+    q = (await s.app.reconstruction.prepare(s.p.id, input(s))).request;
+  const { result } = await apply(s, q),
+    call = pairedAcceptance(s, q, result);
+  const before = s.app.workspace.kernel.ledger(s.p.id).events.length;
+  s.app.workspace.kernel.accept(...call);
+  assert.deepEqual(s.app.workspace.kernel.selected(s.p.id, call[1]), call[2]);
+  assert.deepEqual(
+    s.app.workspace.kernel.selected(s.p.id, call[8]!.mirror.slot),
+    call[2],
+  );
+  assert.equal(
+    s.app.workspace.kernel
+      .latestPackets()
+      .filter((p) => (p.payload as any).kind === "reconstruction-review")
+      .length,
+    1,
+  );
+  const events = s.app.workspace.kernel.ledger(s.p.id).events.slice(before);
+  assert.deepEqual(
+    events.map((e) => e.kind),
+    ["acceptance", "acceptance", "revision"],
+  );
+  assert.equal(events[2]!.subject.id, call[8]!.records[0]!.id);
+  const output = (await s.app.pages.export(s.p.id, call[2])).bytes,
+    rows = acceptanceRows(s.root);
+  const reopened = await s.reopen();
+  assert.equal(acceptanceRows(s.root), rows);
+  assert.deepEqual(
+    reopened.workspace.kernel.selected(s.p.id, call[1]),
+    call[2],
+  );
+  assert.deepEqual(
+    (await reopened.pages.export(s.p.id, call[2])).bytes,
+    output,
+  );
+  await reopened.close();
+  const copy = s.root + "-accepted-copy";
+  cpSync(s.root, copy, { recursive: true });
+  const db = new DatabaseSync(join(copy, "kernel.sqlite"));
+  db.prepare("DELETE FROM kernel_packets WHERE id=?").run(s.c.id);
+  db.close();
+  const independent = await s.reopen(copy);
+  try {
+    assert.deepEqual(
+      (await independent.pages.export(s.p.id, call[2])).bytes,
+      output,
+    );
+  } finally {
+    await independent.close();
+    rmSync(copy, { recursive: true, force: true });
+  }
+});
+
+test("R1 ordinary legacy page and Website acceptance without companions preserve successful behavior", async (t) => {
+  const s = await setup(t),
+    page = await seedRepairPage(s.app.pages, s.p.id);
+  s.app.pages.accept(s.p.id, {
+    artifact: reference(page),
+    expected: null,
+    reason: "Legacy page review",
+    reviewedHash: pageSignature(page.payload.state),
+  });
+  assert.deepEqual(
+    s.app.workspace.kernel.selected(s.p.id, "page:" + page.id),
+    reference(page),
+  );
+  s.app.pages.assemble(s.p.id, {
+    base: null,
+    title: "Synthetic legacy Website",
+    pages: [{ route: "/", label: "Home", artifact: reference(page) }],
+    reason: "Explicit legacy assembly",
+  });
+  const website = s.app.pages.state(s.p.id).websites[0]!;
+  s.app.pages.acceptWebsite(s.p.id, {
+    assembly: reference(website),
+    expected: null,
+    reason: "Legacy Website review",
+    reviewedHash: digest(website.payload.state),
+  });
+  assert.deepEqual(
+    s.app.workspace.kernel.selected(s.p.id, "website"),
+    reference(website),
+  );
+  assert.equal(
+    s.app.workspace.kernel.selected(s.p.id, "reconstruction:" + s.u.id),
+    null,
+  );
+  const output = (await s.app.pages.exportWebsite(s.p.id, reference(website)))
+      .bytes,
+    rows = acceptanceRows(s.root);
+  const reopened = await s.reopen();
+  assert.equal(acceptanceRows(s.root), rows);
+  assert.deepEqual(
+    (await reopened.pages.exportWebsite(s.p.id, reference(website))).bytes,
+    output,
+  );
+});
