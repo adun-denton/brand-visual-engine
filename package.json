@@ -37,7 +37,9 @@
     "test:browser:reconstruction": "node scripts/reconstruction-browser-check.ts",
     "test:reconstruction:compatibility": "node scripts/reconstruction-compatibility-check.ts",
     "test:browser:auxiliary": "node scripts/auxiliary-browser-check.ts",
-    "test:auxiliary:compatibility": "node scripts/auxiliary-compatibility-check.ts"
+    "test:auxiliary:compatibility": "node scripts/auxiliary-compatibility-check.ts",
+    "test:native:compatibility": "node scripts/native-exchange-compatibility-check.ts",
+    "test:browser:native": "node scripts/native-exchange-browser-check.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.58.2",
