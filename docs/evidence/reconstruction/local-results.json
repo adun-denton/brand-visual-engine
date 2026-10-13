@@ -84,5 +84,6 @@
   "imageProviderCalls": 0,
   "gpuCalls": 0,
   "protectedRootAccesses": 0,
-  "actualGeneration": false
+  "actualGeneration": false,
+  "finalPersistenceRepair": "New single-use review guard; direct stored-review acceptance after supersession rejects with zero writes. Typecheck, full suite, build, reconstruction browser and exact V06 migration rerun successfully."
 }

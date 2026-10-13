@@ -80,7 +80,8 @@ proposal signature and compare-and-swap acceptance. The same transaction writes
 `reconstruction:<page-id>`, the existing `page:<proposal-id>` export-authority
 selection and exact review evidence. Review failure rolls back both selections
 and their events. Raster and Website acceptance are unaffected. Direct kernel
-acceptance into the reconstruction namespace requires its bound review/mirror.
+acceptance into the reconstruction namespace requires its new single-use bound
+review/mirror; a stored review cannot be reused after supersession.
 Legacy semantic acceptance keeps its existing behavior.
 
 Each semantic output has its own tree, frozen render context and exact media-only

@@ -42,6 +42,10 @@ media authority only. No OCR or automatic extraction is performed.
 - [Cancelled late result isolation](evidence/reconstruction/screenshots/cancelled-late-not-adopted.png)
 - [Production unavailable](evidence/reconstruction/screenshots/production-unavailable.png)
 
+Final direct-persistence review also added a single-use review guard: an already
+stored review cannot authorize a new kernel acceptance after supersession. Its
+rollback probe passes. This repair is an ordinary follow-up commit.
+
 Development failures were repaired and rerun: an ESM initialization cycle was
 removed by extracting unchanged validation primitives; fixture responsive/context
 shapes were corrected to the unchanged semantic contract; a standalone export check

@@ -1100,6 +1100,27 @@ test("direct kernel reconstruction acceptance cannot bypass the atomic review bo
     /atomic bound review/,
   );
   assert.equal(snapshot(s), after);
+  await s.app.reconstruction.prepare(s.p.id, input(s));
+  const afterSupersession = snapshot(s);
+  assert.throws(
+    () =>
+      s.app.workspace.kernel.accept(
+        s.p.id,
+        "reconstruction:" + s.u.id,
+        accepted,
+        accepted,
+        "operator",
+        "Reused historical review",
+        null,
+        undefined,
+        {
+          mirror: { slot: "page:" + accepted.id, expected: accepted },
+          records: [review],
+        },
+      ),
+    /new single-use review/,
+  );
+  assert.equal(snapshot(s), afterSupersession);
 });
 
 test("ledger-known lost reconstruction control cannot fall back or reuse a canonical version", async (t) => {

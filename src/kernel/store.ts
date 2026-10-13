@@ -128,6 +128,7 @@ export class KernelStore {
       if(slot.startsWith('reconstruction:')){
         const review=companions?.records[0]?.payload as {kind?:string;state?:{workUnit?:VersionRef;proposal?:VersionRef}}|undefined;
         if(!companions||companions.mirror.slot!=='page:'+artifactRef.id||companions.records.length!==1||review?.kind!=='reconstruction-review'||review.state?.workUnit?.id!==slot.slice('reconstruction:'.length)||review.state.proposal?.id!==artifactRef.id||review.state.proposal?.version!==artifactRef.version)throw new Error('Reconstruction acceptance requires its atomic bound review and page acceptance');
+        if(this.lookup(reference(companions.records[0]!)))throw new Error('Reconstruction acceptance requires a new single-use review');
       }
       revalidatePacket(artifact, writePort(artifact.type), this.environment());
       if (artifactRef.freshness === 'current' && this.currentVersion(artifact.id) !== artifact.version) throw new Error('stale acceptance artifact');
