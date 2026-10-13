@@ -1,3 +1,5 @@
+import { nativeReturnKit } from './native-return-kit.ts';
+import { tar } from './handoff.ts';
 import { randomUUID } from 'node:crypto';
 import type { Workspace } from './workspace.ts';
 import { Exploration } from './exploration.ts';
@@ -85,6 +87,13 @@ export class NativeExchange {
     const state=structuredClone(p.payload.state),s=state.slots.find(a=>a.slot===slot)!;s.release=release;s.status='awaiting-operator';
     this.commit([this.change(p,state)],()=>this.authority(pid,p));return out;
   }
+  async exportReturnKit(pid:string,run:VersionRef,slot:number){
+    this.audit(pid);integer(slot,6);const p=this.latest<NativeRun>(pid,run,'native-exchange'),a=p.payload.state.slots.find(a=>a.slot===slot);
+    if(!a?.release)throw new InputError('Export the selected request before its return kit');
+    const out=await this.adapter.request(a.release,this.sourceFiles(a.release));
+    const files=new Map([['manifest.json',out.manifest],...out.files,...nativeReturnKit(a.release)]);
+    return {bytes:tar(files,'native-kit'),mime:'application/x-tar',filename:'native-return-kit-'+a.release.binding.exchangeJobId+'.tar'};
+  }
   claim(pid:string,run:VersionRef,slot:number,packetDigest:string){
     const p=this.latest<NativeRun>(pid,run,'native-exchange');this.authority(pid,p);
     const s=structuredClone(p.payload.state),a=s.slots.find(a=>a.slot===slot);
@@ -100,8 +109,13 @@ export class NativeExchange {
     if(same(s,p.payload.state))return p;const n=this.change(p,s);this.commit([n]);return n;
   }
   revoke(pid:string,grant:VersionRef){this.audit(pid);const p=this.latest<NativeGrant>(pid,grant,'native-exchange-grant');if(p.payload.state.revoked)return p;const n=revise(p,{...p.payload,state:{...p.payload.state,revoked:true}},'local-operator','Withdraw future manual invocation claims; no termination proof');this.commit([n]);return n;}
-  async importResult(pid:string,run:VersionRef,manifest:Buffer,files:Map<string,Buffer>,historical:boolean){
-    this.audit(pid);const {result,bytes}=await this.adapter.readResult(manifest,files);
+  async importResult(pid:string,run:VersionRef,manifest:Buffer,files:Map<string,Buffer>,historical:boolean,expectedSlot:number){
+    this.audit(pid);integer(expectedSlot,6);
+    const scoped=this.latest<NativeRun>(pid,run,'native-exchange');
+    if(!scoped.payload.state.slots.some(a=>a.slot===expectedSlot))throw new InputError('Selected native slot is not owned by this run');
+    const supplied=this.adapter.resultManifest(manifest);
+    if(supplied.binding.projectId!==pid||supplied.binding.execution.id!==run.id||supplied.binding.slot!==expectedSlot)throw new InputError('Native result does not match selected run/slot',409);
+    const {result,bytes}=await this.adapter.readResult(manifest,files);
     const identity='native-receipt-'+digest({job:result.binding.exchangeJobId,receipt:result.receiptId}),payloadHash=digest(result);
     const duplicate=()=>{const d=this.w.kernel.lookup({id:identity,version:1,freshness:'pinned'}) as Work<NativeReceipt>|null;if(!d)return null;if(d.projectId!==pid||d.payload.state.payloadHash!==payloadHash||d.payload.state.result.binding.execution.id!==run.id)throw new InputError('Conflicting native receipt payload',409);return this.own<NativeReceipt>(pid,reference(d),'native-exchange-receipt');};
     const prior=duplicate();if(prior)return prior;
@@ -140,15 +154,16 @@ export class NativeExchange {
       const slots=list(r['slots'],s=>integer(s,6),6),g=this.grant(pid,{request:reference(q),slots,maxSubmissions:slots.length,maxStatusCalls:0,maxCancelCalls:0,timeoutMs:30000,expiresAt:r['expiresAt'],evidence:r['evidence'],reason:'Explicit manual exchange grant; no automatic invocation'});
       return this.prepare(pid,reference(g),parent?{execution:reference(parent),slot:integer(retry!['slot'],6)}:null);
     }
-    const r=record(input,action==='import'?['run','manifest','files','historical']:action==='claim'?['run','slot','packetDigest']:['run','slot']);
+    const r=record(input,action==='import'?['run','slot','manifest','files','historical']:action==='claim'?['run','slot','packetDigest']:['run','slot']);
     const run=exactRef(r['run']);
+    if(action==='return-kit')return this.exportReturnKit(pid,run,integer(r['slot'],6));
     if(action==='export')return this.exportRequest(pid,run,integer(r['slot'],6));
     if(action==='claim')return this.claim(pid,run,integer(r['slot'],6),string(r['packetDigest'],64));
     if(action==='cancel'||action==='uncertain')return this.control(pid,run,integer(r['slot'],6),action);
     if(action==='revoke'){const p=this.latest<NativeRun>(pid,run,'native-exchange');return this.revoke(pid,p.payload.state.grant);}
     if(action==='import'){
       const files=list(r['files'],f=>{const a=record(f,['path','base64']);const b=string(a['base64'],12*1024*1024);if(!/^[A-Za-z0-9+/]*={0,2}$/.test(b))throw new InputError('Invalid original upload encoding');const bytes=Buffer.from(b,'base64');if(bytes.toString('base64')!==b)throw new InputError('Noncanonical original upload');return {path:string(a['path'],100),bytes};},1);
-      return this.importResult(pid,run,Buffer.from(string(r['manifest'],262144)),this.adapter.fileInput(files),bool(r['historical']));
+      return this.importResult(pid,run,Buffer.from(string(r['manifest'],262144)),this.adapter.fileInput(files),bool(r['historical']),integer(r['slot'],6));
     }
     throw new InputError('Unknown manual exchange action',404);
   }

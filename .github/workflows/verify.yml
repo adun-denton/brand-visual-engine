@@ -25,6 +25,8 @@ jobs:
       - run: npm run build
       - run: npm run typecheck
       - run: npm test
+        env:
+          BVE_NATIVE_REPAIR_EVIDENCE_DIR: ${{ runner.temp }}/bve-native-repair-unit-evidence
       - run: npm run test:combined:compatibility
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-combined-compatibility-evidence
@@ -34,6 +36,9 @@ jobs:
       - run: npm run test:native:compatibility
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-native-compatibility-evidence
+      - run: npm run test:native:repair-compatibility
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-native-repair-compatibility-evidence
       - run: npm run test:auxiliary:compatibility
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-auxiliary-compatibility-evidence
@@ -133,6 +138,8 @@ jobs:
         with:
           name: offline-browser-evidence-${{ matrix.os }}
           path: |
+            ${{ runner.temp }}/bve-native-repair-unit-evidence
+            ${{ runner.temp }}/bve-native-repair-compatibility-evidence
             ${{ runner.temp }}/bve-native-compatibility-evidence
             ${{ runner.temp }}/bve-native-browser-evidence
             ${{ runner.temp }}/bve-auxiliary-admission-evidence

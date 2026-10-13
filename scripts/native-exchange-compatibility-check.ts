@@ -376,7 +376,7 @@ try {
     const originals=fixtureTar(out.bytes),manifest=originals.get('manifest.json')!;originals.delete('manifest.json');
     const packageRequest=await app.visual.native.adapter.readRequest(manifest,originals);
     app.visual.native.claim(meta.pid,reference(run),1,packageRequest.packetDigest);
-    const result=await nativeReturn(packageRequest);receipt=await app.visual.native.importResult(meta.pid,reference(run),result.manifest,result.files,false);
+    const result=await nativeReturn(packageRequest);receipt=await app.visual.native.importResult(meta.pid,reference(run),result.manifest,result.files,false,result.result.binding.slot);
     assert.equal(receipt.payload.state.outcome,'returned');
     const candidate=app.visual.state(meta.pid,reference(newUnit)).candidates[0]!;
     item=(await app.library.save(meta.pid,{expectedProject:meta.project,unit:reference(newUnit),candidate:reference(candidate),integrity:candidate.integrity,extent:'whole'})).item;

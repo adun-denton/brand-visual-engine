@@ -25,8 +25,9 @@ export class NativeExchangeAdapter {
     const manifest=Buffer.from(canonical(p)+'\n');await this.readRequest(manifest,files);
     return {manifest,files,bytes:tar(new Map([['manifest.json',manifest],...files])),mime:'application/x-tar',filename:'native-request-'+p.binding.exchangeJobId+'.tar'};
   }
+  resultManifest(manifest:Buffer):NativeResult {return parseNativeResult(this.json(manifest));}
   async readResult(manifest:Buffer,files:Map<string,Buffer>):Promise<{result:NativeResult;bytes:Buffer|null}> {
-    const result=parseNativeResult(this.json(manifest));this.files(files,new Set(result.output?[result.output.path]:[]));
+    const result=this.resultManifest(manifest);this.files(files,new Set(result.output?[result.output.path]:[]));
     const bytes=result.output?files.get(result.output.path)!:null;
     if(bytes&&canonical(await decode(bytes))!==canonical(result.output!.image))throw new InputError('Native original hash/descriptor/full decode mismatch');
     return {result,bytes};

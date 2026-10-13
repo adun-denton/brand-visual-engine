@@ -1,5 +1,9 @@
 # Account-native exchange implementation return
 
+This is the historical first-slice return. The independent review withheld acceptance for selected-slot
+scope and portable return-contract gaps. See [the R1–R2 repair return](native-exchange-repair-result.md)
+for the current implementation/evidence; the dated first-slice records below remain intact.
+
 The bounded manual exchange exports a frozen raster request and accepts owned original image bytes
 through one reusable adapter. Package export reserves one slot; explicit invocation reporting is
 separate; original intake atomically commits media/candidate/membership/receipt/run. Imported origin,

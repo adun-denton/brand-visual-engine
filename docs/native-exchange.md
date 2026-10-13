@@ -106,12 +106,63 @@ Missing ledger-known native export evidence fails closed rather than silently dr
 
 ## Repeatable offline review
 
+### Selected-slot import and portable return kit (R1–R2)
+
+Import commands require `run` and `slot` from the chosen form. Old ambiguous HTTP commands without a
+slot reject. Internal intake's final argument is the independently selected slot. The service checks
+owned run/project and slot before original decoding, saving or receipt replay. A manifest for another
+slot cannot redirect the action even when its identical receipt already exists. Full frozen binding,
+digest, provenance and atomic media/candidate/membership/receipt/run admission remain.
+
+Frozen V1 `manifest.json`, `nativeInstructions`, packet digests and `native-request.tar` are unchanged.
+After **Export request**, choose that slot's **Export return kit**. This separate additive, deterministic
+archive includes the same manifest and exact sources plus `kit.json`, `RETURN.md`,
+`result-schema-v1.json`, bound `returned-template-v1.json` and `failed-template-v1.json`, and
+`build-return.mjs`. It is available for old released jobs, including historical evidence. Exporting it
+reads existing authority and never reserves, claims, dispatches or grants another attempt.
+
+Give the receiving session the entire return kit and explicit operator instructions. The operator
+mediates BVE's manual claim/report step and conveys approval before one invocation. There is no presumed
+connection from the receiving session to BVE. Stop on denial/withdrawal/expiry/uncertainty; never retry
+the claim or call an unconfigured service. The kit itself performs no generation or transport.
+
+The kit documents Node24.19.x with standard locked `sharp`0.35.5 and `ajv`8.20.0 available to its builder.
+Use an existing offline tooling environment; no provider install is involved. Copy the appropriate
+template to `filled.json`, fill receipt ID, rights, attestation statement and message truthfully, then
+run the included builder with an actual original file (omit it for failed outcomes):
+
+```sh
+node build-return.mjs filled.json return-directory /absolute/path/to/original.png
+node build-return.mjs filled-failed.json failed-return-directory
+```
+
+The builder hashes actual original bytes, records buffer length and fully decoded PNG/JPEG/WebP format
+and encoded dimensions, then copies the unchanged file under its checksum name. It validates the bound
+schema, strict requested dimensions, image limits and source substitution before writing the return.
+The schema and instructions also state relational descriptor/hash/path invariants independently checked
+by production intake. No resizing, conversion, model-transcribed metadata/base64 or URL fetching.
+
+Upload `result.json` and its named original through the matching run/slot form. Receipt IDs identify one
+return under its exchange job: exact replay is read-only; changed payload conflicts; another receipt
+gives no invocation authority. Origin stays imported. Synthetic and operator-attested classes cannot
+be interchanged; machine verification is never asserted. Unknown actual host/model/seed/usage/cost/
+provider facts stay null. Late evidence needs the explicit historical option and confers no current
+membership or acceptance. Consumer/schema success proves offline portability, not live host support.
+
+The repair consumer extracts only generated kit names into a fresh temporary directory, makes standard
+installed dependencies available, and constructs returns using only kit templates/builder and authored
+originals. It does not use `nativeReturn`, internal result types/parser or server source to construct the
+result. Production intake independently validates generation-shaped and exact-source refinement-shaped
+returns, then checks cold reopen, memory and original/package exports.
+
 ```sh
 npm ci --ignore-scripts
 npm run typecheck
 npm run build
 node --test tests/native-exchange.test.ts
 npm run test:native:compatibility
+npm run test:native:repair-compatibility
+node --test tests/native-exchange-repair.test.ts
 npm run test:browser:native
 ```
 

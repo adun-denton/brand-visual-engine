@@ -1,0 +1,20 @@
+{
+  "base": "bab870a3b075de32192d870b01fbddd93ead8915",
+  "tree": "7afeb82cc3f73efccc6adc308016e289f14763bc",
+  "tableCount": 6,
+  "fileCount": 9,
+  "oldReceipts": [
+    "historical",
+    "returned",
+    "failed"
+  ],
+  "oldActiveReleases": [
+    "awaiting-operator",
+    "claimed"
+  ],
+  "oldPackageReplayAndExportsByteStable": true,
+  "additiveScopedIntake": true,
+  "coldReopen": true,
+  "dispatches": 0,
+  "nativeCalls": 0
+}
