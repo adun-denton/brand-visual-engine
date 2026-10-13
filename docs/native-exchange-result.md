@@ -19,8 +19,9 @@ self-accept code or complete either owning task.
   `codex/bve-vnext-v08-auxiliary-session`. PR18 and PR10 remain unchanged.
 - Terminal push lacked write credentials. Connected GitHub tools published exactly the local verified
   tree with one ordinary accepted-base parent. The terminal-only commit `dafae486...` was never published.
-- This evidence document and authored sample fixtures are a subsequent documentation-only publication.
+- This evidence document and authored sample fixtures accompany the subsequent review publication.
   The final publication also repairs the missing UI stored-progress refresh after explicit actions.
+  Each manual run also displays its fixture or unverified operator-attested provenance outside the inspector.
   Its exact final head/tree and exact-head CI are recorded in PR19 and the review return; embedding a
   commit's own hash in its tree would be self-referential. The implementation identity above is stable.
 
@@ -81,7 +82,9 @@ exact `b98d7ba56f5e194b2ab7b64e625fdc3fab880e86` on Linux and Windows. Outcome a
 reported in the final PR19 return after completion. Linux passed all retained gates, but its new native
 browser failed because explicit manual actions did not reload stored progress. The repair adds one
 stored-state reload after explicit actions and preserves the open panel, with no polling/transport calls.
-The failed initial run is retained, not reported as passing. The final publication's platform run is separately
+The failed initial run is retained, not reported as passing. CI124 passed Linux, including all retained
+17 browsers and the new native flow. Screenshot inspection then added a visible per-run provenance
+label; the exact final-head platform result is recorded in PR19. The final publication's platform run is separately
 identified there. CI uploads full closed inventories, authored exchange packages and public-safe UI
 screens for sheet, filmstrip and390px layouts with chat closed. Browser evidence is synthetic interaction,
 not image-generation evidence. No success is inferred from queued/running CI.

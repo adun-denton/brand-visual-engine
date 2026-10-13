@@ -26,6 +26,7 @@ try {
   const saved=join(evidence,'authored-request.tar');await download.saveAs(saved);
   const state=v.native.state(p.project.id,reference(unit)),run=state.runs[0]!.run,pkg=run.payload.state.slots[0]!.release!;
   await expect(page.locator('.native-slot strong')).toHaveText('awaiting-operator');
+  await expect(page.locator('#native-exchange-panel')).toContainText('Authored synthetic fixture · no native invocation');
   await page.locator('#native-exchange-panel').screenshot({path:join(evidence,'sheet-awaiting.png')});
   const secondDownload=page.waitForEvent('download');await page.getByRole('button',{name:'Re-download request',exact:true}).click();await secondDownload;await idle();await open();expect(v.native.state(p.project.id,reference(unit)).runs[0]!.run.version).toBe(run.version);
   await page.getByRole('button',{name:'Report invocation / claim',exact:true}).click();await idle();await open();await expect(page.locator('.native-slot strong')).toHaveText('claimed');
