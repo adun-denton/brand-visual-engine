@@ -12,18 +12,21 @@ self-accept code or complete either owning task.
 - Planning pin: `f1e4d888e08026b7cacdcaeed240993d21d4b84e`.
 - Accepted software base: `87c9484e83a12b570d632fbbe1c2e070a36a3319`.
 - Accepted tree: `8842b781c4bb9c24843f707d9ca01affd127009c`.
+- Final code implementation commit: `3c28c45ee21c41720cad128f6bc924e92216dafb`.
 - Initial implementation commit: `b98d7ba56f5e194b2ab7b64e625fdc3fab880e86`.
+- Final code tree: `d63b8840813ca31ffcb831b4ef224260e2c12cd6`.
 - Initial implementation tree: `24730838e45128fc9ec7fa84bea8a22a4ad3238e`.
 - Branch: `codex/bve-account-native-exchange`.
 - [Dependent draft PR19](https://github.com/adun-denton/brand-visual-engine/pull/19), target
   `codex/bve-vnext-v08-auxiliary-session`. PR18 and PR10 remain unchanged.
 - Terminal push lacked write credentials. Connected GitHub tools published exactly the local verified
   tree with one ordinary accepted-base parent. The terminal-only commit `dafae486...` was never published.
-- This evidence document and authored sample fixtures accompany the subsequent review publication.
-  The final publication also repairs the missing UI stored-progress refresh after explicit actions.
-  Each manual run also displays its fixture or unverified operator-attested provenance outside the inspector.
-  Its exact final head/tree and exact-head CI are recorded in PR19 and the review return; embedding a
-  commit's own hash in its tree would be self-referential. The implementation identity above is stable.
+- The final code adds the single stored-progress refresh, visible fixture/native provenance and explicit
+  per-slot retry targeting. Retry preparation is verified to create new authority without package release.
+- This report is a subsequent documentation-only child of the final code commit. Exact publication
+  head/tree and its exact-head CI link are recorded in PR19 and the review return; a commit cannot
+  embed its own hash. The final code identity above is independently reproducible and stable.
+
 
 ## Changed surfaces
 
@@ -77,17 +80,28 @@ disconnected. No result selects or accepts a candidate.
 
 ## Platform and visual evidence
 
-[Implementation CI122](https://github.com/adun-denton/brand-visual-engine/actions/runs/38416056298) checks
-exact `b98d7ba56f5e194b2ab7b64e625fdc3fab880e86` on Linux and Windows. Outcome and any repair/rerun are
-reported in the final PR19 return after completion. Linux passed all retained gates, but its new native
-browser failed because explicit manual actions did not reload stored progress. The repair adds one
-stored-state reload after explicit actions and preserves the open panel, with no polling/transport calls.
-The failed initial run is retained, not reported as passing. CI124 passed Linux, including all retained
-17 browsers and the new native flow. Screenshot inspection then added a visible per-run provenance
-label; the exact final-head platform result is recorded in PR19. The final publication's platform run is separately
-identified there. CI uploads full closed inventories, authored exchange packages and public-safe UI
-screens for sheet, filmstrip and390px layouts with chat closed. Browser evidence is synthetic interaction,
-not image-generation evidence. No success is inferred from queued/running CI.
+- [Initial CI122](https://github.com/adun-denton/brand-visual-engine/actions/runs/38416056298), exact
+  `b98d7ba56f5e194b2ab7b64e625fdc3fab880e86`: retained gates pass; both native browser checks fail
+  because explicit manual actions saved state without reloading displayed progress. This failed evidence
+  remains disclosed. The fix refreshes stored state once after explicit actions, never transport polling.
+- [CI124](https://github.com/adun-denton/brand-visual-engine/actions/runs/38417278827), exact
+  `ea023a2520714823efab01ac14411c5f3a8b7b92`: both Windows/Linux succeed, including all18 browser
+  commands, native compatibility and retained gates. Windows387 pass;Linux386 pass/one retained skip.
+- [CI126](https://github.com/adun-denton/brand-visual-engine/actions/runs/38418665889), exact
+  `192681724e7f5c0dacab3aeced4cb1c2299f4f25`: both Windows/Linux succeed after making per-run
+  provenance visible outside the inspector. Complete Linux logs and the hash-verified artifact were
+  read; desktop and390px screenshots were inspected. The earlier CI124 Windows/Linux logs were also
+  read in full. These are dated evidence, not proof of the later per-slot retry change.
+- The final publication adds explicit per-slot retry targets and a browser assertion binding the new
+  retry to the exact selected parent/slot, with no package release. Its Windows/Linux run is linked
+  from PR19; completion and complete decoded logs are verified before the final review return. No
+  passing outcome is inferred from a queued/running job. That publication changes only this report
+  relative to final code `3c28c45ee21c41720cad128f6bc924e92216dafb`.
+
+CI artifacts include complete closed inventories, authored request/return packages and public-safe UI
+screens for sheet, filmstrip and390px layouts, with chat closed. Screens are synthetic interaction,
+not native generation. The final artifact link and SHA-256 are pinned in PR19. Repeatable reviewer
+commands remain in [the contract](native-exchange.md).
 
 ## Limits and rollback
 
