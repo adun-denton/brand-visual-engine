@@ -1,3 +1,4 @@
+import {NativeExchange} from './native-exchange.ts';
 import { Executions, type OfflineExecutionInjection } from './execution.ts';
 import type { Workspace } from "./workspace.ts";
 import { Exploration } from "./exploration.ts";
@@ -39,8 +40,10 @@ export class VisualWorkspace {
   readonly w: Workspace;
   readonly exploration: Exploration;
   readonly executions: Executions;
+  readonly native: NativeExchange;
   constructor(w: Workspace, injection?: OfflineExecutionInjection) {
     this.w = w;
+    this.native = NativeExchange.for(w);
     this.executions = new Executions(w, injection);
     this.exploration = new Exploration(w);
   }
@@ -126,7 +129,7 @@ export class VisualWorkspace {
         .filter((m) => canonical(m.payload.state.candidate) === canonical(reference(c)))
         .map((m) => this.exploration.read<WorkUnit>(pid, m.payload.state.workUnit, "page-work-unit").payload.state.label);
     }
-    return { ...this.project(pid), unit: u, records, candidates, selectedSources, sourceOrigins, executionAvailability:this.executions.availability(), executions:this.executions.state(pid,unit) };
+    return { ...this.project(pid), unit: u, records, candidates, selectedSources, sourceOrigins, executionAvailability:this.executions.availability(), executions:this.executions.state(pid,unit), nativeExchange:this.native.state(pid,unit) };
   }
   private order(pid: string) {
     const sequence = new Map<string, number>();

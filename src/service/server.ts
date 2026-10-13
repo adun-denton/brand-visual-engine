@@ -349,6 +349,12 @@ export async function startApp(
         throw new InputError('Invalid JSON');
       }
       let result: unknown;
+      if(path.startsWith('/api/v1/visual/native/')){
+        const outer=record(input,['projectId','input']),pid=id(outer['projectId']),action=path.slice('/api/v1/visual/native/'.length);
+        const out=await visual.native.command(pid,action,outer['input']);
+        if(action==='export'||action==='return-kit'){const d=out as Awaited<ReturnType<typeof visual.native.exportRequest>>;res.writeHead(200,{'Content-Type':d.mime,'Content-Length':d.bytes.length,'Content-Disposition':'attachment; filename="'+d.filename+'"'});res.end(d.bytes);}else json(200,out,false);
+        return;
+      }
       if(path.startsWith('/api/v1/visual/auxiliary/')){
         const outer=record(input,['projectId','input']),pid=id(outer['projectId']),action=path.slice('/api/v1/visual/auxiliary/'.length),value=outer['input'];
         if(action==='open') {record(value,[]);result=auxiliary.open();}

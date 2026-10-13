@@ -1,3 +1,6 @@
+import type {NativeReceipt,NativeRun,NativeGrant} from '../modules/website/native-exchange-contracts.ts';
+import type {ExecutionRequest} from '../modules/website/execution-contracts.ts';
+import {sourcePath} from '../modules/website/native-exchange-contracts.ts';
 import type { Workspace } from "./workspace.ts";
 import type {
   DesignArtifact,
@@ -448,6 +451,20 @@ export class RasterLibrary {
           "." +
           manifest.raster.extension,
       };
+    const nativeInventory=new CanonicalMemory(this.w.kernel.environment()).inventory(pid);
+    if(nativeInventory.some(r=>!r.packet && /^(native-exchange|native-receipt)-/.test(r.ref.id)))throw new InputError('Native export evidence unavailable; no provenance omission inferred',409);
+    const receipts=nativeInventory.flatMap(({packet:p})=>p?.type==='work-record'&&(p.payload as DesignArtifact<unknown>).kind==='native-exchange-receipt'?[p as NodePacket<DesignArtifact<NativeReceipt>>]:[]).filter(p=>same(p.payload.state.media,manifest.source.media));
+    if(receipts.length){
+      const receipt=receipts[0]!;
+      revalidatePacket(receipt,writePort(receipt.type),this.w.kernel.environment());
+      const execution=this.w.kernel.get<DesignArtifact<NativeRun>>(receipt.payload.state.execution);
+      const grant=this.w.kernel.get<DesignArtifact<NativeGrant>>(execution.payload.state.grant);
+      const request=this.w.kernel.get<DesignArtifact<ExecutionRequest>>(execution.payload.state.request);
+      const evidence={version:1,kind:'bve-native-raster-evidence',authority:'operator-attestation-only',sourceMedia:manifest.source.media,records:{request,grant,execution,receipt},generationClaim:receipt.payload.state.result.attestation.kind==='synthetic-fixture'?'not-established':'operator-attested-native-unverified'};
+      const files=new Map<string,Buffer>([['manifest.json',Buffer.from(canonical(manifest)+'\n')],['exchange-evidence.json',Buffer.from(canonical(evidence)+'\n')],[manifest.raster.path,bytes]]);
+      for(const source of request.payload.state.sources){await this.w.assets.inspect(source.image);files.set(sourcePath(source.image),this.w.assets.read(source.image.id));}
+      return {bytes:tar(files,'native-raster'),manifest,mime:'application/x-tar',filename:'raster-'+manifest.raster.image.checksum+'.tar'};
+    }
     const description = Buffer.from(canonical(manifest) + "\n");
     if (description.length > 65536)
       throw new InputError("Raster manifest exceeds 64 KiB", 413);

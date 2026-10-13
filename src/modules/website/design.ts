@@ -1,3 +1,4 @@
+import {validateNativeRecord} from './native-exchange-contracts.ts';
 import {auxiliaryRoles,parseAuxiliary} from './auxiliary-contracts.ts';
 import {validateReconstructionRecord} from './reconstruction-contracts.ts';
 import { memoryRoles, parseNote, parseCapsule } from "./memory-contracts.ts";
@@ -30,6 +31,7 @@ export function validateWebsiteArtifact(payload: Record<string, unknown>): void 
   if(validateReconstructionRecord(payload))return;
   if(validateLibraryRecord(payload))return;
   if (Object.hasOwn(memoryRoles,String(payload['kind']))) { if(payload['kind']==='project-handoff-note')parseNote(payload['state']);else parseCapsule(payload['state']);return; }
+  if (validateNativeRecord(payload)) return;
   if (validateExecutionRecord(payload)) return;
   if (validateExplorationRecord(payload)) return;
   if (validatePageRecord(payload) || validateInferenceRecord(payload)) return;

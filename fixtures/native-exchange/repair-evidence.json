@@ -1,0 +1,166 @@
+{
+  "before": {
+    "head": "bab870a3b075de32192d870b01fbddd93ead8915",
+    "synthetic": true,
+    "nativeCalls": 0,
+    "package": {
+      "entries": [
+        "manifest.json"
+      ],
+      "manifestKeys": [
+        "adapter",
+        "authority",
+        "binding",
+        "evidence",
+        "instructions",
+        "kind",
+        "packetDigest",
+        "prompt",
+        "request",
+        "sources",
+        "version"
+      ],
+      "instructions": "Manual exchange. This package authorizes at most one invocation for its exact slot. Claim with BVE before invoking; stop if denied, expired, withdrawn or uncertain. Re-download does not authorize a second invocation. BVE cannot physically prevent duplicate manual execution. Use only the frozen request and ordered original sources, without project/chat history. Return the original PNG/JPEG/WebP bytes and a bve-native-result manifest; never transcribe base64, convert, resize, substitute a source, or fetch manifest URLs. Exact requested dimensions are required by BVE but native-host support is unverified. Keep unknown host IDs/model/seed/usage/cost/provider IDs null. Packet digest binding is not authentication or generation proof. Selection and acceptance are separate operator actions.",
+      "hasResultTemplate": false,
+      "hasExpectedReturnFields": false
+    },
+    "ownSlot": {
+      "selectedFormSlot": 1,
+      "manifestSlot": 2,
+      "postedInputKeys": [
+        "run",
+        "manifest",
+        "files",
+        "historical"
+      ],
+      "postedSlot": null,
+      "outcome": "accepted",
+      "states": [
+        {
+          "slot": 1,
+          "status": "withdrawn",
+          "receipt": null
+        },
+        {
+          "slot": 2,
+          "status": "returned",
+          "receipt": "returned"
+        }
+      ],
+      "candidateCount": 1
+    },
+    "historicalPositive": {
+      "outcome": "historical",
+      "candidate": null,
+      "candidateCount": 1
+    },
+    "lostEvidencePositive": {
+      "rejected": true,
+      "error": "Error: Canonical evidence unavailable; allowance cannot be reconstructed"
+    },
+    "probeSha256": "84860ed1efe138170f7238c90b60c4b870556dffdfa50bbea899a3379c5b46d8"
+  },
+  "after": {
+    "r1-scoped-intake": {
+      "synthetic": true,
+      "originalCase": {
+        "selectedSlot": 1,
+        "manifestSlot": 2,
+        "rejected": true,
+        "beforeHash": "16a2a8aea5218f36c97865e8625f7c91cba687748003288cd7aa676405807301",
+        "afterHash": "16a2a8aea5218f36c97865e8625f7c91cba687748003288cd7aa676405807301",
+        "originalFiles": [],
+        "candidatesBefore": 0
+      },
+      "rejected": [
+        {
+          "project": "owned",
+          "run": "selected",
+          "slot": 1,
+          "noMutation": true
+        },
+        {
+          "project": "owned",
+          "run": "selected",
+          "slot": 3,
+          "noMutation": true
+        },
+        {
+          "project": "owned",
+          "run": "selected",
+          "slot": 0,
+          "noMutation": true
+        },
+        {
+          "project": "owned",
+          "run": "selected",
+          "slot": 7,
+          "noMutation": true
+        },
+        {
+          "project": "owned",
+          "run": "selected",
+          "slot": "missing",
+          "noMutation": true
+        },
+        {
+          "project": "owned",
+          "run": "foreign",
+          "slot": 2,
+          "noMutation": true
+        },
+        {
+          "project": "foreign",
+          "run": "selected",
+          "slot": 2,
+          "noMutation": true
+        }
+      ],
+      "ambiguousHttpRejected": true,
+      "duplicateWrongSlotRejected": true,
+      "identicalReplayReadOnly": true,
+      "conflictingDuplicateRejected": true,
+      "correctSlot2": "returned",
+      "correctSlot1": "historical",
+      "currentCandidates": 1,
+      "accepted": [],
+      "nativeCalls": 0
+    },
+    "r2-negatives": {
+      "failedOutput": "failed",
+      "failedReplayAfterReopen": true,
+      "incompleteTemplateRejected": true,
+      "fixtureForgedNativeRejected": true,
+      "wrongBindingDigestRejected": true,
+      "malformedDescriptorRejected": true,
+      "alteredBytesRejected": true,
+      "wrongDimensionsRejected": true,
+      "noMutationOnRejectedIntake": true,
+      "nativeCalls": 0
+    },
+    "r2-consumer": {
+      "synthetic": true,
+      "kitEntries": [
+        "build-return.mjs",
+        "failed-template-v1.json",
+        "kit.json",
+        "manifest.json",
+        "result-schema-v1.json",
+        "RETURN.md",
+        "returned-template-v1.json"
+      ],
+      "freshDirectoryConsumer": true,
+      "constructsFrom": "exported kit builder/templates plus authored originals; standard locked tooling only",
+      "generation": "returned",
+      "refinement": "returned",
+      "exactSourceOriginal": true,
+      "sourceSubstitutionRejected": true,
+      "unknownMetadataNull": true,
+      "coldReopen": true,
+      "memoryPreserved": true,
+      "originalAndPackageExportsByteStable": true,
+      "frozenV1RequestByteStable": true,
+      "nativeCalls": 0
+    }
+  }
+}

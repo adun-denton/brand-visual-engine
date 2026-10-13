@@ -1,6 +1,6 @@
 import { InputError } from './validation.ts';
 /** Bounded deterministic ustar: generated names only, no links, timestamps or source paths. */
-export function tar(files: Map<string, Buffer>, mode: 'legacy' | 'page' | 'website' | 'request' | 'raster' = 'legacy'): Buffer {
+export function tar(files: Map<string, Buffer>, mode: 'legacy' | 'page' | 'website' | 'request' | 'raster' | 'native-raster' | 'native-kit' = 'legacy'): Buffer {
   if(mode==='raster'&&(files.size!==2||!files.has('manifest.json')||files.get('manifest.json')!.length>65536||[...files].some(([name,bytes])=>name!=='manifest.json'&&(!/^assets\/[a-f0-9]{64}\.(png|jpg|webp)$/.test(name)||bytes.length>8*1024*1024))))throw new InputError('Raster package requires one bounded original and manifest');
   const chunks: Buffer[] = [];
   let size = 1024;
@@ -9,6 +9,8 @@ export function tar(files: Map<string, Buffer>, mode: 'legacy' | 'page' | 'websi
   )) {
     const safe = /^(manifest\.json|index\.html|RECONSTRUCT\.md|assets\/[a-f0-9]{64}\.(png|jpg|webp))$/.test(name)
       || (mode === 'website' && /^(?:[A-Za-z0-9_-]+\/)+index\.html$/.test(name))
+      || (mode === 'native-raster' && name === 'exchange-evidence.json' && data.length<=1024*1024)
+      || (mode === 'native-kit' && /^(kit\.json|RETURN\.md|result-schema-v1\.json|returned-template-v1\.json|failed-template-v1\.json|build-return\.mjs)$/.test(name) && data.length<=262144)
       || (mode === 'request' && /^(request\.json|response-schema\.json)$/.test(name));
     if (!safe || Buffer.byteLength(name) > 100)
       throw new InputError('Unsafe handoff path');
