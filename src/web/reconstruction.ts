@@ -1,3 +1,4 @@
+import {auxiliaryReconstructionChanged} from './auxiliary-hooks.ts';
 import type { VersionRef } from "../kernel/contracts.ts";
 import type {
   Work,
@@ -49,6 +50,8 @@ let ctx: Ctx | null = null,
   notice = "",
   sheet = false,
   sheetSource: Work<RasterConcept> | null = null,
+  preparationIdentity=0,
+  applyingAuxiliaryDraft=false,
   base: { ref: VersionRef; signature: string } | null = null;
 const host = () => document.getElementById("reconstruction-root");
 const rawSelected = () =>
@@ -118,12 +121,15 @@ export function bindReconstruction(c: Ctx | null) {
       sheetSource = ctx.focus;
       base = null;
       sheetDraft = {};
+      preparationIdentity++;
       sheet = true;
       render();
     }
   });
 }
 function render() {
+  if(!applyingAuxiliaryDraft)capturePreparationDraft();
+  auxiliaryReconstructionChanged('before');
   const root = host();
   if (!root || !ctx) return;
   const chosen = selected(),
@@ -216,13 +222,14 @@ function render() {
     frame.onload = scale;
     scale();
   });
+  auxiliaryReconstructionChanged('after');
 }
 function sheetMarkup() {
   const source = sheetSource!,
     resources = (data?.resources ?? []).filter(
       (m) => m.id !== source.payload.state.media.id,
     );
-  return `<dialog id="reconstruction-sheet" aria-labelledby="reconstruction-sheet-title"><form id="reconstruction-prepare"><h2 id="reconstruction-sheet-title">Build whole raster as HTML</h2><button type="button" id="reconstruction-close">Close preparation</button><img class="reconstruction-sheet-source" src="${esc(image(ctx!.pid, pin(source)))}" alt="Exact whole raster to reconstruct"><p>Project ${esc(ctx!.pid)} · Page ${esc(ctx!.unit.id)} · v${ctx!.unit.version}</p><p id="reconstruction-source-identity">${esc(source.id)} · v${source.version} · ${esc(source.integrity)}</p><p>Reconstruct the whole raster. Existing selected regions are not cropped or substituted.</p><label>Implementation instructions<textarea name="instruction" required rows="3" placeholder="Describe implementation intent and unknowns"></textarea></label><label>Attempts<select name="count" required><option value="">Choose 1–6</option>${[1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}">${n}</option>`).join("")}</select></label><label>Requested viewport(s)<select name="viewports" required><option value="">Choose preview viewports</option><option value="desktop">Desktop · 1440 × 1000</option><option value="narrow">Narrow · 390 × 844</option><option value="both">Desktop and narrow</option></select></label><label>Optional approved Brand<select name="brand"><option value="">Off · no project or old Brand context</option>${ctx!.brands.map((b, i) => `<option value="${i}">${esc(b.label)} · v${b.ref.version}</option>`).join("")}</select></label><p>Brand off excludes separate project defaults and old base context. Visible source styling and a deliberately selected semantic tree remain explicit inputs.</p>${base ? `<p>Explicit semantic base ${esc(base.ref.id)} · v${base.ref.version} · ${esc(base.signature)}</p>` : ""}<details><summary>Deliberately included references / placeable media</summary>${resources.map((m, i) => `<label><input type="checkbox" name="resource" value="${i}">${esc(m.payload.state.label)} · v${m.version}</label><select name="role-${i}" aria-label="Role for ${esc(m.payload.state.label)}"><option value="reference">Reference only</option>${m.payload.state.role === "placeable" ? '<option value="placeable">Placeable media</option>' : ""}</select>`).join("") || "<p>No additional media available.</p>"}<p>Placed base media must be explicitly included as placeable. Missing media stays unresolved.</p></details><details><summary>Explicit human handoff evidence</summary>${(data?.notes ?? []).map((n, i) => `<label><input type="checkbox" name="evidence" value="${i}">${esc(n.payload.state.text)} · v${n.version}</label>`).join("") || "<p>No handoff notes included.</p>"}</details><p>Preparing saves an operation and pending slots. Production execution is unavailable.</p><button class="primary" ${busy ? "disabled" : ""}>Prepare reconstruction</button></form></dialog>`;
+  return `<dialog id="reconstruction-sheet" aria-labelledby="reconstruction-sheet-title"><form id="reconstruction-prepare" data-preparation-owner="${esc(JSON.stringify([ctx!.pid,key(ctx!.unit),preparationIdentity]))}"><h2 id="reconstruction-sheet-title">Build whole raster as HTML</h2><button type="button" id="reconstruction-close">Close preparation</button><img class="reconstruction-sheet-source" src="${esc(image(ctx!.pid, pin(source)))}" alt="Exact whole raster to reconstruct"><p>Project ${esc(ctx!.pid)} · Page ${esc(ctx!.unit.id)} · v${ctx!.unit.version}</p><p id="reconstruction-source-identity">${esc(source.id)} · v${source.version} · ${esc(source.integrity)}</p><p>Reconstruct the whole raster. Existing selected regions are not cropped or substituted.</p><label>Implementation instructions<textarea name="instruction" required rows="3" placeholder="Describe implementation intent and unknowns"></textarea></label><label>Attempts<select name="count" required><option value="">Choose 1–6</option>${[1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}">${n}</option>`).join("")}</select></label><label>Requested viewport(s)<select name="viewports" required><option value="">Choose preview viewports</option><option value="desktop">Desktop · 1440 × 1000</option><option value="narrow">Narrow · 390 × 844</option><option value="both">Desktop and narrow</option>${sheetDraft["customViewports"] ? `<option value="custom">Explicit applied viewports · ${esc(String(sheetDraft["customViewports"]))}</option>` : ""}</select></label><label>Optional approved Brand<select name="brand"><option value="">Off · no project or old Brand context</option>${ctx!.brands.map((b, i) => `<option value="${i}">${esc(b.label)} · v${b.ref.version}</option>`).join("")}</select></label><p>Brand off excludes separate project defaults and old base context. Visible source styling and a deliberately selected semantic tree remain explicit inputs.</p>${base ? `<p>Explicit semantic base ${esc(base.ref.id)} · v${base.ref.version} · ${esc(base.signature)}</p>` : ""}<details><summary>Deliberately included references / placeable media</summary>${resources.map((m, i) => `<label><input type="checkbox" name="resource" value="${i}">${esc(m.payload.state.label)} · v${m.version}</label><select name="role-${i}" aria-label="Role for ${esc(m.payload.state.label)}"><option value="reference">Reference only</option>${m.payload.state.role === "placeable" ? '<option value="placeable">Placeable media</option>' : ""}</select>`).join("") || "<p>No additional media available.</p>"}<p>Placed base media must be explicitly included as placeable. Missing media stays unresolved.</p></details><details><summary>Explicit human handoff evidence</summary>${(data?.notes ?? []).map((n, i) => `<label><input type="checkbox" name="evidence" value="${i}">${esc(n.payload.state.text)} · v${n.version}</label>`).join("") || "<p>No handoff notes included.</p>"}</details><p>Preparing saves an operation and pending slots. Production execution is unavailable.</p><button class="primary" ${busy ? "disabled" : ""}>Prepare reconstruction</button></form></dialog>`;
 }
 function closeSheet() {
   sheet = false;
@@ -258,6 +265,7 @@ async function action(fn: () => Promise<unknown>) {
   }
 }
 function bind() {
+  const preparation=document.getElementById('reconstruction-prepare');for(const event of ['input','change'])preparation?.addEventListener(event,()=>{capturePreparationDraft();auxiliaryReconstructionChanged('draft');});
   const on = (id: string, fn: (e: Event) => void, event = "click") =>
     document.getElementById(id)?.addEventListener(event, fn);
   on("reconstruction-close", () => closeSheet());
@@ -402,7 +410,8 @@ function bind() {
     };
     base = { ref: p!.ref, signature: p!.signature };
     sheetDraft = {};
-    sheet = true;
+    preparationIdentity++;
+      sheet = true;
     render();
   });
   on("reconstruction-return", () => {
@@ -473,6 +482,7 @@ function bind() {
           return { ref: pin(n), integrity: n.integrity };
         }),
         viewports =
+          f.get("viewports")==='custom'?JSON.parse(String(sheetDraft['customViewports'])):
           f.get("viewports") === "both"
             ? [
                 { width: 1440, height: 1000 },
@@ -526,3 +536,10 @@ function bind() {
       if (b) b.disabled = true;
     });
 }
+
+function capturePreparationDraft(){const form=document.getElementById('reconstruction-prepare') as HTMLFormElement|null;if(!form||!sheet||!ctx||form.dataset['preparationOwner']!==JSON.stringify([ctx.pid,key(ctx.unit),preparationIdentity]))return;sheetDraft['resource']=[];sheetDraft['evidence']=[];const f=new FormData(form);for(const name of new Set(f.keys()))sheetDraft[name]=['resource','evidence'].includes(name)?f.getAll(name).map(String):String(f.get(name)??'');}
+export function auxiliaryPreparationDraft(){if(!sheet||!ctx||!sheetSource)return null;capturePreparationDraft();const v=String(sheetDraft['viewports']??'');const values={instruction:String(sheetDraft['instruction']??''),count:sheetDraft['count']?Number(sheetDraft['count']):null,viewports:v==='custom'?JSON.parse(String(sheetDraft['customViewports'])):v==='both'?[{width:1440,height:1000},{width:390,height:844}]:v==='desktop'?[{width:1440,height:1000}]:v==='narrow'?[{width:390,height:844}]:null};return {key:sheetSource.id+':'+sheetSource.version+':'+(base?.ref.id??'no-base')+':'+preparationIdentity,values,focus:{kind:'visual-page' as const,unit:ctx.unit,raster:{ref:pin(sheetSource),integrity:sheetSource.integrity},region:null},apply:(edits:{field:string;after:unknown}[])=>{capturePreparationDraft();for(const e of edits){if(e.field==='instruction'||e.field==='count')sheetDraft[e.field]=String(e.after);else if(e.field==='viewports'){sheetDraft['customViewports']=JSON.stringify(e.after);sheetDraft['viewports']='custom';}else throw Error('Unsupported reconstruction preparation edit');}applyingAuxiliaryDraft=true;try{render();}finally{applyingAuxiliaryDraft=false;}}};}
+export function auxiliaryOperationFocus(){const s=selected();if(!s||!ctx)return null;return {kind:'reconstruction' as const,unit:ctx.unit,request:pin(s.request),integrity:s.request.integrity,result:s.result?{ref:pin(s.result),integrity:s.result.integrity}:null};}
+export function auxiliarySemanticProposal(){const s=selected();const p=s?.result?.payload.state.proposals.find(p=>p.slot===slot)??s?.result?.payload.state.proposals[0];return ctx&&p?{unit:ctx.unit,ref:p.ref,signature:p.signature}:null;}
+
+export async function auxiliaryBridgeDone(request:VersionRef){await load();if(view===key(request)&&data?.control?.payload.state.status==='returned'&&key(data.control.payload.state.request)===key(request)){shownResult=key(data.control.payload.state.result!);render();}}

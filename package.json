@@ -35,7 +35,9 @@
     "test:combined:memory": "node scripts/combined-memory-probes.ts",
     "test:browser:combined": "node scripts/combined-browser-check.ts",
     "test:browser:reconstruction": "node scripts/reconstruction-browser-check.ts",
-    "test:reconstruction:compatibility": "node scripts/reconstruction-compatibility-check.ts"
+    "test:reconstruction:compatibility": "node scripts/reconstruction-compatibility-check.ts",
+    "test:browser:auxiliary": "node scripts/auxiliary-browser-check.ts",
+    "test:auxiliary:compatibility": "node scripts/auxiliary-compatibility-check.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.58.2",

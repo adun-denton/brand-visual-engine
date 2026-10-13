@@ -1,0 +1,32 @@
+✔ auxiliary proposes only; explicit Apply affects ephemeral named draft, idempotent action and cold reopen never restore it (307.350624ms)
+✔ draft N cannot overwrite N+1; old snapshot cannot reset token; navigation cannot redirect a proposal (215.99222ms)
+✔ typed raster/semantic/operation focus rejects owner/hash/unit/region mismatches; Brand off excludes old context and history (81.118684ms)
+✔ separate runtime allowlists reject legacy tools, aliases, unexpected arguments and unsupported draft fields without proposals/design writes (1666.691391ms)
+✔ explicit requested Level1/2 and reconstruction draft fields support bounded proposals; unsupported edits reject without filtering (215.803647ms)
+✔ exact authorized evidence reads and explicit Brand snapshot are bounded; foreign/missing evidence stays unavailable (223.981636ms)
+✔ offline bridge uses fresh exact image input, canonical semantic schema and atomic V07 result/evidence; acceptance pair remains protected (362.533687ms)
+✔ wrong bridge submission binding rejects every semantic proposal/result and companion evidence (259.036091ms)
+✔ direct persistence forged scope/proposal/action kinds cannot acquire controller write authority (223.126962ms)
+✔ two-project/page focus and scoped rectangle pin exact source/geometry; corrupt bytes reject before driver or scope write (237.46398ms)
+✔ Brand off, excluded real legacy fixture history and unrelated notes never enter context; explicit approved values/media order freeze exactly (543.207598ms)
+✔ exact evidence reports historical and missing primary state; dated capsules authorize no hidden content dump (254.063575ms)
+✔ cancel/timeout retain valid staged proposals historically, deny later tool rounds, and expired scopes cannot authorize a retry (983.027617ms)
+✔ superseded draft scope cannot authorize further tool rounds; a new focus/inclusion scope gets no previous history (220.742258ms)
+✔ bridge cancellation makes staged valid delivery historical; a new frozen operation uses a fresh context and no retry of old identity (391.968964ms)
+✔ bridge final companion failure and malformed second candidate roll back all semantic outputs and reconstruction receipts (510.233055ms)
+✔ new auxiliary memory evidence is complete; coherent omission rejects and missing primary versions stay discoverable after reopen (285.27311ms)
+✔ HTTP token, unsupported/alternate routes and production authority cannot bypass isolated tools or Apply (102.511436ms)
+✔ session close/shutdown interrupt an abort-ignoring fixture, drain HTTP and cold reopen without draft or transport replay (231.073903ms)
+✔ reconstruction preparation proposals Apply only bounded instruction/count/explicit viewport draft fields (209.743197ms)
+✔ incompatible Brand/evidence scope freeze supersedes old proposals and continuation; only explicit editable values reach driver (262.257564ms)
+✔ tool action replay is exact/idempotent; conflicting identities and unavailable production driver kinds reject (208.842866ms)
+✔ an explicit session close preserves cancellation/history but cannot resume/apply or restore registered draft (245.801154ms)
+✔ missing latest completed-turn evidence blocks Apply even while the session mirror survives (215.683954ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8786.468138

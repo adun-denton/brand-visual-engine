@@ -1,0 +1,2999 @@
+{
+  "synthetic": true,
+  "provenance": {
+    "kind": "authored-test-fixture",
+    "generation": false
+  },
+  "calls": [
+    {
+      "mode": "auxiliary",
+      "context": {
+        "project": {
+          "id": "website-da7f2b43-0b7d-447e-80f5-54fe0379cae3",
+          "version": 1,
+          "freshness": "pinned"
+        },
+        "focus": {
+          "kind": "visual-page",
+          "unit": {
+            "id": "page-work-unit-9411696c-f1de-446f-a6b7-6f4c45256f2f",
+            "version": 1,
+            "freshness": "pinned"
+          },
+          "raster": {
+            "ref": {
+              "id": "raster-concept-75a827df-1fd1-4faa-b0a1-b64cf9102330",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            "integrity": "d9462e5ef9afda5521ddae664a55386a943a100397442f94da7eff48a3a196cb",
+            "image": {
+              "id": "180a91d518e6380d1839be8d46df60b686545f6428b39f60315098870d0462f3",
+              "checksum": "180a91d518e6380d1839be8d46df60b686545f6428b39f60315098870d0462f3",
+              "width": 800,
+              "height": 1100,
+              "format": "png",
+              "bytes": 76074
+            },
+            "rights": "Synthetic fixture rights"
+          },
+          "region": null
+        },
+        "brand": {
+          "enabled": false
+        },
+        "references": [],
+        "evidence": [],
+        "policy": "Explicit inputs only; source-visible styling remains visible; no legacy history or old render context"
+      },
+      "contextDigest": "b9d354b49b22055f27de80423092ee6afc7c9dac50e951b8b1156fac788aad74",
+      "thread": {
+        "id": "auxiliary-scope-14a5d46d-1416-49c1-9c16-b5ad2755f108",
+        "resume": false
+      },
+      "images": [
+        {
+          "label": "Exact whole raster",
+          "role": "focus-raster",
+          "ref": {
+            "id": "page-media-a43296f6-ef0a-442c-a6e6-9ba3fc9de7ec",
+            "version": 1,
+            "freshness": "pinned"
+          },
+          "mime": "image/png",
+          "bytes": 76074,
+          "sha256": "180a91d518e6380d1839be8d46df60b686545f6428b39f60315098870d0462f3"
+        }
+      ],
+      "history": [],
+      "tools": [
+        "read_scope",
+        "read_evidence",
+        "propose_edit",
+        "recommend_prepare"
+      ],
+      "toolSchemas": {
+        "read_scope": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {},
+          "required": []
+        },
+        "read_evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "ref": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]+$"
+                },
+                "version": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "freshness": {
+                  "const": "pinned"
+                }
+              },
+              "required": [
+                "id",
+                "version",
+                "freshness"
+              ]
+            },
+            "integrity": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          },
+          "required": [
+            "ref",
+            "integrity"
+          ]
+        },
+        "propose_edit": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "edits": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 16,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "after": {}
+                },
+                "required": [
+                  "field",
+                  "after"
+                ]
+              }
+            },
+            "rationale": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4000
+            }
+          },
+          "required": [
+            "edits",
+            "rationale"
+          ]
+        },
+        "recommend_prepare": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "mode": "auxiliary",
+      "context": {
+        "project": {
+          "id": "website-da7f2b43-0b7d-447e-80f5-54fe0379cae3",
+          "version": 1,
+          "freshness": "pinned"
+        },
+        "focus": {
+          "kind": "visual-page",
+          "unit": {
+            "id": "page-work-unit-9411696c-f1de-446f-a6b7-6f4c45256f2f",
+            "version": 1,
+            "freshness": "pinned"
+          },
+          "raster": {
+            "ref": {
+              "id": "raster-concept-75a827df-1fd1-4faa-b0a1-b64cf9102330",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            "integrity": "d9462e5ef9afda5521ddae664a55386a943a100397442f94da7eff48a3a196cb",
+            "image": {
+              "id": "180a91d518e6380d1839be8d46df60b686545f6428b39f60315098870d0462f3",
+              "checksum": "180a91d518e6380d1839be8d46df60b686545f6428b39f60315098870d0462f3",
+              "width": 800,
+              "height": 1100,
+              "format": "png",
+              "bytes": 76074
+            },
+            "rights": "Synthetic fixture rights"
+          },
+          "region": null
+        },
+        "brand": {
+          "enabled": false
+        },
+        "references": [],
+        "evidence": [],
+        "policy": "Explicit inputs only; source-visible styling remains visible; no legacy history or old render context"
+      },
+      "contextDigest": "b9d354b49b22055f27de80423092ee6afc7c9dac50e951b8b1156fac788aad74",
+      "thread": {
+        "id": "auxiliary-scope-ddcba837-52ed-458c-8f40-41a00ff45523",
+        "resume": false
+      },
+      "images": [
+        {
+          "label": "Exact whole raster",
+          "role": "focus-raster",
+          "ref": {
+            "id": "page-media-a43296f6-ef0a-442c-a6e6-9ba3fc9de7ec",
+            "version": 1,
+            "freshness": "pinned"
+          },
+          "mime": "image/png",
+          "bytes": 76074,
+          "sha256": "180a91d518e6380d1839be8d46df60b686545f6428b39f60315098870d0462f3"
+        }
+      ],
+      "history": [],
+      "tools": [
+        "read_scope",
+        "read_evidence",
+        "propose_edit",
+        "recommend_prepare"
+      ],
+      "toolSchemas": {
+        "read_scope": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {},
+          "required": []
+        },
+        "read_evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "ref": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]+$"
+                },
+                "version": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "freshness": {
+                  "const": "pinned"
+                }
+              },
+              "required": [
+                "id",
+                "version",
+                "freshness"
+              ]
+            },
+            "integrity": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          },
+          "required": [
+            "ref",
+            "integrity"
+          ]
+        },
+        "propose_edit": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "edits": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 16,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "after": {}
+                },
+                "required": [
+                  "field",
+                  "after"
+                ]
+              }
+            },
+            "rationale": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4000
+            }
+          },
+          "required": [
+            "edits",
+            "rationale"
+          ]
+        },
+        "recommend_prepare": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "mode": "auxiliary",
+      "context": {
+        "project": {
+          "id": "website-da7f2b43-0b7d-447e-80f5-54fe0379cae3",
+          "version": 1,
+          "freshness": "pinned"
+        },
+        "focus": {
+          "kind": "visual-page",
+          "unit": {
+            "id": "page-work-unit-9411696c-f1de-446f-a6b7-6f4c45256f2f",
+            "version": 1,
+            "freshness": "pinned"
+          },
+          "raster": {
+            "ref": {
+              "id": "raster-concept-75a827df-1fd1-4faa-b0a1-b64cf9102330",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            "integrity": "d9462e5ef9afda5521ddae664a55386a943a100397442f94da7eff48a3a196cb",
+            "image": {
+              "id": "180a91d518e6380d1839be8d46df60b686545f6428b39f60315098870d0462f3",
+              "checksum": "180a91d518e6380d1839be8d46df60b686545f6428b39f60315098870d0462f3",
+              "width": 800,
+              "height": 1100,
+              "format": "png",
+              "bytes": 76074
+            },
+            "rights": "Synthetic fixture rights"
+          },
+          "region": null
+        },
+        "brand": {
+          "enabled": false
+        },
+        "references": [],
+        "evidence": [],
+        "policy": "Explicit inputs only; source-visible styling remains visible; no legacy history or old render context"
+      },
+      "contextDigest": "b9d354b49b22055f27de80423092ee6afc7c9dac50e951b8b1156fac788aad74",
+      "thread": {
+        "id": "auxiliary-scope-0146691e-7bb8-4aaa-ad03-b98f9c4ce930",
+        "resume": false
+      },
+      "images": [
+        {
+          "label": "Exact whole raster",
+          "role": "focus-raster",
+          "ref": {
+            "id": "page-media-a43296f6-ef0a-442c-a6e6-9ba3fc9de7ec",
+            "version": 1,
+            "freshness": "pinned"
+          },
+          "mime": "image/png",
+          "bytes": 76074,
+          "sha256": "180a91d518e6380d1839be8d46df60b686545f6428b39f60315098870d0462f3"
+        }
+      ],
+      "history": [],
+      "tools": [
+        "read_scope",
+        "read_evidence",
+        "propose_edit",
+        "recommend_prepare"
+      ],
+      "toolSchemas": {
+        "read_scope": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {},
+          "required": []
+        },
+        "read_evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "ref": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]+$"
+                },
+                "version": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "freshness": {
+                  "const": "pinned"
+                }
+              },
+              "required": [
+                "id",
+                "version",
+                "freshness"
+              ]
+            },
+            "integrity": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          },
+          "required": [
+            "ref",
+            "integrity"
+          ]
+        },
+        "propose_edit": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "edits": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 16,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "after": {}
+                },
+                "required": [
+                  "field",
+                  "after"
+                ]
+              }
+            },
+            "rationale": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4000
+            }
+          },
+          "required": [
+            "edits",
+            "rationale"
+          ]
+        },
+        "recommend_prepare": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "mode": "auxiliary",
+      "context": {
+        "project": {
+          "id": "website-da7f2b43-0b7d-447e-80f5-54fe0379cae3",
+          "version": 1,
+          "freshness": "pinned"
+        },
+        "focus": {
+          "kind": "visual-page",
+          "unit": {
+            "id": "page-work-unit-9411696c-f1de-446f-a6b7-6f4c45256f2f",
+            "version": 1,
+            "freshness": "pinned"
+          },
+          "raster": {
+            "ref": {
+              "id": "raster-concept-75a827df-1fd1-4faa-b0a1-b64cf9102330",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            "integrity": "d9462e5ef9afda5521ddae664a55386a943a100397442f94da7eff48a3a196cb",
+            "image": {
+              "id": "180a91d518e6380d1839be8d46df60b686545f6428b39f60315098870d0462f3",
+              "checksum": "180a91d518e6380d1839be8d46df60b686545f6428b39f60315098870d0462f3",
+              "width": 800,
+              "height": 1100,
+              "format": "png",
+              "bytes": 76074
+            },
+            "rights": "Synthetic fixture rights"
+          },
+          "region": null
+        },
+        "brand": {
+          "enabled": false
+        },
+        "references": [],
+        "evidence": [],
+        "policy": "Explicit inputs only; source-visible styling remains visible; no legacy history or old render context"
+      },
+      "contextDigest": "b9d354b49b22055f27de80423092ee6afc7c9dac50e951b8b1156fac788aad74",
+      "thread": {
+        "id": "auxiliary-scope-8d359016-e116-4838-94bb-4381259e277f",
+        "resume": false
+      },
+      "images": [
+        {
+          "label": "Exact whole raster",
+          "role": "focus-raster",
+          "ref": {
+            "id": "page-media-a43296f6-ef0a-442c-a6e6-9ba3fc9de7ec",
+            "version": 1,
+            "freshness": "pinned"
+          },
+          "mime": "image/png",
+          "bytes": 76074,
+          "sha256": "180a91d518e6380d1839be8d46df60b686545f6428b39f60315098870d0462f3"
+        }
+      ],
+      "history": [],
+      "tools": [
+        "read_scope",
+        "read_evidence",
+        "propose_edit",
+        "recommend_prepare"
+      ],
+      "toolSchemas": {
+        "read_scope": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {},
+          "required": []
+        },
+        "read_evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "ref": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]+$"
+                },
+                "version": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "freshness": {
+                  "const": "pinned"
+                }
+              },
+              "required": [
+                "id",
+                "version",
+                "freshness"
+              ]
+            },
+            "integrity": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          },
+          "required": [
+            "ref",
+            "integrity"
+          ]
+        },
+        "propose_edit": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "edits": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 16,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "after": {}
+                },
+                "required": [
+                  "field",
+                  "after"
+                ]
+              }
+            },
+            "rationale": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4000
+            }
+          },
+          "required": [
+            "edits",
+            "rationale"
+          ]
+        },
+        "recommend_prepare": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "mode": "auxiliary",
+      "context": {
+        "project": {
+          "id": "website-da7f2b43-0b7d-447e-80f5-54fe0379cae3",
+          "version": 1,
+          "freshness": "pinned"
+        },
+        "focus": {
+          "kind": "visual-page",
+          "unit": {
+            "id": "page-work-unit-9411696c-f1de-446f-a6b7-6f4c45256f2f",
+            "version": 1,
+            "freshness": "pinned"
+          },
+          "raster": {
+            "ref": {
+              "id": "raster-concept-eb16e0a8-48c3-4684-a742-12a72f03e49b",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            "integrity": "25500c8134bbf8a9fa345490977185eb01456e7c4b18ca36e415ac1c7f7e194f",
+            "image": {
+              "id": "1eb60a96e9336f9a37d31938a19362b5770a1d1942cc9d94f49a8e1f522485d7",
+              "checksum": "1eb60a96e9336f9a37d31938a19362b5770a1d1942cc9d94f49a8e1f522485d7",
+              "width": 800,
+              "height": 1100,
+              "format": "png",
+              "bytes": 76588
+            },
+            "rights": "Synthetic second rights"
+          },
+          "region": null
+        },
+        "brand": {
+          "enabled": false
+        },
+        "references": [],
+        "evidence": [],
+        "policy": "Explicit inputs only; source-visible styling remains visible; no legacy history or old render context"
+      },
+      "contextDigest": "2a69213adc6455e47ae221cfe24697d0c2e457df291107a90d797a1d365bdf76",
+      "thread": {
+        "id": "auxiliary-scope-0cb91181-dd47-443b-90bb-b3ea552a782a",
+        "resume": false
+      },
+      "images": [
+        {
+          "label": "Exact whole raster",
+          "role": "focus-raster",
+          "ref": {
+            "id": "page-media-d88680a3-5c68-4dc0-96e2-d123cda87917",
+            "version": 1,
+            "freshness": "pinned"
+          },
+          "mime": "image/png",
+          "bytes": 76588,
+          "sha256": "1eb60a96e9336f9a37d31938a19362b5770a1d1942cc9d94f49a8e1f522485d7"
+        }
+      ],
+      "history": [],
+      "tools": [
+        "read_scope",
+        "read_evidence",
+        "propose_edit",
+        "recommend_prepare"
+      ],
+      "toolSchemas": {
+        "read_scope": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {},
+          "required": []
+        },
+        "read_evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "ref": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]+$"
+                },
+                "version": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "freshness": {
+                  "const": "pinned"
+                }
+              },
+              "required": [
+                "id",
+                "version",
+                "freshness"
+              ]
+            },
+            "integrity": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          },
+          "required": [
+            "ref",
+            "integrity"
+          ]
+        },
+        "propose_edit": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "edits": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 16,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "after": {}
+                },
+                "required": [
+                  "field",
+                  "after"
+                ]
+              }
+            },
+            "rationale": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4000
+            }
+          },
+          "required": [
+            "edits",
+            "rationale"
+          ]
+        },
+        "recommend_prepare": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "mode": "reconstruction",
+      "context": {
+        "mode": "reconstruction",
+        "request": {
+          "version": 1,
+          "project": {
+            "id": "website-da7f2b43-0b7d-447e-80f5-54fe0379cae3",
+            "version": 1,
+            "freshness": "pinned"
+          },
+          "workUnit": {
+            "id": "page-work-unit-9411696c-f1de-446f-a6b7-6f4c45256f2f",
+            "version": 1,
+            "freshness": "pinned"
+          },
+          "source": {
+            "candidate": {
+              "id": "raster-concept-eb16e0a8-48c3-4684-a742-12a72f03e49b",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            "integrity": "25500c8134bbf8a9fa345490977185eb01456e7c4b18ca36e415ac1c7f7e194f",
+            "membership": {
+              "id": "raster-membership-6919c34a-ee12-47ac-9ef9-7f3edb263c8d",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            "membershipIntegrity": "368929a7d065e351c8c84ee0f671b87d8f7c5eb3c4a823ab4bb1ba5378f19981",
+            "media": {
+              "id": "page-media-d88680a3-5c68-4dc0-96e2-d123cda87917",
+              "version": 1,
+              "freshness": "pinned"
+            },
+            "mediaIntegrity": "0a96ba5eb8b5294a654a6fc21fd51fca5e405273eb0de03286548626b8533277",
+            "image": {
+              "id": "1eb60a96e9336f9a37d31938a19362b5770a1d1942cc9d94f49a8e1f522485d7",
+              "checksum": "1eb60a96e9336f9a37d31938a19362b5770a1d1942cc9d94f49a8e1f522485d7",
+              "width": 800,
+              "height": 1100,
+              "format": "png",
+              "bytes": 76588
+            },
+            "rights": "Synthetic second rights"
+          },
+          "instruction": "Make the hierarchy clearer; keep unknown factual content unresolved.",
+          "count": 2,
+          "slots": [
+            1,
+            2
+          ],
+          "viewports": [
+            {
+              "width": 1440,
+              "height": 1000
+            },
+            {
+              "width": 390,
+              "height": 844
+            }
+          ],
+          "brand": {
+            "enabled": false
+          },
+          "base": null,
+          "locks": [],
+          "resources": [],
+          "evidence": [],
+          "context": {},
+          "grammar": {
+            "name": "bve.page",
+            "version": 1
+          },
+          "previousControl": null,
+          "epoch": 1,
+          "heads": {
+            "project": 1,
+            "workUnit": 1,
+            "source": 1,
+            "base": null,
+            "brand": null
+          },
+          "limits": {
+            "maxReceipts": 1,
+            "maxCandidates": 2,
+            "automaticRetry": false
+          }
+        },
+        "grammar": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema",
+            "version",
+            "request",
+            "requestHash",
+            "project",
+            "source",
+            "baseSignature",
+            "receiptId",
+            "slots",
+            "findings",
+            "provenance"
+          ],
+          "properties": {
+            "schema": {
+              "const": "bve.reconstruction-result"
+            },
+            "version": {
+              "const": 1
+            },
+            "request": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "version",
+                "freshness"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]+$",
+                  "maxLength": 160
+                },
+                "version": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "freshness": {
+                  "const": "pinned"
+                }
+              }
+            },
+            "requestHash": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "project": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "version",
+                "freshness"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]+$",
+                  "maxLength": 160
+                },
+                "version": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "freshness": {
+                  "const": "pinned"
+                }
+              }
+            },
+            "source": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "candidate",
+                "integrity"
+              ],
+              "properties": {
+                "candidate": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "version",
+                    "freshness"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9_-]+$",
+                      "maxLength": 160
+                    },
+                    "version": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "freshness": {
+                      "const": "pinned"
+                    }
+                  }
+                },
+                "integrity": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              }
+            },
+            "baseSignature": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              ]
+            },
+            "receiptId": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "maxLength": 160
+            },
+            "slots": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 6,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "slot",
+                  "candidate"
+                ],
+                "properties": {
+                  "slot": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 6
+                  },
+                  "candidate": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "rationale",
+                      "page",
+                      "mediaRequirements",
+                      "proposedActions"
+                    ],
+                    "properties": {
+                      "label": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "pattern": "\\S"
+                      },
+                      "rationale": {
+                        "type": "string",
+                        "maxLength": 4000,
+                        "pattern": "\\S"
+                      },
+                      "page": {
+                        "$ref": "#/$defs/page"
+                      },
+                      "mediaRequirements": {
+                        "type": "array",
+                        "maxItems": 100,
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "slot",
+                            "instruction"
+                          ],
+                          "properties": {
+                            "slot": {
+                              "type": "string",
+                              "maxLength": 160,
+                              "pattern": "\\S"
+                            },
+                            "instruction": {
+                              "type": "string",
+                              "maxLength": 4000,
+                              "pattern": "\\S"
+                            }
+                          }
+                        }
+                      },
+                      "proposedActions": {
+                        "type": "array",
+                        "maxItems": 32,
+                        "items": {
+                          "type": "string",
+                          "maxLength": 4000,
+                          "pattern": "\\S"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "findings": {
+              "type": "array",
+              "maxItems": 100,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4000,
+                "pattern": "\\S"
+              }
+            },
+            "provenance": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "generation"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "authored-test-fixture"
+                },
+                "generation": {
+                  "const": false
+                }
+              }
+            }
+          },
+          "$defs": {
+            "styleDimension": {
+              "type": "string",
+              "pattern": "^(?:auto|0*(?:(?:[0-9]{1,3}|[1-3][0-9]{3}|40[0-8][0-9]|409[0-5])(?:\\.[0-9]+)?|4096(?:\\.0(?:0(?:0(?:0(?:0(?:0(?:0(?:0(?:0(?:0(?:0(?:0(?:(?:[0-3][0-9]*|4(?:(?:[0-4][0-9]*|5(?:(?:[0-3][0-9]*|4(?:(?:[0-6][0-9]*|7(?:(?:[0-3][0-9]*|4(?:(?:[0-6][0-9]*|7(?:(?:[0-2][0-9]*|3(?:(?:[0-4][0-9]*|5(?:0(?:(?:[0-7][0-9]*|8(?:(?:[0-7][0-9]*|8(?:(?:[0-5][0-9]*|6(?:(?:[0-3][0-9]*|4(?:(?:[0-5][0-9]*|6(?:(?:[0-3][0-9]*|4(?:(?:[0-0][0-9]*|1(?:(?:[0-0][0-9]*|1(?:(?:[0-7][0-9]*|8(?:(?:[0-8][0-9]*|9(?:(?:[0-4][0-9]*|5(?:(?:[0-6][0-9]*|7(?:(?:[0-4][0-9]*|5(?:(?:[0-0][0-9]*|1(?:(?:[0-8][0-9]*|9(?:(?:[0-4][0-9]*|5(?:(?:[0-2][0-9]*|3(?:(?:[0-0][0-9]*|1(?:(?:[0-1][0-9]*|2(?:(?:[0-4][0-9]*|5(?:0*)?))?))?))?))?))?))?))?))?))?))?))?))?))?))?))?))?))?))?))?))?)?))?))?))?))?))?))?))?))?)?)?)?)?)?)?)?)?)?)?)?)?)(?:px|rem|em|ch|%|vw|vh))$"
+            },
+            "style": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "display": {
+                  "type": "string",
+                  "enum": [
+                    "block",
+                    "flex",
+                    "grid",
+                    "inline",
+                    "inline-block",
+                    "none"
+                  ],
+                  "description": "one of block, flex, grid, inline, inline-block, none",
+                  "examples": [
+                    "grid"
+                  ]
+                },
+                "flexDirection": {
+                  "type": "string",
+                  "enum": [
+                    "row",
+                    "column",
+                    "row-reverse",
+                    "column-reverse"
+                  ],
+                  "description": "one of row, column, row-reverse, column-reverse",
+                  "examples": [
+                    "row"
+                  ]
+                },
+                "flexWrap": {
+                  "type": "string",
+                  "enum": [
+                    "wrap",
+                    "nowrap"
+                  ],
+                  "description": "one of wrap, nowrap",
+                  "examples": [
+                    "wrap"
+                  ]
+                },
+                "justifyContent": {
+                  "type": "string",
+                  "enum": [
+                    "start",
+                    "end",
+                    "center",
+                    "space-between",
+                    "space-around",
+                    "space-evenly"
+                  ],
+                  "description": "one of start, end, center, space-between, space-around, space-evenly",
+                  "examples": [
+                    "start"
+                  ]
+                },
+                "alignItems": {
+                  "type": "string",
+                  "enum": [
+                    "start",
+                    "end",
+                    "center",
+                    "stretch",
+                    "baseline"
+                  ],
+                  "description": "one of start, end, center, stretch, baseline",
+                  "examples": [
+                    "start"
+                  ]
+                },
+                "gap": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 4096
+                    },
+                    {
+                      "$ref": "#/$defs/styleDimension"
+                    }
+                  ],
+                  "description": "JSON number from 0 to 4096 (pixels), or auto, or one nonnegative scalar <=4096 with px/rem/em/ch/%/vw/vh; no compound shorthand",
+                  "examples": [
+                    22
+                  ]
+                },
+                "gridTemplateColumns": {
+                  "type": "string",
+                  "pattern": "^(?:minmax\\(0,[0-9.]+fr\\)|[0-9.]+(?:fr|px|%|rem)|auto)(?: (?:minmax\\(0,[0-9.]+fr\\)|[0-9.]+(?:fr|px|%|rem)|auto))*$",
+                  "maxLength": 200,
+                  "description": "explicit columns such as 1fr 1fr 1fr or minmax(0,1fr) auto; max200 characters; no repeat()/calc()",
+                  "examples": [
+                    "1fr 1fr 1fr"
+                  ]
+                },
+                "gridColumn": {
+                  "type": "string",
+                  "pattern": "^(auto|[1-9][0-9]?(?: \\/ (?:[1-9][0-9]?|span [1-9][0-9]?))?)$",
+                  "description": "auto or integer1–99, optionally / integer1–99 or / span integer1–99 with single spaces",
+                  "examples": [
+                    "1 / span 2"
+                  ]
+                },
+                "gridRow": {
+                  "type": "string",
+                  "pattern": "^(auto|[1-9][0-9]?(?: \\/ (?:[1-9][0-9]?|span [1-9][0-9]?))?)$",
+                  "description": "auto or integer1–99, optionally / integer1–99 or / span integer1–99 with single spaces",
+                  "examples": [
+                    "auto"
+                  ]
+                },
+                "padding": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 4096
+                    },
+                    {
+                      "$ref": "#/$defs/styleDimension"
+                    }
+                  ],
+                  "description": "JSON number from 0 to 4096 (pixels), or auto, or one nonnegative scalar <=4096 with px/rem/em/ch/%/vw/vh; no compound shorthand",
+                  "examples": [
+                    22
+                  ]
+                },
+                "margin": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 4096
+                    },
+                    {
+                      "$ref": "#/$defs/styleDimension"
+                    }
+                  ],
+                  "description": "JSON number from 0 to 4096 (pixels), or auto, or one nonnegative scalar <=4096 with px/rem/em/ch/%/vw/vh; no compound shorthand",
+                  "examples": [
+                    22
+                  ]
+                },
+                "width": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 4096
+                    },
+                    {
+                      "$ref": "#/$defs/styleDimension"
+                    }
+                  ],
+                  "description": "JSON number from 0 to 4096 (pixels), or auto, or one nonnegative scalar <=4096 with px/rem/em/ch/%/vw/vh; no compound shorthand",
+                  "examples": [
+                    22
+                  ]
+                },
+                "maxWidth": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 4096
+                    },
+                    {
+                      "$ref": "#/$defs/styleDimension"
+                    }
+                  ],
+                  "description": "JSON number from 0 to 4096 (pixels), or auto, or one nonnegative scalar <=4096 with px/rem/em/ch/%/vw/vh; no compound shorthand",
+                  "examples": [
+                    22
+                  ]
+                },
+                "minHeight": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 4096
+                    },
+                    {
+                      "$ref": "#/$defs/styleDimension"
+                    }
+                  ],
+                  "description": "JSON number from 0 to 4096 (pixels), or auto, or one nonnegative scalar <=4096 with px/rem/em/ch/%/vw/vh; no compound shorthand",
+                  "examples": [
+                    22
+                  ]
+                },
+                "background": {
+                  "type": "string",
+                  "pattern": "^(#(?:[a-fA-F0-9]{3}|[a-fA-F0-9]{4}|[a-fA-F0-9]{6}|[a-fA-F0-9]{8})|transparent|currentColor)$",
+                  "description": "hex color with 3/4/6/8 digits, transparent or currentColor",
+                  "examples": [
+                    "#153932"
+                  ]
+                },
+                "color": {
+                  "type": "string",
+                  "pattern": "^(#(?:[a-fA-F0-9]{3}|[a-fA-F0-9]{4}|[a-fA-F0-9]{6}|[a-fA-F0-9]{8})|transparent|currentColor)$",
+                  "description": "hex color with 3/4/6/8 digits, transparent or currentColor",
+                  "examples": [
+                    "#153932"
+                  ]
+                },
+                "fontFamily": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9 ,'-]+$",
+                  "maxLength": 150,
+                  "description": "local font-family string using ASCII letters/digits, spaces, commas, apostrophes or hyphens; max150 characters",
+                  "examples": [
+                    "Georgia, serif"
+                  ]
+                },
+                "fontSize": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 4096
+                    },
+                    {
+                      "$ref": "#/$defs/styleDimension"
+                    }
+                  ],
+                  "description": "JSON number from 0 to 4096 (pixels), or auto, or one nonnegative scalar <=4096 with px/rem/em/ch/%/vw/vh; no compound shorthand",
+                  "examples": [
+                    22
+                  ]
+                },
+                "fontWeight": {
+                  "type": "number",
+                  "minimum": 100,
+                  "maximum": 900,
+                  "description": "JSON number from 100 to 900; not a quoted number",
+                  "examples": [
+                    700
+                  ]
+                },
+                "lineHeight": {
+                  "type": "number",
+                  "minimum": 0.8,
+                  "maximum": 4,
+                  "description": "JSON number from 0.8 to 4; not a quoted number",
+                  "examples": [
+                    1.05
+                  ]
+                },
+                "letterSpacing": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": -10,
+                      "maximum": 4096
+                    },
+                    {
+                      "$ref": "#/$defs/styleDimension"
+                    }
+                  ],
+                  "description": "JSON number from -10 to 4096 (pixels), or auto, or one nonnegative scalar <=4096 with px/rem/em/ch/%/vw/vh; no compound shorthand",
+                  "examples": [
+                    22
+                  ]
+                },
+                "textAlign": {
+                  "type": "string",
+                  "enum": [
+                    "left",
+                    "right",
+                    "center",
+                    "start",
+                    "end"
+                  ],
+                  "description": "one of left, right, center, start, end",
+                  "examples": [
+                    "left"
+                  ]
+                },
+                "border": {
+                  "type": "string",
+                  "pattern": "^(none|[0-9]{1,2}px (?:solid|dashed|dotted) (?:#(?:[a-fA-F0-9]{3}|[a-fA-F0-9]{4}|[a-fA-F0-9]{6}|[a-fA-F0-9]{8})|currentColor))$",
+                  "description": "none or a whole border: 0–99px solid/dashed/dotted plus hex3/4/6/8 or currentColor; no side shorthand",
+                  "examples": [
+                    "1px solid #abc"
+                  ]
+                },
+                "borderRadius": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 4096
+                    },
+                    {
+                      "$ref": "#/$defs/styleDimension"
+                    }
+                  ],
+                  "description": "JSON number from 0 to 4096 (pixels), or auto, or one nonnegative scalar <=4096 with px/rem/em/ch/%/vw/vh; no compound shorthand",
+                  "examples": [
+                    22
+                  ]
+                },
+                "objectFit": {
+                  "type": "string",
+                  "enum": [
+                    "cover",
+                    "contain"
+                  ],
+                  "description": "one of cover, contain",
+                  "examples": [
+                    "cover"
+                  ]
+                },
+                "aspectRatio": {
+                  "type": "string",
+                  "pattern": "^[1-9][0-9]{0,2} \\/ [1-9][0-9]{0,2}$",
+                  "description": "two integers1–999 separated by space / space",
+                  "examples": [
+                    "16 / 9"
+                  ]
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "JSON number from 0 to 1; not a quoted number",
+                  "examples": [
+                    1
+                  ]
+                }
+              }
+            },
+            "node": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "kind"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "maxLength": 160,
+                  "pattern": "^\\s*(?:[a-zA-Z0-9_-]+)\\s*$"
+                },
+                "kind": {
+                  "enum": [
+                    "container",
+                    "section",
+                    "heading",
+                    "text",
+                    "link",
+                    "list",
+                    "media"
+                  ]
+                },
+                "text": {
+                  "type": "string",
+                  "maxLength": 8000,
+                  "pattern": "\\S"
+                },
+                "level": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 6
+                },
+                "href": {
+                  "type": "string",
+                  "maxLength": 500,
+                  "pattern": "^\\s*(?:(#[a-zA-Z0-9_-]+|\\/(?:[a-zA-Z0-9_-]+\\/?)*|https:\\/\\/[^\\s<>\"'\\\\]+|mailto:[a-zA-Z0-9._+@-]+|tel:[+0-9()-]+))\\s*$"
+                },
+                "items": {
+                  "type": "array",
+                  "maxItems": 100,
+                  "items": {
+                    "type": "string",
+                    "maxLength": 2000,
+                    "pattern": "\\S"
+                  }
+                },
+                "slot": {
+                  "type": "string",
+                  "maxLength": 160,
+                  "pattern": "^\\s*(?:[a-zA-Z0-9_-]+)\\s*$"
+                },
+                "alt": {
+                  "type": "string",
+                  "maxLength": 1000
+                },
+                "decorative": {
+                  "type": "boolean"
+                },
+                "style": {
+                  "$ref": "#/$defs/style"
+                },
+                "children": {
+                  "type": "array",
+                  "maxItems": 100,
+                  "items": {
+                    "$ref": "#/$defs/node"
+                  }
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "heading",
+                          "text",
+                          "link"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ]
+                  },
+                  "then": {
+                    "required": [
+                      "text"
+                    ],
+                    "properties": {
+                      "text": {}
+                    }
+                  },
+                  "else": {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "text"
+                          ],
+                          "properties": {
+                            "text": {}
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "heading"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ]
+                  },
+                  "then": {
+                    "required": [
+                      "level"
+                    ],
+                    "properties": {
+                      "level": {}
+                    }
+                  },
+                  "else": {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "level"
+                          ],
+                          "properties": {
+                            "level": {}
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "link"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ]
+                  },
+                  "then": {
+                    "required": [
+                      "href"
+                    ],
+                    "properties": {
+                      "href": {}
+                    }
+                  },
+                  "else": {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "href"
+                          ],
+                          "properties": {
+                            "href": {}
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "list"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ]
+                  },
+                  "then": {
+                    "required": [
+                      "items"
+                    ],
+                    "properties": {
+                      "items": {}
+                    }
+                  },
+                  "else": {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "items"
+                          ],
+                          "properties": {
+                            "items": {}
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "media"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ]
+                  },
+                  "then": {
+                    "required": [
+                      "slot",
+                      "alt",
+                      "decorative"
+                    ],
+                    "properties": {
+                      "slot": {},
+                      "alt": {},
+                      "decorative": {}
+                    }
+                  },
+                  "else": {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "slot"
+                          ],
+                          "properties": {
+                            "slot": {}
+                          }
+                        },
+                        {
+                          "required": [
+                            "alt"
+                          ],
+                          "properties": {
+                            "alt": {}
+                          }
+                        },
+                        {
+                          "required": [
+                            "decorative"
+                          ],
+                          "properties": {
+                            "decorative": {}
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "container",
+                          "section"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ]
+                  },
+                  "then": {
+                    "required": [
+                      "children"
+                    ],
+                    "properties": {
+                      "children": {}
+                    }
+                  },
+                  "else": {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "children"
+                          ],
+                          "properties": {
+                            "children": {}
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "decorative": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "decorative"
+                    ]
+                  },
+                  "then": {
+                    "properties": {
+                      "alt": {
+                        "type": "string",
+                        "pattern": "^\\s*$"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "page": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "version",
+                "title",
+                "language",
+                "root",
+                "media",
+                "responsive",
+                "unresolved"
+              ],
+              "properties": {
+                "version": {
+                  "const": 1
+                },
+                "title": {
+                  "type": "string",
+                  "maxLength": 200,
+                  "pattern": "\\S"
+                },
+                "language": {
+                  "type": "string",
+                  "maxLength": 30,
+                  "pattern": "^\\s*(?:[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*)\\s*$"
+                },
+                "root": {
+                  "$ref": "#/$defs/node",
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "container",
+                        "section"
+                      ]
+                    }
+                  },
+                  "type": "object"
+                },
+                "media": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string",
+                    "maxLength": 160,
+                    "pattern": "^[a-zA-Z0-9_-]+$"
+                  },
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string",
+                        "maxLength": 100,
+                        "pattern": "\\S"
+                      }
+                    ]
+                  }
+                },
+                "responsive": {
+                  "type": "array",
+                  "maxItems": 100,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "maxWidth",
+                      "nodeId",
+                      "style"
+                    ],
+                    "properties": {
+                      "maxWidth": {
+                        "type": "integer",
+                        "minimum": 240,
+                        "maximum": 4096
+                      },
+                      "nodeId": {
+                        "type": "string",
+                        "maxLength": 160,
+                        "pattern": "^\\s*(?:[a-zA-Z0-9_-]+)\\s*$"
+                      },
+                      "style": {
+                        "$ref": "#/$defs/style"
+                      }
+                    }
+                  }
+                },
+                "unresolved": {
+                  "type": "array",
+                  "maxItems": 100,
+                  "items": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "pattern": "\\S"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "policy": "Fresh frozen operation; no auxiliary/legacy history"
+      },
+      "contextDigest": "0d66aa57db6b9d50aa285b909b8f9e4a9e71aeee2d4219827fa867858e9bf342",
+      "thread": {
+        "id": "reconstruction-request-f7914407-485a-4d3b-899f-80578522e548",
+        "resume": false
+      },
+      "images": [
+        {
+          "label": "Exact whole reconstruction raster",
+          "role": "source",
+          "ref": {
+            "id": "page-media-d88680a3-5c68-4dc0-96e2-d123cda87917",
+            "version": 1,
+            "freshness": "pinned"
+          },
+          "mime": "image/png",
+          "bytes": 76588,
+          "sha256": "1eb60a96e9336f9a37d31938a19362b5770a1d1942cc9d94f49a8e1f522485d7"
+        }
+      ],
+      "history": [],
+      "tools": [
+        "read_scope",
+        "read_evidence",
+        "submit_reconstruction"
+      ],
+      "toolSchemas": {
+        "read_scope": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {},
+          "required": []
+        },
+        "read_evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "ref": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]+$"
+                },
+                "version": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "freshness": {
+                  "const": "pinned"
+                }
+              },
+              "required": [
+                "id",
+                "version",
+                "freshness"
+              ]
+            },
+            "integrity": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          },
+          "required": [
+            "ref",
+            "integrity"
+          ]
+        },
+        "submit_reconstruction": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "response": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "schema",
+                "version",
+                "request",
+                "requestHash",
+                "project",
+                "source",
+                "baseSignature",
+                "receiptId",
+                "slots",
+                "findings",
+                "provenance"
+              ],
+              "properties": {
+                "schema": {
+                  "const": "bve.reconstruction-result"
+                },
+                "version": {
+                  "const": 1
+                },
+                "request": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "version",
+                    "freshness"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9_-]+$",
+                      "maxLength": 160
+                    },
+                    "version": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "freshness": {
+                      "const": "pinned"
+                    }
+                  }
+                },
+                "requestHash": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "project": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "version",
+                    "freshness"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9_-]+$",
+                      "maxLength": 160
+                    },
+                    "version": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "freshness": {
+                      "const": "pinned"
+                    }
+                  }
+                },
+                "source": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "candidate",
+                    "integrity"
+                  ],
+                  "properties": {
+                    "candidate": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "id",
+                        "version",
+                        "freshness"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "pattern": "^[A-Za-z0-9_-]+$",
+                          "maxLength": 160
+                        },
+                        "version": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "freshness": {
+                          "const": "pinned"
+                        }
+                      }
+                    },
+                    "integrity": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    }
+                  }
+                },
+                "baseSignature": {
+                  "anyOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    }
+                  ]
+                },
+                "receiptId": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]+$",
+                  "maxLength": 160
+                },
+                "slots": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 6,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "slot",
+                      "candidate"
+                    ],
+                    "properties": {
+                      "slot": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 6
+                      },
+                      "candidate": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "label",
+                          "rationale",
+                          "page",
+                          "mediaRequirements",
+                          "proposedActions"
+                        ],
+                        "properties": {
+                          "label": {
+                            "type": "string",
+                            "maxLength": 200,
+                            "pattern": "\\S"
+                          },
+                          "rationale": {
+                            "type": "string",
+                            "maxLength": 4000,
+                            "pattern": "\\S"
+                          },
+                          "page": {
+                            "$ref": "#/$defs/page"
+                          },
+                          "mediaRequirements": {
+                            "type": "array",
+                            "maxItems": 100,
+                            "items": {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "required": [
+                                "slot",
+                                "instruction"
+                              ],
+                              "properties": {
+                                "slot": {
+                                  "type": "string",
+                                  "maxLength": 160,
+                                  "pattern": "\\S"
+                                },
+                                "instruction": {
+                                  "type": "string",
+                                  "maxLength": 4000,
+                                  "pattern": "\\S"
+                                }
+                              }
+                            }
+                          },
+                          "proposedActions": {
+                            "type": "array",
+                            "maxItems": 32,
+                            "items": {
+                              "type": "string",
+                              "maxLength": 4000,
+                              "pattern": "\\S"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "findings": {
+                  "type": "array",
+                  "maxItems": 100,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4000,
+                    "pattern": "\\S"
+                  }
+                },
+                "provenance": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "kind",
+                    "generation"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "const": "authored-test-fixture"
+                    },
+                    "generation": {
+                      "const": false
+                    }
+                  }
+                }
+              },
+              "$defs": {
+                "styleDimension": {
+                  "type": "string",
+                  "pattern": "^(?:auto|0*(?:(?:[0-9]{1,3}|[1-3][0-9]{3}|40[0-8][0-9]|409[0-5])(?:\\.[0-9]+)?|4096(?:\\.0(?:0(?:0(?:0(?:0(?:0(?:0(?:0(?:0(?:0(?:0(?:0(?:(?:[0-3][0-9]*|4(?:(?:[0-4][0-9]*|5(?:(?:[0-3][0-9]*|4(?:(?:[0-6][0-9]*|7(?:(?:[0-3][0-9]*|4(?:(?:[0-6][0-9]*|7(?:(?:[0-2][0-9]*|3(?:(?:[0-4][0-9]*|5(?:0(?:(?:[0-7][0-9]*|8(?:(?:[0-7][0-9]*|8(?:(?:[0-5][0-9]*|6(?:(?:[0-3][0-9]*|4(?:(?:[0-5][0-9]*|6(?:(?:[0-3][0-9]*|4(?:(?:[0-0][0-9]*|1(?:(?:[0-0][0-9]*|1(?:(?:[0-7][0-9]*|8(?:(?:[0-8][0-9]*|9(?:(?:[0-4][0-9]*|5(?:(?:[0-6][0-9]*|7(?:(?:[0-4][0-9]*|5(?:(?:[0-0][0-9]*|1(?:(?:[0-8][0-9]*|9(?:(?:[0-4][0-9]*|5(?:(?:[0-2][0-9]*|3(?:(?:[0-0][0-9]*|1(?:(?:[0-1][0-9]*|2(?:(?:[0-4][0-9]*|5(?:0*)?))?))?))?))?))?))?))?))?))?))?))?))?))?))?))?))?))?))?))?))?)?))?))?))?))?))?))?))?))?)?)?)?)?)?)?)?)?)?)?)?)?)(?:px|rem|em|ch|%|vw|vh))$"
+                },
+                "style": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "display": {
+                      "type": "string",
+                      "enum": [
+                        "block",
+                        "flex",
+                        "grid",
+                        "inline",
+                        "inline-block",
+                        "none"
+                      ],
+                      "description": "one of block, flex, grid, inline, inline-block, none",
+                      "examples": [
+                        "grid"
+                      ]
+                    },
+                    "flexDirection": {
+                      "type": "string",
+                      "enum": [
+                        "row",
+                        "column",
+                        "row-reverse",
+                        "column-reverse"
+                      ],
+                      "description": "one of row, column, row-reverse, column-reverse",
+                      "examples": [
+                        "row"
+                      ]
+                    },
+                    "flexWrap": {
+                      "type": "string",
+                      "enum": [
+                        "wrap",
+                        "nowrap"
+                      ],
+                      "description": "one of wrap, nowrap",
+                      "examples": [
+                        "wrap"
+                      ]
+                    },
+                    "justifyContent": {
+                      "type": "string",
+                      "enum": [
+                        "start",
+                        "end",
+                        "center",
+                        "space-between",
+                        "space-around",
+                        "space-evenly"
+                      ],
+                      "description": "one of start, end, center, space-between, space-around, space-evenly",
+                      "examples": [
+                        "start"
+                      ]
+                    },
+                    "alignItems": {
+                      "type": "string",
+                      "enum": [
+                        "start",
+                        "end",
+                        "center",
+                        "stretch",
+                        "baseline"
+                      ],
+                      "description": "one of start, end, center, stretch, baseline",
+                      "examples": [
+                        "start"
+                      ]
+                    },
+                    "gap": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 4096
+                        },
+                        {
+                          "$ref": "#/$defs/styleDimension"
+                        }
+                      ],
+                      "description": "JSON number from 0 to 4096 (pixels), or auto, or one nonnegative scalar <=4096 with px/rem/em/ch/%/vw/vh; no compound shorthand",
+                      "examples": [
+                        22
+                      ]
+                    },
+                    "gridTemplateColumns": {
+                      "type": "string",
+                      "pattern": "^(?:minmax\\(0,[0-9.]+fr\\)|[0-9.]+(?:fr|px|%|rem)|auto)(?: (?:minmax\\(0,[0-9.]+fr\\)|[0-9.]+(?:fr|px|%|rem)|auto))*$",
+                      "maxLength": 200,
+                      "description": "explicit columns such as 1fr 1fr 1fr or minmax(0,1fr) auto; max200 characters; no repeat()/calc()",
+                      "examples": [
+                        "1fr 1fr 1fr"
+                      ]
+                    },
+                    "gridColumn": {
+                      "type": "string",
+                      "pattern": "^(auto|[1-9][0-9]?(?: \\/ (?:[1-9][0-9]?|span [1-9][0-9]?))?)$",
+                      "description": "auto or integer1–99, optionally / integer1–99 or / span integer1–99 with single spaces",
+                      "examples": [
+                        "1 / span 2"
+                      ]
+                    },
+                    "gridRow": {
+                      "type": "string",
+                      "pattern": "^(auto|[1-9][0-9]?(?: \\/ (?:[1-9][0-9]?|span [1-9][0-9]?))?)$",
+                      "description": "auto or integer1–99, optionally / integer1–99 or / span integer1–99 with single spaces",
+                      "examples": [
+                        "auto"
+                      ]
+                    },
+                    "padding": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 4096
+                        },
+                        {
+                          "$ref": "#/$defs/styleDimension"
+                        }
+                      ],
+                      "description": "JSON number from 0 to 4096 (pixels), or auto, or one nonnegative scalar <=4096 with px/rem/em/ch/%/vw/vh; no compound shorthand",
+                      "examples": [
+                        22
+                      ]
+                    },
+                    "margin": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 4096
+                        },
+                        {
+                          "$ref": "#/$defs/styleDimension"
+                        }
+                      ],
+                      "description": "JSON number from 0 to 4096 (pixels), or auto, or one nonnegative scalar <=4096 with px/rem/em/ch/%/vw/vh; no compound shorthand",
+                      "examples": [
+                        22
+                      ]
+                    },
+                    "width": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 4096
+                        },
+                        {
+                          "$ref": "#/$defs/styleDimension"
+                        }
+                      ],
+                      "description": "JSON number from 0 to 4096 (pixels), or auto, or one nonnegative scalar <=4096 with px/rem/em/ch/%/vw/vh; no compound shorthand",
+                      "examples": [
+                        22
+                      ]
+                    },
+                    "maxWidth": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 4096
+                        },
+                        {
+                          "$ref": "#/$defs/styleDimension"
+                        }
+                      ],
+                      "description": "JSON number from 0 to 4096 (pixels), or auto, or one nonnegative scalar <=4096 with px/rem/em/ch/%/vw/vh; no compound shorthand",
+                      "examples": [
+                        22
+                      ]
+                    },
+                    "minHeight": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 4096
+                        },
+                        {
+                          "$ref": "#/$defs/styleDimension"
+                        }
+                      ],
+                      "description": "JSON number from 0 to 4096 (pixels), or auto, or one nonnegative scalar <=4096 with px/rem/em/ch/%/vw/vh; no compound shorthand",
+                      "examples": [
+                        22
+                      ]
+                    },
+                    "background": {
+                      "type": "string",
+                      "pattern": "^(#(?:[a-fA-F0-9]{3}|[a-fA-F0-9]{4}|[a-fA-F0-9]{6}|[a-fA-F0-9]{8})|transparent|currentColor)$",
+                      "description": "hex color with 3/4/6/8 digits, transparent or currentColor",
+                      "examples": [
+                        "#153932"
+                      ]
+                    },
+                    "color": {
+                      "type": "string",
+                      "pattern": "^(#(?:[a-fA-F0-9]{3}|[a-fA-F0-9]{4}|[a-fA-F0-9]{6}|[a-fA-F0-9]{8})|transparent|currentColor)$",
+                      "description": "hex color with 3/4/6/8 digits, transparent or currentColor",
+                      "examples": [
+                        "#153932"
+                      ]
+                    },
+                    "fontFamily": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9 ,'-]+$",
+                      "maxLength": 150,
+                      "description": "local font-family string using ASCII letters/digits, spaces, commas, apostrophes or hyphens; max150 characters",
+                      "examples": [
+                        "Georgia, serif"
+                      ]
+                    },
+                    "fontSize": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 4096
+                        },
+                        {
+                          "$ref": "#/$defs/styleDimension"
+                        }
+                      ],
+                      "description": "JSON number from 0 to 4096 (pixels), or auto, or one nonnegative scalar <=4096 with px/rem/em/ch/%/vw/vh; no compound shorthand",
+                      "examples": [
+                        22
+                      ]
+                    },
+                    "fontWeight": {
+                      "type": "number",
+                      "minimum": 100,
+                      "maximum": 900,
+                      "description": "JSON number from 100 to 900; not a quoted number",
+                      "examples": [
+                        700
+                      ]
+                    },
+                    "lineHeight": {
+                      "type": "number",
+                      "minimum": 0.8,
+                      "maximum": 4,
+                      "description": "JSON number from 0.8 to 4; not a quoted number",
+                      "examples": [
+                        1.05
+                      ]
+                    },
+                    "letterSpacing": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "minimum": -10,
+                          "maximum": 4096
+                        },
+                        {
+                          "$ref": "#/$defs/styleDimension"
+                        }
+                      ],
+                      "description": "JSON number from -10 to 4096 (pixels), or auto, or one nonnegative scalar <=4096 with px/rem/em/ch/%/vw/vh; no compound shorthand",
+                      "examples": [
+                        22
+                      ]
+                    },
+                    "textAlign": {
+                      "type": "string",
+                      "enum": [
+                        "left",
+                        "right",
+                        "center",
+                        "start",
+                        "end"
+                      ],
+                      "description": "one of left, right, center, start, end",
+                      "examples": [
+                        "left"
+                      ]
+                    },
+                    "border": {
+                      "type": "string",
+                      "pattern": "^(none|[0-9]{1,2}px (?:solid|dashed|dotted) (?:#(?:[a-fA-F0-9]{3}|[a-fA-F0-9]{4}|[a-fA-F0-9]{6}|[a-fA-F0-9]{8})|currentColor))$",
+                      "description": "none or a whole border: 0–99px solid/dashed/dotted plus hex3/4/6/8 or currentColor; no side shorthand",
+                      "examples": [
+                        "1px solid #abc"
+                      ]
+                    },
+                    "borderRadius": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 4096
+                        },
+                        {
+                          "$ref": "#/$defs/styleDimension"
+                        }
+                      ],
+                      "description": "JSON number from 0 to 4096 (pixels), or auto, or one nonnegative scalar <=4096 with px/rem/em/ch/%/vw/vh; no compound shorthand",
+                      "examples": [
+                        22
+                      ]
+                    },
+                    "objectFit": {
+                      "type": "string",
+                      "enum": [
+                        "cover",
+                        "contain"
+                      ],
+                      "description": "one of cover, contain",
+                      "examples": [
+                        "cover"
+                      ]
+                    },
+                    "aspectRatio": {
+                      "type": "string",
+                      "pattern": "^[1-9][0-9]{0,2} \\/ [1-9][0-9]{0,2}$",
+                      "description": "two integers1–999 separated by space / space",
+                      "examples": [
+                        "16 / 9"
+                      ]
+                    },
+                    "opacity": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "JSON number from 0 to 1; not a quoted number",
+                      "examples": [
+                        1
+                      ]
+                    }
+                  }
+                },
+                "node": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "kind"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "maxLength": 160,
+                      "pattern": "^\\s*(?:[a-zA-Z0-9_-]+)\\s*$"
+                    },
+                    "kind": {
+                      "enum": [
+                        "container",
+                        "section",
+                        "heading",
+                        "text",
+                        "link",
+                        "list",
+                        "media"
+                      ]
+                    },
+                    "text": {
+                      "type": "string",
+                      "maxLength": 8000,
+                      "pattern": "\\S"
+                    },
+                    "level": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 6
+                    },
+                    "href": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "pattern": "^\\s*(?:(#[a-zA-Z0-9_-]+|\\/(?:[a-zA-Z0-9_-]+\\/?)*|https:\\/\\/[^\\s<>\"'\\\\]+|mailto:[a-zA-Z0-9._+@-]+|tel:[+0-9()-]+))\\s*$"
+                    },
+                    "items": {
+                      "type": "array",
+                      "maxItems": 100,
+                      "items": {
+                        "type": "string",
+                        "maxLength": 2000,
+                        "pattern": "\\S"
+                      }
+                    },
+                    "slot": {
+                      "type": "string",
+                      "maxLength": 160,
+                      "pattern": "^\\s*(?:[a-zA-Z0-9_-]+)\\s*$"
+                    },
+                    "alt": {
+                      "type": "string",
+                      "maxLength": 1000
+                    },
+                    "decorative": {
+                      "type": "boolean"
+                    },
+                    "style": {
+                      "$ref": "#/$defs/style"
+                    },
+                    "children": {
+                      "type": "array",
+                      "maxItems": 100,
+                      "items": {
+                        "$ref": "#/$defs/node"
+                      }
+                    }
+                  },
+                  "allOf": [
+                    {
+                      "if": {
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "heading",
+                              "text",
+                              "link"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ]
+                      },
+                      "then": {
+                        "required": [
+                          "text"
+                        ],
+                        "properties": {
+                          "text": {}
+                        }
+                      },
+                      "else": {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "required": [
+                                "text"
+                              ],
+                              "properties": {
+                                "text": {}
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "heading"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ]
+                      },
+                      "then": {
+                        "required": [
+                          "level"
+                        ],
+                        "properties": {
+                          "level": {}
+                        }
+                      },
+                      "else": {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "required": [
+                                "level"
+                              ],
+                              "properties": {
+                                "level": {}
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "link"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ]
+                      },
+                      "then": {
+                        "required": [
+                          "href"
+                        ],
+                        "properties": {
+                          "href": {}
+                        }
+                      },
+                      "else": {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "required": [
+                                "href"
+                              ],
+                              "properties": {
+                                "href": {}
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "list"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ]
+                      },
+                      "then": {
+                        "required": [
+                          "items"
+                        ],
+                        "properties": {
+                          "items": {}
+                        }
+                      },
+                      "else": {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "required": [
+                                "items"
+                              ],
+                              "properties": {
+                                "items": {}
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "media"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ]
+                      },
+                      "then": {
+                        "required": [
+                          "slot",
+                          "alt",
+                          "decorative"
+                        ],
+                        "properties": {
+                          "slot": {},
+                          "alt": {},
+                          "decorative": {}
+                        }
+                      },
+                      "else": {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "required": [
+                                "slot"
+                              ],
+                              "properties": {
+                                "slot": {}
+                              }
+                            },
+                            {
+                              "required": [
+                                "alt"
+                              ],
+                              "properties": {
+                                "alt": {}
+                              }
+                            },
+                            {
+                              "required": [
+                                "decorative"
+                              ],
+                              "properties": {
+                                "decorative": {}
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "container",
+                              "section"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ]
+                      },
+                      "then": {
+                        "required": [
+                          "children"
+                        ],
+                        "properties": {
+                          "children": {}
+                        }
+                      },
+                      "else": {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "required": [
+                                "children"
+                              ],
+                              "properties": {
+                                "children": {}
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "decorative": {
+                            "const": true
+                          }
+                        },
+                        "required": [
+                          "decorative"
+                        ]
+                      },
+                      "then": {
+                        "properties": {
+                          "alt": {
+                            "type": "string",
+                            "pattern": "^\\s*$"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                "page": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "version",
+                    "title",
+                    "language",
+                    "root",
+                    "media",
+                    "responsive",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "version": {
+                      "const": 1
+                    },
+                    "title": {
+                      "type": "string",
+                      "maxLength": 200,
+                      "pattern": "\\S"
+                    },
+                    "language": {
+                      "type": "string",
+                      "maxLength": 30,
+                      "pattern": "^\\s*(?:[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*)\\s*$"
+                    },
+                    "root": {
+                      "$ref": "#/$defs/node",
+                      "properties": {
+                        "kind": {
+                          "enum": [
+                            "container",
+                            "section"
+                          ]
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "media": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                        "maxLength": 160,
+                        "pattern": "^[a-zA-Z0-9_-]+$"
+                      },
+                      "additionalProperties": {
+                        "anyOf": [
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "string",
+                            "maxLength": 100,
+                            "pattern": "\\S"
+                          }
+                        ]
+                      }
+                    },
+                    "responsive": {
+                      "type": "array",
+                      "maxItems": 100,
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "maxWidth",
+                          "nodeId",
+                          "style"
+                        ],
+                        "properties": {
+                          "maxWidth": {
+                            "type": "integer",
+                            "minimum": 240,
+                            "maximum": 4096
+                          },
+                          "nodeId": {
+                            "type": "string",
+                            "maxLength": 160,
+                            "pattern": "^\\s*(?:[a-zA-Z0-9_-]+)\\s*$"
+                          },
+                          "style": {
+                            "$ref": "#/$defs/style"
+                          }
+                        }
+                      }
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "maxItems": 100,
+                      "items": {
+                        "type": "string",
+                        "maxLength": 1000,
+                        "pattern": "\\S"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": [
+            "response"
+          ]
+        }
+      }
+    }
+  ],
+  "accountCalls": 0,
+  "modelCalls": 0,
+  "imageProviderCalls": 0,
+  "gpuCalls": 0
+}
