@@ -255,6 +255,7 @@ export function memoryKind(p: NodePacket<unknown>) {
       : String((p.payload as DesignArtifact<unknown>).kind ?? p.type);
 }
 const fullKinds = new Set([
+  "auxiliary-scope", "auxiliary-turn", "auxiliary-proposal", "auxiliary-action", "auxiliary-bridge",
   "reconstruction-request", "reconstruction-control", "reconstruction-result", "reconstruction-review",
   "page-work-unit",
   "raster-concept",

@@ -1,3 +1,5 @@
+import {Auxiliary,type OfflineAuxiliaryInjection} from './auxiliary.ts';
+import {exactImageInput} from './session-inputs.ts';
 import {Reconstruction,type OfflineReconstructionInjection} from './reconstruction.ts';
 import { ProjectMemory } from "./project-memory.ts";
 import { RasterLibrary } from './raster-library.ts';
@@ -31,6 +33,7 @@ export interface RunningApp {
   pages: Pages;
   visual: VisualWorkspace;
   reconstruction: Reconstruction;
+  auxiliary: Auxiliary;
   memory: ProjectMemory;
   library: RasterLibrary;
   chat: Chat;
@@ -47,6 +50,7 @@ export async function startApp(
     aiResponseFixture?: boolean;
     executionFixture?: OfflineExecutionInjection;
     reconstructionFixture?: OfflineReconstructionInjection;
+    auxiliaryFixture?: OfflineAuxiliaryInjection;
     chatDriver?: ChatDriver;
     chatImageDriver?: ChatImageDriver;
   },
@@ -59,7 +63,8 @@ export async function startApp(
   const pages = new Pages(workspace);
   const directions = new AIDirections(workspace);
   const visual = new VisualWorkspace(workspace,workspaceOptions?.executionFixture);
-  const reconstruction=new Reconstruction(workspace,pages,visual,workspaceOptions?.reconstructionFixture);
+  const reconstruction=new Reconstruction(workspace,pages,visual,workspaceOptions?.reconstructionFixture,workspaceOptions?.auxiliaryFixture);
+  const auxiliary=new Auxiliary(workspace,pages,reconstruction,workspaceOptions?.auxiliaryFixture);
   const memory = new ProjectMemory(workspace);
   const library = new RasterLibrary(workspace);
   let origin = '';
@@ -67,7 +72,7 @@ export async function startApp(
   let closePromise: Promise<void> | undefined;
   const auth = new ChatAuth(root);
   const grants = new Map<string,{pid:string;tid:string}>();
-  const account = new AccountChatDriver(root,auth,()=>origin,(pid,tid)=>{const token=randomBytes(32).toString('hex');grants.set(token,{pid,tid});return {token,release:()=>{grants.delete(token);}};},async(pid,refs)=>Promise.all(refs.map(async r=>{const m=await pages.mediaBytes(pid,r);return {type:'image' as const,url:'data:image/'+m.info.format+';base64,'+m.bytes.toString('base64')};})));
+  const account = new AccountChatDriver(root,auth,()=>origin,(pid,tid)=>{const token=randomBytes(32).toString('hex');grants.set(token,{pid,tid});return {token,release:()=>{grants.delete(token);}};},async(pid,refs)=>Promise.all(refs.map(async r=>{const m=await pages.mediaBytes(pid,r);return exactImageInput(m.bytes,m.info.format);})));
   const chat = new Chat(root,workspace,pages,workspaceOptions?.chatDriver ?? (process.env['BVE_CHAT_POLICY_FILE'] ? account : undefined),workspaceOptions?.chatImageDriver);
   chat.accountStatus = () => auth.status();
   const http = createDrainingServer(async (req, res) => {
@@ -118,6 +123,8 @@ export async function startApp(
       )
         throw new InputError('Local host/origin required', 403);
       if (req.method === 'GET') {
+        if(path==='/api/v1/visual/auxiliary/state'){json(200,auxiliary.state(id(url.searchParams.get('project')),exactRef(JSON.parse(url.searchParams.get('unit')??'null'))),false);return;}
+
         if(path.startsWith('/api/v1/visual/reconstruction/')){
           const pid=id(url.searchParams.get('project')),action=path.slice('/api/v1/visual/reconstruction/'.length);
           if(action==='state'){json(200,reconstruction.state(pid,exactRef(JSON.parse(url.searchParams.get('unit')??'null'))),false);return;}
@@ -342,6 +349,24 @@ export async function startApp(
         throw new InputError('Invalid JSON');
       }
       let result: unknown;
+      if(path.startsWith('/api/v1/visual/auxiliary/')){
+        const outer=record(input,['projectId','input']),pid=id(outer['projectId']),action=path.slice('/api/v1/visual/auxiliary/'.length),value=outer['input'];
+        if(action==='open') {record(value,[]);result=auxiliary.open();}
+        else if(action==='describe'){const r=record(value,['unit','page']),page=pages.page(pid,exactRef(r['page']));result={kind:'semantic-page',unit:exactRef(r['unit']),page:{id:page.id,version:page.version,freshness:'pinned'},integrity:page.integrity,signature:(await import('../modules/website/page.ts')).pageSignature(page.payload.state),placement:null};}
+        else if(action==='brand'){const r=record(value,['ref']),ref=exactRef(r['ref']),b=workspace.kernel.get(ref);if(b.type!=='visual-os'||b.approval!=='accepted')throw new InputError('Explicit approved Brand required');result={ref,integrity:b.integrity};}
+        else if(action==='observe')result=auxiliary.observe(pid,value);
+        else if(action==='inspect')result=auxiliary.inspect(pid,value);
+        else if(action==='freeze')result=auxiliary.freeze(pid,value);
+        else if(action==='send'){const out=auxiliary.send(pid,value);result={turn:out.turn,record:await out.completion};}
+        else if(action==='action')result=auxiliary.action(pid,value);
+        else if(action==='navigate'){const r=record(value,['session','target']);result=auxiliary.navigate(id(r['session']),r['target']);}
+        else if(action==='cancel')result=auxiliary.cancel(pid,value);
+        else if(action==='bridge'){const out=await auxiliary.bridge(pid,value);result={bridge:out.bridge,record:await out.completion};}
+        else if(action==='close'){const r=record(value,['session']);result=await auxiliary.closeSession(id(r['session']));}
+        else throw new InputError('Unsupported visual auxiliary route',403);
+        json(200,result,false);return;
+      }
+
       if(path.startsWith('/api/v1/visual/reconstruction/')){
         const outer=record(input,['projectId','input']),pid=id(outer['projectId']),action=path.slice('/api/v1/visual/reconstruction/'.length),value=outer['input'];
         if(action==='prepare')result=await reconstruction.prepare(pid,value);
@@ -605,6 +630,7 @@ export async function startApp(
     pages,
     visual,
     reconstruction,
+    auxiliary,
     memory,
     library,
     chat,
@@ -615,11 +641,13 @@ export async function startApp(
       // Stop HTTP admission/drain readers before closing private chat persistence.
       const drained = http.close();
       const reconstructed=reconstruction.close();
+      const auxiliaryClosed=auxiliary.close();
       closePromise = (async () => {
         await providers.close();
         await drained;
         await visual.executions.close();
         await reconstructed;
+        await auxiliaryClosed;
         await chat.close();
         workspace.close();
       })();

@@ -1,3 +1,10 @@
+import { bindAuxiliary, auxiliaryDraftChanged } from "./auxiliary.ts";
+import {
+  auxiliaryPreparationDraft,
+  auxiliaryOperationFocus,
+  auxiliarySemanticProposal,
+  auxiliaryBridgeDone,
+} from "./reconstruction.ts";
 import {bindReconstruction} from './reconstruction.ts';
 import type { MemoryIndex, HandoffNote, EvidenceEntry, EvidenceLink } from "../modules/website/memory-contracts.ts";
 import type { LibraryItem, RasterManifest } from '../modules/website/library-contracts.ts';
@@ -130,6 +137,7 @@ async function get(path: string) {
 async function post(action: string, input: unknown, projectId = pid) {
   const r = await fetch("/api/v1/visual/" + action, {
     method: "POST",
+    keepalive: action === "auxiliary/close",
     headers: { "Content-Type": "application/json", "X-BVE-Token": token },
     body: JSON.stringify(
       action === "create" ? input : { projectId, input },
@@ -1021,6 +1029,67 @@ function bind() {
   bindLibrary();
   bindMemory();
   bindReconstruction(state&&project?{pid,project,unit:ref(state.unit),focus:active()??null,brands:catalog.brands,post}:null);
+  bindAuxiliary(
+    state && project
+      ? {
+          pid,
+          project,
+          unit: ref(state.unit),
+          focus: {
+            kind: "visual-page",
+            unit: ref(state.unit),
+            raster: active()
+              ? { ref: ref(active()!), integrity: active()!.integrity }
+              : null,
+            region:
+              entry &&
+              selection() &&
+              entries().find(
+                (e) =>
+                  e.id === entry &&
+                  e.anchor.kind !== "whole" &&
+                  active() &&
+                  key(e.candidate) === key(active()!),
+              )
+                ? {
+                    selections: ref(selection()!),
+                    integrity: selection()!.integrity,
+                    entryId: entry,
+                  }
+                : null,
+          },
+          brands: catalog.brands,
+          post,
+          variation: () => ({
+            key: requestScopeKey(),
+            values: {
+              intent: draft().intent,
+              ...Object.fromEntries(
+                requestFields
+                  .filter((c) => !c.unavailable && requestValues()[c.key])
+                  .map((c) => [
+                    "level" + c.level + ":" + c.key,
+                    ["scale", "count", "px"].includes(c.type)
+                      ? Number(requestValues()[c.key])
+                      : requestValues()[c.key],
+                  ]),
+              ),
+            },
+          }),
+          applyVariation: (edits) => {
+            for (const e of edits) {
+              if (e.field === "intent") draft().intent = String(e.after);
+              else setRequest(e.field.split(":")[1]!, String(e.after));
+            }
+            render();
+          },
+          preparation: auxiliaryPreparationDraft,
+          operation: auxiliaryOperationFocus,
+          semantic: auxiliarySemanticProposal,
+          bridgeDone: auxiliaryBridgeDone,
+        }
+      : null,
+  );
   observers.forEach((o) => o.disconnect());
   observers = [];
   root.querySelectorAll<HTMLImageElement>("img").forEach((img) => {
@@ -1058,6 +1127,7 @@ function bind() {
       if (number) number.value = target.value;
       const output = root.querySelector(`[data-output="${k}"]`); if (output) output.textContent = target.value || "No request";
     }
+    if (form?.id === "prepare" || k) auxiliaryDraftChanged();
   };
   root.querySelectorAll<HTMLDetailsElement>("details[id]").forEach(panel => panel.ontoggle = () => { if (state) draft().open[panel.id] = panel.open; });
   root.querySelectorAll<HTMLButtonElement>("[data-clear]").forEach(b => b.onclick = () => { setRequest(b.dataset["clear"]!, ""); render(); });

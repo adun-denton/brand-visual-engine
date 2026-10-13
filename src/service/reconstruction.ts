@@ -77,6 +77,7 @@ export class Reconstruction {
   readonly pages: Pages;
   readonly visual: VisualWorkspace;
   readonly injection: OfflineReconstructionInjection | undefined;
+  private readonly auxiliaryFixtureAuthorized:boolean;
   private attempted = new Map<string, Promise<unknown>>();
   private controllers = new Set<AbortController>();
   private closing = false;
@@ -85,6 +86,7 @@ export class Reconstruction {
     pages: Pages,
     visual: VisualWorkspace,
     injection?: OfflineReconstructionInjection,
+    auxiliaryFixture?:{testOnly:true;driver:{kind:'authored-test-fixture'}},
   ) {
     this.w = w;
     this.pages = pages;
@@ -98,6 +100,7 @@ export class Reconstruction {
         "Only explicitly injected authored reconstruction fixtures are available",
       );
     this.injection = injection;
+    this.auxiliaryFixtureAuthorized=auxiliaryFixture?.testOnly===true&&auxiliaryFixture.driver.kind==='authored-test-fixture';
   }
   private make<T>(
     pid: string,
@@ -401,6 +404,15 @@ export class Reconstruction {
         "Reconstruction execution unavailable; no production intake transport",
         403,
       );
+    return this.intake(pid,input);
+  }
+  /** Explicit test-only controller seam. No HTTP/env/browser route can obtain it. */
+  offlineSessionIntake(testOnly:true,kind:'authored-test-fixture') {
+    if(!this.auxiliaryFixtureAuthorized)throw new InputError('No injected offline visual session intake authority',403);
+    if(testOnly!==true||kind!=='authored-test-fixture')throw Error('Authored fixture authority required');
+    return (pid:string,input:unknown, companion:(result:Work<ReconstructionResult>)=>NodePacket<unknown>[], commit:(writes:NodePacket<unknown>[],guard:()=>void)=>void)=>this.intake(pid,input,{companion,commit});
+  }
+  private async intake(pid:string,input:unknown, extra?:{companion:(result:Work<ReconstructionResult>)=>NodePacket<unknown>[];commit:(writes:NodePacket<unknown>[],guard:()=>void)=>void}) {
     const r = record(input, ["request", "response"]),
       q = this.request(pid, exactRef(r["request"])),
       s = q.payload.state,
@@ -534,7 +546,8 @@ export class Reconstruction {
         }),
       );
     }
-    this.w.kernel.putMany(writes, () => {
+    if(extra)writes.push(...extra.companion(result));
+    (extra?.commit??this.w.kernel.putMany.bind(this.w.kernel))(writes, () => {
       const now = this.control(pid, s.workUnit);
       if (
         !same(

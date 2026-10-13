@@ -1,0 +1,100 @@
+{
+  "runtime": {
+    "node": "v24.19.0",
+    "npm": "11.9.0",
+    "localBrowser": "Chromium 153.0.8010.0",
+    "ciBrowser": "Playwright 1.58.2 pinned Chromium",
+    "pinnedProtocolBinary": "codex-cli 0.162.1"
+  },
+  "lockedInstall": "npm ci --ignore-scripts passed",
+  "typecheck": "passed",
+  "build": "passed",
+  "units": {
+    "total": 343,
+    "pass": 342,
+    "fail": 0,
+    "skip": 1,
+    "skipReason": "retained Windows-only process-tree check on Linux",
+    "newAuxiliary": 24
+  },
+  "offlineGates": [
+    {
+      "command": "npm run test:combined:compatibility",
+      "exit": 0
+    },
+    {
+      "command": "npm run test:reconstruction:compatibility",
+      "exit": 0
+    },
+    {
+      "command": "npm run test:auxiliary:compatibility",
+      "exit": 0
+    },
+    {
+      "command": "npm run test:combined:memory",
+      "exit": 0
+    },
+    {
+      "command": "npm run test:page-contract",
+      "exit": 0
+    },
+    {
+      "command": "node scripts/reconstruction-acceptance-probe.ts",
+      "exit": 0
+    },
+    {
+      "command": "npm run smoke",
+      "exit": 0
+    },
+    {
+      "command": "npm run smoke:design-os",
+      "exit": 0
+    },
+    {
+      "command": "node scripts/serialize-design-fixtures.ts",
+      "exit": 0
+    },
+    {
+      "command": "git diff --exit-code -- fixtures/design-os.json",
+      "exit": 0
+    }
+  ],
+  "permissionsAndProtocol": [
+    {
+      "command": "test:chat:permissions",
+      "exit": 0
+    },
+    {
+      "command": "test:chat:protocol",
+      "exit": 0
+    }
+  ],
+  "browsers": {
+    "retained": 16,
+    "new": 1,
+    "failed": 0,
+    "reconstructionFinalRerun": "passed after preparation lifetime refinement"
+  },
+  "fixtureEquality": "unchanged fixtures/design-os.json",
+  "whitespace": "git diff --check passed",
+  "actualAccountCalls": 0,
+  "actualModelCalls": 0,
+  "imageProviderCalls": 0,
+  "gpuCalls": 0,
+  "protectedRootAccesses": 0,
+  "limitations": [
+    "Injected authored outputs only; no actual account/model or designer trial",
+    "Production visual transport unavailable",
+    "No local generation, merge or deployment",
+    "Unload close is best effort; TTL and shutdown prevent replay",
+    "Existing layout/default-count and cross-project Library decisions remain unresolved"
+  ],
+  "developmentFailures": [
+    "Initial new gate/dependency and fixture-shape errors corrected",
+    "Preparation redraw/captured checkbox lifetime corrected",
+    "Duplicate reconstruction resource fixture rejected by retained validator; corrected to two distinct media",
+    "One browser invocation omitted local executable override; corrected invocation passed",
+    "Checkbox-removal browser check initially clicked collapsed section; corrected to open the section explicitly"
+  ],
+  "independentAcceptance": "pending Work reviewer"
+}

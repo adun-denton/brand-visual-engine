@@ -1,0 +1,85 @@
+{
+  "softwareHead": "022512e57faf969ac3da2f1be42203163cdc2e29",
+  "serviceBlob": "e345c91c33e852b699c120f3a2c84267ac096f25",
+  "probeSha256": "cea1c07001a22e471efa97db332511e3fec1512c3debd71d5a4cec5b044819e8",
+  "expected": "rejected",
+  "R1": {
+    "declaredTurns": 1,
+    "intactRejected": true,
+    "lostRejected": true,
+    "driverCalls": 1,
+    "ledgerStillHasFirst": true,
+    "rejection": "Canonical turn history unavailable; no allowance or history inferred",
+    "before": {
+      "packets": {
+        "rows": 7,
+        "sha256": "d71f46542e06fc407ac0806bace7634b2c0280639952cd33d1482f4bd05503e3"
+      },
+      "ledger": {
+        "rows": 9,
+        "sha256": "9646c419b922c2f1d52c023b24c401db366b2f80e018619dea4eb5a218665a2d"
+      },
+      "selections": {
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "after": {
+      "packets": {
+        "rows": 7,
+        "sha256": "d71f46542e06fc407ac0806bace7634b2c0280639952cd33d1482f4bd05503e3"
+      },
+      "ledger": {
+        "rows": 9,
+        "sha256": "9646c419b922c2f1d52c023b24c401db366b2f80e018619dea4eb5a218665a2d"
+      },
+      "selections": {
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "rejectedWritesByteEquivalent": true
+  },
+  "R2": {
+    "requestProjectVersion": 1,
+    "currentProjectVersion": 2,
+    "rejected": true,
+    "rejection": "Operation superseded; frozen operation is not current/pending",
+    "driverCalls": 0,
+    "before": {
+      "packets": {
+        "rows": 8,
+        "sha256": "22a9b07637c9829be05d3c826ec8899a8983c53f44cd17982be39c82bb9994e4"
+      },
+      "ledger": {
+        "rows": 8,
+        "sha256": "971703b5bfc0faedacbee4bc21e4ed02192b2300f44a29f87a56d52a67b60e14"
+      },
+      "selections": {
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "after": {
+      "packets": {
+        "rows": 8,
+        "sha256": "22a9b07637c9829be05d3c826ec8899a8983c53f44cd17982be39c82bb9994e4"
+      },
+      "ledger": {
+        "rows": 8,
+        "sha256": "971703b5bfc0faedacbee4bc21e4ed02192b2300f44a29f87a56d52a67b60e14"
+      },
+      "selections": {
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "rejectedWritesByteEquivalent": true
+  },
+  "synthetic": true,
+  "accountCalls": 0,
+  "modelCalls": 0,
+  "imageProviderCalls": 0,
+  "gpuCalls": 0,
+  "protectedRootAccesses": 0
+}

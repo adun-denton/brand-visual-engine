@@ -103,10 +103,10 @@ export class CanonicalMemory {
         p &&
         ((p.type === "module-project" &&
           sameRef((p.payload as ModuleProject).visualOSRef, r)) ||
-          (["raster-specification","reconstruction-request"].includes(memoryKind(p)) &&
+          (["raster-specification","reconstruction-request","auxiliary-scope"].includes(memoryKind(p)) &&
             sameRef(
               (p.payload as Work<{ brand: { source?: VersionRef } }>["payload"])
-                .state.brand?.source,
+                .state.brand?.source ?? (p.payload as any).state.brand?.ref,
               r,
             ))),
     );
@@ -251,11 +251,12 @@ export class CanonicalMemory {
         const b = (p.payload as ModuleProject).visualOSRef;
         if (b) add(b);
       }
-      if (["raster-specification","reconstruction-request"].includes(e.kind)) {
+      if (["raster-specification","reconstruction-request","auxiliary-scope"].includes(e.kind)) {
         const b = (
           p as Work<{ brand: { enabled: boolean; source?: VersionRef } }>
         ).payload.state.brand;
-        if (b.enabled && b.source) add(b.source);
+        if (b?.enabled && b.source) add(b.source);
+        if ((b as any)?.ref) add((b as any).ref);
       }
     };
     for (const row of rows) {

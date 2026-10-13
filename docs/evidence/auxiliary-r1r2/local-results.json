@@ -1,0 +1,166 @@
+{
+  "units": {
+    "total": 372,
+    "pass": 371,
+    "skip": 1,
+    "fail": 0,
+    "skipReason": "Retained Windows-only process test on Linux",
+    "newRepairTests": 29,
+    "unchangedAuxiliaryTests": 24
+  },
+  "lockedInstall": "pass",
+  "typecheck": "pass",
+  "build": "pass",
+  "smokesAndCompatibilityMemoryParserProbes": [
+    {
+      "command": "npm run test:combined:compatibility",
+      "exit": 0
+    },
+    {
+      "command": "npm run test:reconstruction:compatibility",
+      "exit": 0
+    },
+    {
+      "command": "npm run test:auxiliary:compatibility",
+      "exit": 0
+    },
+    {
+      "command": "npm run test:combined:memory",
+      "exit": 0
+    },
+    {
+      "command": "npm run test:page-contract",
+      "exit": 0
+    },
+    {
+      "command": "node scripts/reconstruction-acceptance-probe.ts",
+      "exit": 0
+    },
+    {
+      "command": "node scripts/auxiliary-admission-probes.ts",
+      "exit": 0
+    },
+    {
+      "command": "npm run smoke",
+      "exit": 0
+    },
+    {
+      "command": "npm run smoke:design-os",
+      "exit": 0
+    },
+    {
+      "command": "node scripts/serialize-design-fixtures.ts",
+      "exit": 0
+    },
+    {
+      "command": "git diff --exit-code -- fixtures/design-os.json",
+      "exit": 0
+    }
+  ],
+  "browsers": [
+    {
+      "command": "test:browser:visual",
+      "exit": 0
+    },
+    {
+      "command": "test:browser",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:providers",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:regions",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:composition",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:readiness",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:ai-assets",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:pages",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:review-repairs",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:memory",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:library",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:execution",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:chat",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:page-contract",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:combined",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:reconstruction",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:auxiliary",
+      "exit": 0
+    }
+  ],
+  "permissionsAndProtocol": [
+    {
+      "command": "test:chat:permissions",
+      "exit": 0
+    },
+    {
+      "command": "test:chat:protocol",
+      "exit": 0
+    }
+  ],
+  "fixtureEquality": "pass",
+  "whitespace": "pass",
+  "runtime": {
+    "node": "24.19.0",
+    "localBrowser": "Chromium 153.0.8010.0",
+    "pinnedOfflineBinary": "Codex 0.162.1"
+  },
+  "developmentFailures": [
+    "Typed fixture used nonexistent ModuleProject title; corrected to ordinary same-payload version advance",
+    "Typed state result required explicit ReconstructionResult type",
+    "New acceptance fixture required explicit findings acknowledgment",
+    "Initial timeout test delayed before its declared interval; replaced with controlled clock advance after call",
+    "Old scratch binary path was absent; same exact pinned package reinstalled externally, permission/protocol rerun passed"
+  ],
+  "accountCalls": 0,
+  "modelCalls": 0,
+  "imageProviderCalls": 0,
+  "gpuCalls": 0,
+  "protectedRootAccesses": 0,
+  "independentDisposition": "pending Work reviewer",
+  "limitations": [
+    "Unknown canonical identity/version conservatively blocks conversation admission within its project until separately authorized recovery",
+    "No automatic recovery, parallel database, destructive migration or historical rewrite",
+    "All outputs are authored fixtures; real transport and designer usefulness unverified",
+    "No local inventory/generation, merge, deployment or next-stage activation"
+  ]
+}

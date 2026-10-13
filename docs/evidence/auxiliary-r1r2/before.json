@@ -1,0 +1,85 @@
+{
+  "softwareHead": "022512e57faf969ac3da2f1be42203163cdc2e29",
+  "serviceBlob": "0d1e7810efabe99a2d5eeec6ce2af69da97a7e88",
+  "probeSha256": "cea1c07001a22e471efa97db332511e3fec1512c3debd71d5a4cec5b044819e8",
+  "expected": "unsafe",
+  "R1": {
+    "declaredTurns": 1,
+    "intactRejected": true,
+    "lostRejected": false,
+    "driverCalls": 2,
+    "ledgerStillHasFirst": true,
+    "rejection": "",
+    "before": {
+      "packets": {
+        "rows": 7,
+        "sha256": "1c459aad43650e41952bec7fafa4093c0c7c37ee8fbcf93ecd635307d7363606"
+      },
+      "ledger": {
+        "rows": 9,
+        "sha256": "285c3bb9b7502c5a690e35edbcd2f12200c288974b60252b38fa9a11b09209cf"
+      },
+      "selections": {
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "after": {
+      "packets": {
+        "rows": 10,
+        "sha256": "f3ef6a9e2c8eedebb46dce771d53fdee7f52280c9f3debcb8def9856c1ca67a7"
+      },
+      "ledger": {
+        "rows": 12,
+        "sha256": "cfe0fe491ed74218230de05b346b31c9470d2da3e492384edccfbf57fccbf9a8"
+      },
+      "selections": {
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "rejectedWritesByteEquivalent": false
+  },
+  "R2": {
+    "requestProjectVersion": 1,
+    "currentProjectVersion": 2,
+    "rejected": true,
+    "rejection": "Operation superseded; no further tool rounds",
+    "driverCalls": 1,
+    "before": {
+      "packets": {
+        "rows": 8,
+        "sha256": "76b5328d9162fb78ebdab443dc29bafebb4e7e7701c943992f34e9d10b21db49"
+      },
+      "ledger": {
+        "rows": 8,
+        "sha256": "c6d7c2648a90a4b4acf21732810e1444755083f324cc68cbb1a8793efdb49da9"
+      },
+      "selections": {
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "after": {
+      "packets": {
+        "rows": 10,
+        "sha256": "9f489ec9adad46d9563b444b38faaefc54a2725410796ed80bc532dd8099aed1"
+      },
+      "ledger": {
+        "rows": 10,
+        "sha256": "54516a090eb38d362766f9128002d430a1f4aa3560c645f9070f4be534ac7295"
+      },
+      "selections": {
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "rejectedWritesByteEquivalent": false
+  },
+  "synthetic": true,
+  "accountCalls": 0,
+  "modelCalls": 0,
+  "imageProviderCalls": 0,
+  "gpuCalls": 0,
+  "protectedRootAccesses": 0
+}
