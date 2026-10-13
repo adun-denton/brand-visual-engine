@@ -224,7 +224,8 @@ const screen = async (name: string) => {
 let nativeOperation: NodePacket<DesignArtifact<RegionOperation>>,
   apiOperation: NodePacket<DesignArtifact<RegionOperation>>;
 try {
-  await page.goto(origin);
+  await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
+  await page.goto(origin + "/legacy");
   await page.locator(`[data-action=open][data-id="${pid}"]`).click();
   await region();
   await expect(page.locator('#region-select button')).toBeEnabled();
@@ -570,7 +571,8 @@ try {
   });
   page = await context.newPage();
   listen();
-  await page.goto(origin);
+  await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
+  await page.goto(origin + "/legacy");
   await page.locator(`[data-action=open][data-id="${pid}"]`).click();
   await region();
   await restoredComparison(
@@ -618,7 +620,8 @@ try {
   context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   page = await context.newPage();
   listen();
-  await page.goto(origin);
+  await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
+  await page.goto(origin + "/legacy");
   await page.locator(`[data-action=open][data-id="${pid}"]`).click();
   await region();
   expect(await state()).toEqual(final);

@@ -169,7 +169,8 @@ async function downloadOriginal(
   expect(readFileSync(path!)).toEqual(bytes);
 }
 try {
-  await page.goto(origin);
+  await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
+  await page.goto(origin + "/legacy");
   await expect(
     page.getByRole('heading', { name: 'Make intent inspectable.' }),
   ).toBeVisible();
@@ -435,7 +436,8 @@ try {
   });
   page = await fresh.newPage();
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.goto(origin);
+  await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
+  await page.goto(origin + "/legacy");
   await page
     .getByRole('button', { name: 'Fictional Home Care', exact: true })
     .click();

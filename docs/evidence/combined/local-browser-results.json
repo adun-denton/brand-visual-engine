@@ -1,0 +1,69 @@
+{
+  "node": "24.19.0",
+  "platform": "linux",
+  "browser": "153.0.8010.0",
+  "results": [
+    {
+      "command": "test:browser",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:providers",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:regions",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:composition",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:readiness",
+      "exit": 0,
+      "initialFailure": "CLI legacy-shell probe still fetched root; changed only URL to /legacy, retained assertion and passed rerun"
+    },
+    {
+      "command": "test:browser:ai-assets",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:pages",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:review-repairs",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:chat",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:page-contract",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:execution",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:memory",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:library",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:visual",
+      "exit": 0
+    },
+    {
+      "command": "test:browser:combined",
+      "exit": 0
+    }
+  ],
+  "initialBrowserEnvironment": "Bundled Playwright download failed; old cached binary SIGSEGV. Fresh isolated Chromium153 works. No production dependency change."
+}

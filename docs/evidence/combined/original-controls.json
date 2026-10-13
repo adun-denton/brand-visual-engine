@@ -1,0 +1,11 @@
+{
+  "forgedOmissionRejected": true,
+  "zeroPartialPersistence": true,
+  "historicalDownloadUnchanged": true,
+  "oldSnapshotStaleAfterRevision": true,
+  "missingHistoricalAndLatestVersions": 2,
+  "unknownScopeLossVisible": true,
+  "coldReopen": true,
+  "freshCurrency": "incomplete",
+  "accountCalls": 0
+}

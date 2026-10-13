@@ -1,3 +1,4 @@
+import {mountChat,chatCanvas} from './chat.ts';
 import { studioView, bindStudio } from './pages.ts';
 import type { Pages } from '../service/pages.ts';
 import {
@@ -166,7 +167,7 @@ function shell() {
   return `<div class="shell"><aside class="sidebar"><a class="brand" href="/" aria-label="AI Design OS home"><span class="mark">◈</span><span>Design OS<small>LOCAL STUDIO</small></span></a><p class="eyebrow">WORKSPACES</p><nav aria-label="Projects">${state.projects.map((p) => button(String(p.payload.localContext['title']?.override ?? 'Website'), 'open', `data-id="${e(p.id)}"`, state.project?.id === p.id ? 'project active' : 'project')).join('')}</nav>${button('+ New workspace', 'home', '', 'new-project')}<div class="sidebar-bottom"><span class="dot"></span> Local & private<br><small>Manual image handoff<br>Session reasoning · paid API disabled</small></div></aside><main id="main" tabindex="-1">${state.project ? workspace() : entry()}</main></div>`;
 }
 function entry() {
-  return `<section class="entry"><p class="eyebrow">ONE MODULE. TWO STARTING POINTS.</p><h1>Make intent<br><em>inspectable.</em></h1><p class="intro">A place to explore a website, compare directions and keep the reasons behind your choices.</p><form id="create" class="panel"><h2>Open Website</h2><label>Workspace name<input name="title" required maxlength="100" value="Fictional Home Care"></label><div class="mode-choices"><label><input type="radio" name="mode" value="freeroam" checked> <strong>Freeroam</strong><small>Start with your brief. Brand inputs can stay unresolved.</small></label><label><input type="radio" name="mode" value="branded"> <strong>Branded</strong><small>Explicitly create or mount a minimal VisualOS.</small></label></div><label>VisualOS for Branded<select name="visualOS">${option('new', 'Create and approve this manual palette')}${state.visualOS.map((p) => option(JSON.stringify(ptr(p)), 'Saved VisualOS · ' + p.id.slice(-8))).join('')}</select></label><div class="palette-inputs"><label>Primary<input type="color" name="primary" value="#173f45"></label><label>Background<input type="color" name="background" value="#f3ede0"></label><label>Accent<input type="color" name="accent" value="#de8159"></label></div><p class="hint">Branded creation approves only these explicit palette values and system typography. Motion remains unresolved.</p><button class="primary" type="submit">Enter Website <span aria-hidden="true">↗</span></button></form><p class="hint">Website is the only available module. ${state.directionFixture ? 'TEST FIXTURE: synthetic directions, no AI call or quality claim.' : 'Direction generation requires AI-authored output. Unavailable execution leaves a pending handoff.'}</p></section>`;
+  return `<section class="entry"><p class="eyebrow">ONE MODULE. TWO STARTING POINTS.</p><h1>Make intent<br><em>inspectable.</em></h1><p class="intro">A place to explore a website, compare directions and keep the reasons behind your choices.</p><details class="manual-create" ${localStorage.getItem('bve.advanced')==='true'?'open':''}><summary>Optional manual workspace controls</summary><form id="create" class="panel"><h2>Open Website</h2><label>Workspace name<input name="title" required maxlength="100" value="Fictional Home Care"></label><div class="mode-choices"><label><input type="radio" name="mode" value="freeroam" checked> <strong>Freeroam</strong><small>Start with your brief. Brand inputs can stay unresolved.</small></label><label><input type="radio" name="mode" value="branded"> <strong>Branded</strong><small>Explicitly create or mount a minimal VisualOS.</small></label></div><label>VisualOS for Branded<select name="visualOS">${option('new', 'Create and approve this manual palette')}${state.visualOS.map((p) => option(JSON.stringify(ptr(p)), 'Saved VisualOS · ' + p.id.slice(-8))).join('')}</select></label><div class="palette-inputs"><label>Primary<input type="color" name="primary" value="#173f45"></label><label>Background<input type="color" name="background" value="#f3ede0"></label><label>Accent<input type="color" name="accent" value="#de8159"></label></div><p class="hint">Branded creation approves only these explicit palette values and system typography. Motion remains unresolved.</p><button class="primary" type="submit">Enter Website <span aria-hidden="true">↗</span></button></form></details><p class="hint">Website is the only available module. ${state.directionFixture ? 'TEST FIXTURE: synthetic directions, no AI call or quality claim.' : 'Direction generation requires AI-authored output. Unavailable execution leaves a pending handoff.'}</p></section>`;
 }
 function workspace() {
   const p = state.project!;
@@ -191,7 +192,7 @@ function workspace() {
     )
     .join(
       '',
-    )}</nav>${view === 'studio' ? studioView(studioContext()) : view === 'brief' ? brief() : view === 'explore' ? explore() : view === 'native' ? native() : view === 'providers' ? providerView() : view === 'regions' ? regionView(regionContext()) : view === 'composition' ? compositionView(compositionContext()) : view === 'assets' ? assetsView(aiContext()) : history()}</div>`;
+    )}</nav>${view === 'studio' ? chatCanvas()+`<details id="chat-advanced" ${localStorage.getItem('bve.advanced')==='true'?'open':''}><summary>Advanced controls and manual exchange</summary>${studioView(studioContext())}</details>` : view === 'brief' ? brief() : view === 'explore' ? explore() : view === 'native' ? native() : view === 'providers' ? providerView() : view === 'regions' ? regionView(regionContext()) : view === 'composition' ? compositionView(compositionContext()) : view === 'assets' ? assetsView(aiContext()) : history()}</div>`;
 }
 function brief() {
   const p = state.project!;
@@ -437,12 +438,19 @@ function history() {
     .join('')}</ol></section>`;
 }
 function render() {
+  const conversationContext={project:state.project,studio:state.inference,view,post:async(path:string,input:unknown)=>request(path,input),notice:notify,refresh:async()=>{const created=sessionStorage.getItem('bve.chat-created');if(created){sessionStorage.removeItem('bve.chat-created');await open(created);}else if(state.project){const pid=state.project.id, selectedView=view;
+      // A streamed completion refreshes authoritative data without discarding optional unsaved controls.
+      const edits=Array.from(document.querySelectorAll<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>('#chat-advanced input, #chat-advanced textarea, #chat-advanced select')).filter(el=>!(el instanceof HTMLInputElement && ['file','password','hidden'].includes(el.type))).map(el=>({selector:el.id?'#'+CSS.escape(el.id):el.form?.id&&el.name?'#'+CSS.escape(el.form.id)+' [name="'+CSS.escape(el.name)+'"]':null,value:el.value,checked:el instanceof HTMLInputElement&&['checkbox','radio'].includes(el.type)?el.checked:null}));
+      const next=await request('workspace?project='+encodeURIComponent(pid));if(state.project?.id===pid){state=next;render();if(view===selectedView)for(const edit of edits){const el=edit.selector?Array.from(document.querySelectorAll<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>(edit.selector)).find(el=>edit.checked===null||el.value===edit.value):null;if(el instanceof HTMLInputElement||el instanceof HTMLTextAreaElement||el instanceof HTMLSelectElement){el.value=edit.value;if(el instanceof HTMLInputElement&&edit.checked!==null)el.checked=edit.checked;}}}}}};
+  mountChat(conversationContext);
   const active = document.activeElement as HTMLElement | null;
   const name = active?.getAttribute('name'),
     action = active?.dataset['action'],
     compare = active?.dataset['compare'];
   root.innerHTML = shell();
   bind();
+  mountChat(conversationContext);
+  document.querySelector('#chat-advanced')?.addEventListener('toggle',ev=>localStorage.setItem('bve.advanced',String((ev.target as HTMLDetailsElement).open)));
   if (name)
     document
       .querySelector<HTMLElement>(`[name="${CSS.escape(name)}"]`)

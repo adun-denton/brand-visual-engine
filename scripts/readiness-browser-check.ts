@@ -123,7 +123,7 @@ async function cliStartup() {
         timer = setTimeout(() => reject(Error('CLI startup timeout')), 60000);
       }),
     ]);
-    const response = await fetch(`http://127.0.0.1:${port}/`);
+    const response = await fetch(`http://127.0.0.1:${port}/legacy`);
     expect(response.ok).toBe(true);
     expect(await response.text()).toContain('AI Design OS');
   } finally {
@@ -270,7 +270,8 @@ const sameUnchangedSections = (before: Snapshot, after: Snapshot) => {
     expect(after.accepted![id]).toEqual(before.accepted![id]);
 };
 try {
-  await page.goto(origin);
+  await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
+  await page.goto(origin + "/legacy");
   await page.keyboard.press('Tab');
   await expect(
     page.getByRole('link', { name: 'Skip to workspace' }),
@@ -784,7 +785,8 @@ try {
   });
   page = await context.newPage();
   listen();
-  await page.goto(origin);
+  await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
+  await page.goto(origin + "/legacy");
   await page.locator(`[data-action=open][data-id="${pid}"]`).click();
   await view('01 Brief & references');
   await expect(page.getByLabel('Design intent')).toHaveValue(

@@ -268,7 +268,8 @@ async function submit(attempt: VersionRef, expected = 'returned') {
   }).toPass({ timeout: 15000 });
 }
 try {
-  await page.goto(origin);
+  await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
+  await page.goto(origin + "/legacy");
   await page.locator('#create [name=title]').fill('Synthetic provider studio');
   await page.getByRole('button', { name: 'Enter Website' }).click();
   await page.getByRole('button', { name: '01 Brief & references' }).click();
@@ -507,7 +508,8 @@ try {
   context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   page = await context.newPage();
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.goto(origin);
+  await page.addInitScript(() => { try { localStorage.setItem('bve.advanced','true'); } catch {} });
+  await page.goto(origin + "/legacy");
   await page
     .getByRole('button', { name: 'Synthetic provider studio', exact: true })
     .click();

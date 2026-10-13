@@ -1,0 +1,253 @@
+import { randomBytes, randomUUID, createHash } from "node:crypto";
+import { existsSync } from "node:fs";
+import { join, resolve, isAbsolute } from "node:path";
+import { assertOutsideGit, ensurePrivateDirectory, readPrivateJson, writePrivateJson } from './private-storage.ts';
+import { createRemoteJWKSet, jwtVerify, customFetch } from "jose";
+import { digest } from "../kernel/packets.ts";
+import { InputError, record, string, integer } from "./validation.ts";
+export interface ChatPolicy {
+  version: 1;
+  eligibleLocalUseReview: string;
+  licenseReview: string;
+  model: string;
+  maxTurns: number;
+  noPaid: true;
+  allowLogin: true;
+  toolBoundaryReview: string;
+}
+interface Credentials {
+  client_id: string;
+  subject: string;
+  id_token: string;
+  access_token: string;
+  refresh_token: string;
+  scope: string;
+  expiresAt: number;
+}
+export class ChatAuth {
+  private dir: string;
+  private pending: {
+    state: string;
+    nonce: string;
+    verifier: string;
+    redirect: string;
+    client: string;
+    at: number;
+  } | null = null;
+  private host: string | null = null;
+  fetcher: typeof fetch;
+  private credentials: Credentials | null;
+  constructor(root: string, fetcher: typeof fetch = fetch) {
+    this.dir = join(resolve(root), "chat-account-private");
+    this.fetcher = fetcher;
+    this.credentials = existsSync(join(this.dir, "credentials.json"))
+      ? this.readPrivate<Credentials>("credentials.json")
+      : null;
+  }
+  private readPrivate<T = Record<string, unknown>>(name: string): T {
+    return readPrivateJson(join(this.dir, name)) as T;
+  }
+  private write(name: string, data: unknown) {
+    ensurePrivateDirectory(this.dir);
+    writePrivateJson(join(this.dir, name), data);
+  }
+  policy(): ChatPolicy {
+    const path = process.env["BVE_CHAT_POLICY_FILE"];
+    if (!path || !isAbsolute(path))
+      throw new InputError(
+        "Connection awaits coordinator account/eligibility and bounded-turn review",
+      );
+    assertOutsideGit(path);
+    const v = record(readPrivateJson(path), [
+      "version",
+      "eligibleLocalUseReview",
+      "licenseReview",
+      "model",
+      "maxTurns",
+      "noPaid",
+      "allowLogin",
+      "toolBoundaryReview",
+    ]);
+    if (v["version"] !== 1 || v["noPaid"] !== true || v["allowLogin"] !== true)
+      throw new InputError(
+        "Account policy does not authorize the supported bounded route",
+      );
+    return {
+      version: 1,
+      noPaid: true,
+      allowLogin: true,
+      eligibleLocalUseReview: string(v["eligibleLocalUseReview"]),
+      licenseReview: string(v["licenseReview"]),
+      model: string(v["model"], 200),
+      maxTurns: integer(v["maxTurns"], 100),
+      toolBoundaryReview: string(v["toolBoundaryReview"]),
+    };
+  }
+  status() {
+    return {
+      connected: !!this.credentials,
+      credentialState: !this.credentials ? 'missing' as const
+        : this.credentials.expiresAt <= Date.now() ? 'expired' as const : 'stored' as const,
+      route: "ChatGPT plan · own OAuth credentials",
+      liveVerified: false,
+    };
+  }
+  begin(origin: string) {
+    this.policy();
+    ensurePrivateDirectory(this.dir);
+    if (!this.host) {
+      this.host = existsSync(join(this.dir, "host.json"))
+        ? string(this.readPrivate('host.json')['id']) : 'urn:uuid:' + randomUUID();
+      this.write('host.json', {id: this.host});
+    }
+    if (this.pending && Date.now() - this.pending.at < 300000)
+      throw new InputError("A sign-in is already pending");
+    const state = randomBytes(32).toString("base64url"),
+      nonce = randomBytes(32).toString("base64url"),
+      verifier = randomBytes(48).toString("base64url"),
+      redirect = origin + "/auth/callback";
+    const client = this.credentials?.client_id ?? "dynamic_agent_client";
+    this.pending = { state, nonce, verifier, redirect, client, at: Date.now() };
+    const u = new URL("https://auth.openai.com/api/accounts/authorize");
+    for (const [k, v] of Object.entries({
+      client_id: client,
+      ext_agent_host_id: this.host,
+      response_type: "code",
+      redirect_uri: redirect,
+      scope:
+        "openid profile email offline_access resource.invoke chatgpt.tokens.use.direct",
+      resource: "https://api.openai.com/v1",
+      state,
+      nonce,
+      code_challenge_method: "S256",
+      code_challenge: createHash("sha256").update(verifier).digest("base64url"),
+      ...(client === "dynamic_agent_client"
+        ? { agent_name_hint: "brand_visual_engine" }
+        : { id_token_hint: this.credentials!.id_token }),
+    }))
+      u.searchParams.set(k, v);
+    return { url: u.toString() };
+  }
+  async callback(query: URLSearchParams) {
+    this.policy();
+    ensurePrivateDirectory(this.dir);
+    const p = this.pending;
+    if (!p || Date.now() - p.at > 300000 || query.get("state") !== p.state)
+      throw new InputError("Sign-in state is invalid or expired");
+    this.pending = null;
+    if (query.has("error"))
+      throw new InputError(
+        "ChatGPT sign-in was declined; saved drafts retained",
+      );
+    const client = query.get("client_id") ?? p.client;
+    if (
+      client === "dynamic_agent_client" ||
+      (p.client !== "dynamic_agent_client" && client !== p.client)
+    )
+      throw new InputError("Registration identity mismatch");
+    const code = string(query.get("code"), 4000);
+    const r = await this.fetcher(
+      "https://auth.openai.com/api/accounts/oauth/token",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          grant_type: "authorization_code",
+          client_id: client,
+          code,
+          code_verifier: p.verifier,
+          redirect_uri: p.redirect,
+          resource: "https://api.openai.com/v1",
+        }),
+        signal: AbortSignal.timeout(15000),
+      },
+    );
+    if (!r.ok)
+      throw new InputError("Sign-in exchange failed. Begin a fresh sign-in.");
+    const v = (await r.json()) as Record<string, unknown>;
+    const token = string(v["id_token"], 20000);
+    const verified = await jwtVerify(
+      token,
+      createRemoteJWKSet(
+        new URL("https://auth.openai.com/.well-known/jwks.json"),
+        { [customFetch]: this.fetcher },
+      ),
+      {
+        issuer: "https://auth.openai.com",
+        audience: client,
+        algorithms: ["RS256"],
+        requiredClaims: ["sub", "exp", "iat"],
+      },
+    );
+    if (
+      verified.payload.nonce !== p.nonce ||
+      !verified.payload.sub ||
+      (this.credentials && verified.payload.sub !== this.credentials.subject)
+    )
+      throw new InputError("Account/nonce validation failed");
+    const scope = string(v["scope"]);
+    if (!scope.split(" ").includes("chatgpt.tokens.use.direct"))
+      throw new InputError("ChatGPT plan permission was not granted");
+    const credentials = {
+      client_id: client,
+      subject: verified.payload.sub,
+      id_token: token,
+      access_token: string(v["access_token"], 20000),
+      refresh_token: string(v["refresh_token"], 20000),
+      scope,
+      expiresAt: Date.now() + integer(v["expires_in"], 86400) * 1000,
+    };
+    this.write("credentials.json", credentials);
+    this.credentials = credentials;
+    return { connected: true };
+  }
+  consumeTurn() {
+    const p = this.policy(),
+      path = join(this.dir, "turn-budget.json");
+    const saved = existsSync(path) ? this.readPrivate("turn-budget.json") : {};
+    const key = digest(p);
+    const used = Number(saved[key] ?? 0);
+    if (used >= p.maxTurns)
+      throw new InputError("The bounded account turn limit is exhausted");
+    saved[key] = used + 1;
+    this.write("turn-budget.json", saved);
+  }
+  async token() {
+    this.policy();
+    ensurePrivateDirectory(this.dir);
+    if (this.credentials) this.readPrivate<Credentials>('credentials.json');
+    const c = this.credentials;
+    if (!c) throw new InputError("Continue with ChatGPT to connect");
+    if (Date.now() < c.expiresAt - 60000) return c.access_token;
+    const r = await this.fetcher(
+      "https://auth.openai.com/api/accounts/oauth/token",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          grant_type: "refresh_token",
+          client_id: c.client_id,
+          refresh_token: c.refresh_token,
+          resource: "https://api.openai.com/v1",
+        }),
+        signal: AbortSignal.timeout(15000),
+      },
+    );
+    if (!r.ok)
+      throw new InputError("ChatGPT authorization expired; sign in again");
+    const v = (await r.json()) as Record<string, unknown>;
+    const scope = string(v["scope"]);
+    if (!scope.split(" ").includes("chatgpt.tokens.use.direct"))
+      throw new InputError("ChatGPT plan permission is unavailable");
+    const next = {
+      ...c,
+      access_token: string(v["access_token"], 20000),
+      refresh_token: string(v["refresh_token"], 20000),
+      scope,
+      expiresAt: Date.now() + integer(v["expires_in"], 86400) * 1000,
+    };
+    this.write("credentials.json", next);
+    this.credentials = next;
+    return next.access_token;
+  }
+}

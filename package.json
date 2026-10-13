@@ -25,15 +25,25 @@
     "test:browser:review-repairs": "node scripts/review-repairs-browser-check.ts",
     "test:browser:memory": "node scripts/memory-browser-check.ts",
     "test:browser:library": "node scripts/library-browser-check.ts",
-    "test:browser:execution": "node scripts/execution-browser-check.ts"
+    "test:browser:execution": "node scripts/execution-browser-check.ts",
+    "test:browser:chat": "node scripts/chat-browser-check.ts",
+    "test:page-contract": "node scripts/page-contract-check.ts",
+    "test:browser:page-contract": "node scripts/page-contract-browser-check.ts",
+    "test:chat:protocol": "node scripts/chat-protocol-preflight.ts",
+    "test:chat:permissions": "node scripts/chat-permission-preflight.ts",
+    "test:combined:compatibility": "node scripts/combined-compatibility-check.ts",
+    "test:combined:memory": "node scripts/combined-memory-probes.ts",
+    "test:browser:combined": "node scripts/combined-browser-check.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.58.2",
     "@types/node": "24.10.0",
     "esbuild": "0.28.2",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "ajv": "8.20.0"
   },
   "dependencies": {
-    "sharp": "0.35.5"
+    "sharp": "0.35.5",
+    "jose": "6.1.3"
   }
 }
