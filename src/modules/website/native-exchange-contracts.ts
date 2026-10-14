@@ -6,10 +6,39 @@ import { parseImageInfo } from './workspace-contracts.ts';
 import type { ImageInfo } from '../../service/assets.ts';
 import { canonical, digest } from '../../kernel/packets.ts';
 import { record, choice, id, integer, list, string, bool, InputError } from '../../service/validation.ts';
-export const nativeRoles = {'native-exchange-grant':'work-record','native-exchange':'work-record','native-exchange-receipt':'work-record'} as const;
+export const nativeRoles = {'native-raster-execution-request':'work-record','native-exchange-grant':'work-record','native-exchange':'work-record','native-exchange-receipt':'work-record'} as const;
 export type NativeKind = keyof typeof nativeRoles;
 export const nativeAdapter = {id:'account-native-exchange',version:'1',mode:'manual-exchange'} as const;
 export type Evidence = 'operator-attested-native' | 'synthetic-fixture';
+/** Native-only V2; never changes shared ExecutionRequest V1 semantics. */
+export interface DimensionPolicy {version:1; mode:'exact'|'native-resolution';}
+export interface NativeRequest extends Omit<ExecutionRequest,'version'|'compiler'> {
+  version:2; compiler:'native-raster-execution-v2'; dimensionPolicy:DimensionPolicy;
+}
+export type NativeInput = ExecutionRequest | NativeRequest;
+export function parseDimensionPolicy(x:unknown):DimensionPolicy {
+  const r=record(x,['version','mode']);
+  if(r['version']!==1)throw new InputError('Unsupported native dimension policy version');
+  return {version:1,mode:choice(r['mode'],['exact','native-resolution'])};
+}
+export function parseNativeInput(x:unknown):NativeInput {
+  const r=record(x,Object.keys(x as object));
+  if(r['version']===1)return parseExecution('raster-execution-request',x) as ExecutionRequest;
+  if(r['version']!==2||r['compiler']!=='native-raster-execution-v2')throw new InputError('Unsupported native request version/compiler');
+  const {dimensionPolicy,version,compiler,...fields}=r;
+  const legacy=parseExecution('raster-execution-request',{...fields,version:1,compiler:'raster-execution-v1'}) as ExecutionRequest;
+  return {...legacy,version:2,compiler:'native-raster-execution-v2',dimensionPolicy:parseDimensionPolicy(dimensionPolicy)};
+}
+export const nativeInputKind=(q:NativeInput)=>q.version===2?'native-raster-execution-request':'raster-execution-request';
+export const dimensionPolicy=(q:NativeInput):DimensionPolicy=>q.version===2?q.dimensionPolicy:{version:1,mode:'exact'};
+export function nativeDimensionsMatch(q:NativeInput,image:ImageInfo):boolean {
+  return dimensionPolicy(q).mode==='native-resolution'||image.width===q.width&&image.height===q.height;
+}
+export function validateNativeReturn(p:NativePackage,r:NativeResult):void {
+  if(r.version!==p.version||canonical(r.binding)!==canonical(p.binding)||r.packetDigest!==p.packetDigest||r.attestation.kind!==p.evidence||canonical(r.dimensionPolicy??null)!==canonical(p.request.version===2?p.request.dimensionPolicy:null))throw new InputError('Native result policy/binding/digest mismatch');
+  if(r.output&&!nativeDimensionsMatch(p.request,r.output.image))throw new InputError('Native result dimensions mismatch; original rejected atomically');
+  if(r.output&&p.sources.some(s=>s.checksum===r.output!.image.checksum))throw new InputError('Native output cannot substitute an input original');
+}
 export interface NativeGrant {
   version:2; adapter:typeof nativeAdapter; request:VersionRef; requestHash:string;
   slots:number[]; maxSubmissions:number; maxStatusCalls:number; maxCancelCalls:number;
@@ -21,9 +50,9 @@ export interface Binding {
   slot:number; submissionId:string; exchangeJobId:string;
 }
 export interface NativePackage {
-  version:1; kind:'bve-native-request'; adapter:typeof nativeAdapter;
+  version:1|2; kind:'bve-native-request'; adapter:typeof nativeAdapter;
   authority:'one-manual-invocation'; evidence:Evidence; binding:Binding;
-  request:ExecutionRequest; sources:{path:string; checksum:string}[];
+  request:NativeInput; sources:{path:string; checksum:string}[];
   prompt:string; instructions:string; packetDigest:string;
 }
 export type NativeStatus = 'pending'|'awaiting-operator'|'claimed'|'returned'|'failed'|'uncertain'|'withdrawn';
@@ -38,7 +67,7 @@ export interface Attestation {
   statement:string;
 }
 export interface NativeResult {
-  version:1;kind:'bve-native-result';binding:Binding;packetDigest:string;receiptId:string;
+  version:1|2;dimensionPolicy?:DimensionPolicy;kind:'bve-native-result';binding:Binding;packetDigest:string;receiptId:string;
   origin:'imported';outcome:'returned'|'failed';output:{path:string;image:ImageInfo}|null;
   rights:string;attestation:Attestation;message:string;
 }
@@ -55,23 +84,24 @@ export function parseBinding(x:unknown):Binding {
 }
 export const sourcePath=(image:ImageInfo)=>'assets/'+image.checksum+'.'+(image.format==='jpeg'?'jpg':image.format);
 export const nativeInstructions = 'Manual exchange. This package authorizes at most one invocation for its exact slot. Claim with BVE before invoking; stop if denied, expired, withdrawn or uncertain. Re-download does not authorize a second invocation. BVE cannot physically prevent duplicate manual execution. Use only the frozen request and ordered original sources, without project/chat history. Return the original PNG/JPEG/WebP bytes and a bve-native-result manifest; never transcribe base64, convert, resize, substitute a source, or fetch manifest URLs. Exact requested dimensions are required by BVE but native-host support is unverified. Keep unknown host IDs/model/seed/usage/cost/provider IDs null. Packet digest binding is not authentication or generation proof. Selection and acceptance are separate operator actions.';
-export function nativePrompt(q:ExecutionRequest):string {return canonical({operation:q.operation,intent:q.intent,width:q.width,height:q.height,direction:q.direction,brand:q.brand,facts:q.facts,constraints:q.constraints,requests:q.requests,sources:q.sources});}
-export function compileNativePackage(binding:Binding,q:ExecutionRequest,e:Evidence):NativePackage {
-  const body={version:1 as const,kind:'bve-native-request' as const,adapter:nativeAdapter,authority:'one-manual-invocation' as const,evidence:e,binding,request:q,sources:q.sources.map(s=>({path:sourcePath(s.image),checksum:s.image.checksum})),prompt:nativePrompt(q),instructions:nativeInstructions};
+export function nativePrompt(q:NativeInput):string {return canonical({operation:q.operation,intent:q.intent,width:q.width,height:q.height,...(q.version===2?{dimensionPolicy:q.dimensionPolicy,sizeMeaning:q.dimensionPolicy.mode==='exact'?'requirements':'preferences; actual dimensions and ratio come from the untouched original'}:{}),direction:q.direction,brand:q.brand,facts:q.facts,constraints:q.constraints,requests:q.requests,sources:q.sources});}
+export function compileNativePackage(binding:Binding,q:NativeInput,e:Evidence):NativePackage {
+  const body={version:q.version,kind:'bve-native-request' as const,adapter:nativeAdapter,authority:'one-manual-invocation' as const,evidence:e,binding,request:q,sources:q.sources.map(s=>({path:sourcePath(s.image),checksum:s.image.checksum})),prompt:nativePrompt(q),instructions:q.version===2&&q.dimensionPolicy.mode==='native-resolution'?nativeInstructions.replace('Exact requested dimensions are required by BVE but native-host support is unverified.','Requested dimensions are preferences only. Preserve actual original dimensions and ratio under hard image bounds; exact size or ratio compliance is not claimed.'):nativeInstructions};
   return {...body,packetDigest:digest(body)};
 }
 export function parseNativePackage(x:unknown):NativePackage {
   const r=record(x,['version','kind','adapter','authority','evidence','binding','request','sources','prompt','instructions','packetDigest']);
-  if(r['version']!==1||r['kind']!=='bve-native-request'||r['authority']!=='one-manual-invocation')throw new InputError('Native request version/authority');
+  if(![1,2].includes(r['version'] as number)||r['kind']!=='bve-native-request'||r['authority']!=='one-manual-invocation')throw new InputError('Native request version/authority');
   identity(r['adapter']);
-  const result=compileNativePackage(parseBinding(r['binding']),parseExecution('raster-execution-request',r['request']) as ExecutionRequest,evidence(r['evidence']));
+  const result=compileNativePackage(parseBinding(r['binding']),parseNativeInput(r['request']),evidence(r['evidence']));
   if(canonical(result)!==canonical(x))throw new InputError('Native packet digest/compilation mismatch');
   if(Buffer.byteLength(canonical(result))>262144)throw new InputError('Native manifest exceeds 256 KiB',413);
   return result;
 }
 export function parseNativeResult(x:unknown):NativeResult {
-  const r=record(x,['version','kind','binding','packetDigest','receiptId','origin','outcome','output','rights','attestation','message']);
-  if(r['version']!==1||r['kind']!=='bve-native-result'||r['origin']!=='imported')throw new InputError('Only imported native result provenance is admitted');
+  const version=record(x,Object.keys(x as object))['version'];
+  const r=record(x,['version',...(version===2?['dimensionPolicy']:[]),'kind','binding','packetDigest','receiptId','origin','outcome','output','rights','attestation','message']);
+  if(![1,2].includes(version as number)||r['kind']!=='bve-native-result'||r['origin']!=='imported')throw new InputError('Only imported native result provenance is admitted');
   const a=record(r['attestation'],['kind','verification','hostInvocationId','model','seed','usage','cost','providerId','statement']);
   const usage=a['usage']===null?null:record(a['usage'],Object.keys(a['usage'] as object));
   if(canonical(usage).length>12000||!(a['cost']===null||typeof a['cost']==='number'&&Number.isFinite(a['cost'])&&a['cost']>=0))throw new InputError('Invalid attested usage/cost');
@@ -82,11 +112,12 @@ export function parseNativeResult(x:unknown):NativeResult {
   if(output&&output.path!==sourcePath(output.image))throw new InputError('Unsafe or substituted output path');
   const outcome=choice(r['outcome'],['returned','failed']);
   if((outcome==='returned')!==(output!==null))throw new InputError('Native outcome/output mismatch');
-  const result:NativeResult={version:1,kind:'bve-native-result',binding:parseBinding(r['binding']),packetDigest:hash(r['packetDigest']),receiptId:id(r['receiptId']),origin:'imported',outcome,output,rights:string(r['rights']),attestation,message:string(r['message'])};
+  const result:NativeResult={version:version as 1|2,...(version===2?{dimensionPolicy:parseDimensionPolicy(r['dimensionPolicy'])}:{}),kind:'bve-native-result',binding:parseBinding(r['binding']),packetDigest:hash(r['packetDigest']),receiptId:id(r['receiptId']),origin:'imported',outcome,output,rights:string(r['rights']),attestation,message:string(r['message'])};
   if(Buffer.byteLength(canonical(result))>262144)throw new InputError('Native result manifest exceeds bound',413);
   return result;
 }
-export function parseNative(kind:NativeKind,x:unknown):NativeGrant|NativeRun|NativeReceipt {
+export function parseNative(kind:NativeKind,x:unknown):NativeGrant|NativeRun|NativeReceipt|NativeRequest {
+  if(kind==='native-raster-execution-request'){const q=parseNativeInput(x);if(q.version!==2)throw new InputError('Native-only request requires V2');return q;}
   const v=record(x,Object.keys(x as object));if(v['version']!==2)throw new InputError('Native record version');identity(v['adapter']);
   if(kind==='native-exchange-grant'){
     const r=record(x,['version','adapter','request','requestHash','slots','maxSubmissions','maxStatusCalls','maxCancelCalls','timeoutMs','expiresAt','revoked','evidence','reason']);

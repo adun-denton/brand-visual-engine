@@ -9,7 +9,7 @@ export async function nativeOriginal(width=64,height=48,index=0,format:'png'|'jp
 export async function nativeReturn(p:NativePackage,bytes?:Buffer,receiptId='authored-native-return'){
   bytes??=await nativeOriginal(p.request.width,p.request.height);
   const image=await decode(bytes);
-  const result:NativeResult={version:1,kind:'bve-native-result',binding:p.binding,packetDigest:p.packetDigest,receiptId,origin:'imported',outcome:'returned',output:{path:sourcePath(image),image},rights:'Authored synthetic raster fixture; testing only',attestation:{kind:'synthetic-fixture',verification:'operator-attestation-only',hostInvocationId:null,model:null,seed:null,usage:null,cost:null,providerId:null,statement:'Hand-authored synthetic fixture. No host, model or native image invocation.'},message:'Synthetic native-envelope return; not generated'};
+  const result:NativeResult={version:p.version,...(p.request.version===2?{dimensionPolicy:p.request.dimensionPolicy}:{}),kind:'bve-native-result',binding:p.binding,packetDigest:p.packetDigest,receiptId,origin:'imported',outcome:'returned',output:{path:sourcePath(image),image},rights:'Authored synthetic raster fixture; testing only',attestation:{kind:'synthetic-fixture',verification:'operator-attestation-only',hostInvocationId:null,model:null,seed:null,usage:null,cost:null,providerId:null,statement:'Hand-authored synthetic fixture. No host, model or native image invocation.'},message:'Synthetic native-envelope return; not generated'};
   return {result,manifest:Buffer.from(canonical(result)+'\n'),files:new Map([[result.output!.path,bytes]])};
 }
 /** Test-only ustar reader: authored outbox only. Production importer never accepts/extracts archives. */

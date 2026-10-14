@@ -10,7 +10,7 @@ export function tar(files: Map<string, Buffer>, mode: 'legacy' | 'page' | 'websi
     const safe = /^(manifest\.json|index\.html|RECONSTRUCT\.md|assets\/[a-f0-9]{64}\.(png|jpg|webp))$/.test(name)
       || (mode === 'website' && /^(?:[A-Za-z0-9_-]+\/)+index\.html$/.test(name))
       || (mode === 'native-raster' && name === 'exchange-evidence.json' && data.length<=1024*1024)
-      || (mode === 'native-kit' && /^(kit\.json|RETURN\.md|result-schema-v1\.json|returned-template-v1\.json|failed-template-v1\.json|build-return\.mjs)$/.test(name) && data.length<=262144)
+      || (mode === 'native-kit' && /^(kit\.json|RETURN\.md|result-schema-v[12]\.json|returned-template-v[12]\.json|failed-template-v[12]\.json|build-return\.mjs)$/.test(name) && data.length<=262144)
       || (mode === 'request' && /^(request\.json|response-schema\.json)$/.test(name));
     if (!safe || Buffer.byteLength(name) > 100)
       throw new InputError('Unsafe handoff path');

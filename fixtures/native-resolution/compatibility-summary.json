@@ -1,0 +1,36 @@
+{
+  "base": "b2e214dd43185832a7811742c5b45723c755c00c",
+  "tree": "1f48333116af7026a5648b1d84c257caa0ff8bdd",
+  "tableCount": 6,
+  "fileCount": 9,
+  "oldReceipts": [
+    "historical",
+    "returned",
+    "failed"
+  ],
+  "oldActiveReleases": [
+    "awaiting-operator",
+    "claimed"
+  ],
+  "oldPackageReplayAndExportsByteStable": true,
+  "legacyKitBytesUnchanged": true,
+  "additiveScopedIntake": true,
+  "newNativeMode": {
+    "requested": [
+      1024,
+      1024
+    ],
+    "actual": [
+      1254,
+      1254
+    ],
+    "policy": {
+      "mode": "native-resolution",
+      "version": 1
+    },
+    "originalHash": "09d7d21f18891389b13d6362c16d96da7acc403a579e0e6a935c4ca9ec029ff5"
+  },
+  "coldReopen": true,
+  "dispatches": 0,
+  "nativeCalls": 0
+}

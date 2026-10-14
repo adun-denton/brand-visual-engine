@@ -12,7 +12,7 @@ import { compileRequest } from '../kernel/execution-gate.ts';
 import { CanonicalMemory } from '../kernel/memory-index.ts';
 import { parseExecution, type ExecutionRequest } from '../modules/website/execution-contracts.ts';
 import { exactRef, type Specification, type RasterConcept, type Membership } from '../modules/website/exploration-contracts.ts';
-import { nativeAdapter, parseNative, compileNativePackage, type NativeKind, type NativeGrant, type NativeRun, type NativeReceipt, type NativePackage } from '../modules/website/native-exchange-contracts.ts';
+import { nativeAdapter, parseNative, compileNativePackage, type NativeKind, type NativeGrant, type NativeRun, type NativeReceipt, type NativePackage, type NativeInput, nativeInputKind, parseDimensionPolicy, validateNativeReturn } from '../modules/website/native-exchange-contracts.ts';
 import { InputError, record, integer, string, bool, list } from './validation.ts';
 type Work<T> = NodePacket<DesignArtifact<T>>;
 const same=(a:unknown,b:unknown)=>canonical(a)===canonical(b);
@@ -38,33 +38,35 @@ export class NativeExchange {
     if(p.projectId!==pid||p.payload.kind!==kind||p.type!=='work-record')throw new InputError('Foreign native reference');
     revalidatePacket(p,writePort(p.type),this.w.kernel.environment());return p;
   }
+  private request(pid:string,r:VersionRef):Work<NativeInput>{const q=this.w.kernel.get<DesignArtifact<NativeInput>>(r);return this.own<NativeInput>(pid,r,nativeInputKind(q.payload.state));}
   private latest<T>(pid:string,r:VersionRef,kind:string):Work<T>{this.own(pid,r,kind);return this.own(pid,{...r,version:this.w.kernel.currentVersion(r.id)!},kind);}
   private make<T>(pid:string,kind:string,state:T,deps:VersionRef[],identity=kind+'-'+randomUUID()):Work<T>{return packet({type:'work-record',id:identity,projectId:pid,dependencies:[...new Map(deps.map(r=>[r.id+':'+r.version,r])).values()],payload:{moduleId:'website',kind,scope:'page-execution',lockedValues:{},state},provenance:{actor:'local-operator',source:'Explicit manual exchange; operator attestation only, no verified generation',previous:null}});}
   private deps(s:NativeRun){return [s.request,s.grant,...(s.retryOf?[s.retryOf.execution]:[]),...s.slots.flatMap(a=>a.receipt?[a.receipt]:[])];}
   private change(p:Work<NativeRun>,state:NativeRun){const n=revise(p,{...p.payload,state},'local-operator','Durable manual exchange transition'),{integrity:_,...body}=n;return packet({...body,dependencies:this.deps(state)});}
   private authority(pid:string,p:Work<NativeRun>){
-    this.audit(pid);const g=this.latest<NativeGrant>(pid,p.payload.state.grant,'native-exchange-grant'),q=this.own<ExecutionRequest>(pid,p.payload.state.request,'raster-execution-request');
+    this.audit(pid);const g=this.latest<NativeGrant>(pid,p.payload.state.grant,'native-exchange-grant'),q=this.request(pid,p.payload.state.request);
     if(g.payload.state.revoked||Date.parse(g.payload.state.expiresAt)<=Date.now()||!nativeFresh(this.w.kernel.environment(),q.payload.state))throw new InputError('Native authority stale, expired or revoked',409);
     return {g,q};
   }
-  async compile(pid:string,spec:VersionRef,width:number,height:number){
+  async compile(pid:string,spec:VersionRef,width:number,height:number,policy?:unknown){
     this.audit(pid);const p=this.exploration.read<Specification>(pid,spec,'raster-specification');
-    const s=compileRequest(p,integer(width,8192),integer(height,8192),r=>this.w.kernel.lookup(r));parseExecution('raster-execution-request',s);
+    const legacy=compileRequest(p,integer(width,8192),integer(height,8192),r=>this.w.kernel.lookup(r));parseExecution('raster-execution-request',legacy);
+    const s:NativeInput=policy===undefined?legacy:{...legacy,version:2,compiler:'native-raster-execution-v2',dimensionPolicy:parseDimensionPolicy(policy)};
     if(s.sources.some(a=>a.entry?.preservation))throw new InputError('Native exact-preservation support is unverified');
     if(!nativeFresh(this.w.kernel.environment(),s))throw new InputError('Native request context is stale',409);
     for(const source of s.sources)await this.w.assets.inspect(source.image);
-    const q=this.make(pid,'raster-execution-request',s,[spec,...s.sources.map(a=>a.media)]);
+    const q=this.make(pid,nativeInputKind(s),s,[spec,...s.sources.map(a=>a.media)]);
     this.commit([q],()=>{this.audit(pid);if(!nativeFresh(this.w.kernel.environment(),s))throw new InputError('Native context changed during preparation',409);});return q;
   }
   grant(pid:string,input:unknown){
-    this.audit(pid);const r=record(input,['request','slots','maxSubmissions','maxStatusCalls','maxCancelCalls','timeoutMs','expiresAt','evidence','reason']),q=this.own<ExecutionRequest>(pid,exactRef(r['request']),'raster-execution-request');
+    this.audit(pid);const r=record(input,['request','slots','maxSubmissions','maxStatusCalls','maxCancelCalls','timeoutMs','expiresAt','evidence','reason']),q=this.request(pid,exactRef(r['request']));
     const s=parseNative('native-exchange-grant',{...r,version:2,adapter:nativeAdapter,request:reference(q),requestHash:q.integrity,revoked:false}) as NativeGrant;
     if(s.maxStatusCalls!==0||s.maxCancelCalls!==0)throw new InputError('Manual adapter has no remote status/cancel calls');
     if(Date.parse(s.expiresAt)<=Date.now()||!nativeFresh(this.w.kernel.environment(),q.payload.state))throw new InputError('Native grant expired/stale');
     const g=this.make(pid,'native-exchange-grant',s,[reference(q)]);this.commit([g]);return g;
   }
   prepare(pid:string,grant:VersionRef,retryOf:NativeRun['retryOf']=null){
-    this.audit(pid);const g=this.latest<NativeGrant>(pid,grant,'native-exchange-grant'),q=this.own<ExecutionRequest>(pid,g.payload.state.request,'raster-execution-request'),identity=nativeRunId(reference(g));
+    this.audit(pid);const g=this.latest<NativeGrant>(pid,grant,'native-exchange-grant'),q=this.request(pid,g.payload.state.request),identity=nativeRunId(reference(g));
     const existing=this.w.kernel.lookup({id:identity,version:1,freshness:'pinned'});
     if(existing){const p=this.latest<NativeRun>(pid,reference(existing),'native-exchange');if(!same(p.payload.state.retryOf,retryOf))throw new InputError('Native grant lineage already bound');return p;}
     const s:NativeRun={version:2,adapter:nativeAdapter,request:reference(q),requestHash:q.integrity,grant:reference(g),workUnit:q.payload.state.workUnit,slots:g.payload.state.slots.map(slot=>({slot,status:'pending',release:null,receipt:null,cancelRequested:false})),retryOf};
@@ -115,14 +117,16 @@ export class NativeExchange {
     if(!scoped.payload.state.slots.some(a=>a.slot===expectedSlot))throw new InputError('Selected native slot is not owned by this run');
     const supplied=this.adapter.resultManifest(manifest);
     if(supplied.binding.projectId!==pid||supplied.binding.execution.id!==run.id||supplied.binding.slot!==expectedSlot)throw new InputError('Native result does not match selected run/slot',409);
-    const {result,bytes}=await this.adapter.readResult(manifest,files);
+    const released=scoped.payload.state.slots.find(a=>a.slot===expectedSlot)?.release;if(!released)throw new InputError('Native slot not released');
+    validateNativeReturn(released,supplied);
+    const {result,bytes}=await this.adapter.readResult(manifest,files,released);
     const identity='native-receipt-'+digest({job:result.binding.exchangeJobId,receipt:result.receiptId}),payloadHash=digest(result);
     const duplicate=()=>{const d=this.w.kernel.lookup({id:identity,version:1,freshness:'pinned'}) as Work<NativeReceipt>|null;if(!d)return null;if(d.projectId!==pid||d.payload.state.payloadHash!==payloadHash||d.payload.state.result.binding.execution.id!==run.id)throw new InputError('Conflicting native receipt payload',409);return this.own<NativeReceipt>(pid,reference(d),'native-exchange-receipt');};
     const prior=duplicate();if(prior)return prior;
-    const p=this.latest<NativeRun>(pid,run,'native-exchange'),s=p.payload.state,a=s.slots.find(a=>a.slot===result.binding.slot),q=this.own<ExecutionRequest>(pid,s.request,'raster-execution-request'),g=this.latest<NativeGrant>(pid,s.grant,'native-exchange-grant');
+    const p=this.latest<NativeRun>(pid,run,'native-exchange'),s=p.payload.state,a=s.slots.find(a=>a.slot===result.binding.slot),q=this.request(pid,s.request),g=this.latest<NativeGrant>(pid,s.grant,'native-exchange-grant');
     if(!a?.release||a.receipt||!same(a.release.binding,result.binding)||a.release.packetDigest!==result.packetDigest||a.release.evidence!==result.attestation.kind)throw new InputError('Native result unbound, forged or already consumed');
     const image=result.output?.image??null;
-    if(image&&(image.width!==q.payload.state.width||image.height!==q.payload.state.height))throw new InputError('Native result dimensions mismatch; original rejected atomically');
+    validateNativeReturn(a.release,result);
     if(image&&q.payload.state.sources.some(a=>a.image.checksum===image.checksum))throw new InputError('Native output cannot substitute an input original');
     const late=a.cancelRequested||['uncertain','withdrawn'].includes(a.status)||g.payload.state.revoked||Date.parse(g.payload.state.expiresAt)<=Date.now()||!nativeFresh(this.w.kernel.environment(),q.payload.state);
     if(late&&!historical)throw new InputError('Explicit historical intake required for late native evidence',409);
@@ -147,10 +151,11 @@ export class NativeExchange {
   }
   async command(pid:string,action:string,input:unknown):Promise<unknown>{
     if(action==='prepare'){
-      const r=record(input,['expectedProject','spec','width','height','slots','expiresAt','evidence','retryOf']);this.w.project(pid,exactRef(r['expectedProject']));
+      const r=record(input,['expectedProject','spec','width','height','slots','expiresAt','evidence','retryOf','dimensionPolicy']);this.w.project(pid,exactRef(r['expectedProject']));
       const retry=r['retryOf']===null?null:record(r['retryOf'],['execution','slot']);
       const parent=retry?this.latest<NativeRun>(pid,exactRef(retry['execution']),'native-exchange'):null;
-      const q=parent?this.own<ExecutionRequest>(pid,parent.payload.state.request,'raster-execution-request'):await this.compile(pid,exactRef(r['spec']),integer(r['width'],8192),integer(r['height'],8192));
+      const q=parent?this.request(pid,parent.payload.state.request):await this.compile(pid,exactRef(r['spec']),integer(r['width'],8192),integer(r['height'],8192),r['dimensionPolicy']);
+      if(parent&&r['dimensionPolicy']!==undefined)throw new InputError('Retry cannot change frozen dimension policy');
       const slots=list(r['slots'],s=>integer(s,6),6),g=this.grant(pid,{request:reference(q),slots,maxSubmissions:slots.length,maxStatusCalls:0,maxCancelCalls:0,timeoutMs:30000,expiresAt:r['expiresAt'],evidence:r['evidence'],reason:'Explicit manual exchange grant; no automatic invocation'});
       return this.prepare(pid,reference(g),parent?{execution:reference(parent),slot:integer(retry!['slot'],6)}:null);
     }

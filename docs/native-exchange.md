@@ -6,7 +6,7 @@ An explicit manual grant names 1–6 slots; Export request reserves **one** slot
 executable package. Each subsequent slot requires another explicit export. There is no next-slot loop.
 
 Both review layouts contain Export request / Import result under the manual exchange panel, available
-with auxiliary chat closed. Choose a frozen specification, exact dimensions, slots, grant lifetime and
+with auxiliary chat closed. Choose a frozen specification, explicit size policy, requested dimensions, slots, grant lifetime and
 provenance class; prepare the grant; then export a slot. Preparing, exporting, reporting a claim,
 importing, selecting, saving to Library and accepting remain separate actions.
 
@@ -26,8 +26,9 @@ The local HTTP upload encodes browser-read file bytes to preserve them unchanged
 model to transcribe or reconstruct the image. Bounds: 256 KiB manifest, 8 MiB each image, 16 million
 pixels, 8192 pixels per edge, 39 MiB aggregate originals and the retained 40 MiB generated archive bound.
 Duplicate entries, missing/extra files, unsafe paths, corrupt images, descriptor/hash mismatch and
-source substitution reject. Output width and height must exactly match the frozen request. No resize,
-conversion or host-selected-size relaxation is implemented. Live exact-size compatibility is unresolved.
+source substitution reject. V1 and exact-policy output width/height must exactly match the frozen request. New V2 native-resolution
+requests explicitly treat these as preferences; actual size/ratio comes from untouched originals. No
+resize or conversion is performed. Native host exact-size compatibility remains unverified.
 
 Result manifest shape (see the typed contracts and synthetic example for exact populated values):
 
@@ -186,3 +187,42 @@ untried. No account/model/image/GPU trial, image-provider install, real-root mig
 merge or deployment is part of this slice. Rollback uses isolated code plus the complete matching closed
 synthetic root; never downgrade an evolved real root. Independent review owns code acceptance and
 Task003/015 disposition.
+
+## Explicit size policy for future native exchanges
+
+The default is **Exact size required**. Choosing **Native resolution · size preferences** before
+preparation creates a native-only immutable `native-raster-execution-request` V2 with compiler
+`native-raster-execution-v2` and `dimensionPolicy: {version: 1, mode: "native-resolution"}`. Explicit
+new exact requests use the same V2 with mode `exact`. `width`/`height` have the meaning named by the
+policy: requirements in exact mode, preferences in native-resolution mode. Native resolution promises
+neither exact dimensions nor aspect ratio. Original hard bounds apply in either mode. The UI shows
+requested preferences/requirements, returned original dimensions and actual width:height ratio.
+
+Policy is bound into request integrity before grant, then into the V2 package and packet digest.
+V2 results must echo the exact versioned policy; the portable schema fixes it to the released job.
+Missing/unsupported/changed policy, mismatched package/result version, digest or scope rejects before
+mutation, including receipt replay. The kernel reconstructs frozen authority and validates the same
+policy. Requests and releases are immutable; retry preserves the parent's exact request/policy and
+requires separate authority. A policy is not an invocation allowance.
+
+Shared ExecutionRequest V1 and its executor contracts remain unchanged. Omitting policy in the
+legacy compile/prepare API creates V1 with exact semantics. Existing frozen V1 packages, instruction
+text, digests, receipts, return kits and re-download bytes retain their exact meaning. V1 kits keep the
+original `native-return-builder.mjs`; V2 kits distribute `native-return-builder-v2.mjs` under the same
+portable `build-return.mjs` name, with `result-schema-v2.json` and returned/failed V2 templates. These
+are explicit versioned files rather than reinterpretation of the old portable contract.
+
+Media/candidate/selection/reconstruction and Library manifests use actual fully decoded dimensions.
+Requested size and policy remain in the exact request/receipt closure in memory and the raster
+`exchange-evidence.json` sidecar. No raster artifact schema or coordinate system is changed. Original
+bytes remain content addressed, imported and separately accepted. A known returned-but-rejected
+original creates no success receipt/candidate, no fabricated provider failure and no fresh allowance.
+Keep its diagnostic execution evidence outside candidate intake. This slice adds no lifecycle state.
+
+A previously failed exact-size trial remains consumed and cannot be salvaged or rebound under this
+mode. Further native trials and refinement need new explicit approval after independent review.
+
+Offline controls: `node --test tests/native-resolution.test.ts`,
+`npm run test:native:resolution-compatibility`, and `npm run test:browser:native-resolution`.
+They use only authored synthetic originals. Rollback uses isolated accepted code and its matching
+complete closed root; do not downgrade roots containing new V2 native jobs.
