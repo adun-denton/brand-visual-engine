@@ -26,6 +26,7 @@ jobs:
       - run: npm run typecheck
       - run: npm test
         env:
+          BVE_NATIVE_RESOLUTION_EVIDENCE_DIR: ${{ runner.temp }}/bve-native-resolution-unit-evidence
           BVE_NATIVE_REPAIR_EVIDENCE_DIR: ${{ runner.temp }}/bve-native-repair-unit-evidence
       - run: npm run test:combined:compatibility
         env:
@@ -36,6 +37,9 @@ jobs:
       - run: npm run test:native:compatibility
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-native-compatibility-evidence
+      - run: npm run test:native:resolution-compatibility
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-native-resolution-compatibility-evidence
       - run: npm run test:native:repair-compatibility
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-native-repair-compatibility-evidence
@@ -133,11 +137,17 @@ jobs:
       - run: npm run test:browser:native
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-native-browser-evidence
+      - run: npm run test:browser:native-resolution
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-native-resolution-browser-evidence
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: offline-browser-evidence-${{ matrix.os }}
           path: |
+            ${{ runner.temp }}/bve-native-resolution-unit-evidence
+            ${{ runner.temp }}/bve-native-resolution-compatibility-evidence
+            ${{ runner.temp }}/bve-native-resolution-browser-evidence
             ${{ runner.temp }}/bve-native-repair-unit-evidence
             ${{ runner.temp }}/bve-native-repair-compatibility-evidence
             ${{ runner.temp }}/bve-native-compatibility-evidence

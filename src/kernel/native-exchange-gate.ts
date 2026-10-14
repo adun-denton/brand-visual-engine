@@ -1,11 +1,11 @@
 import type { GateEnvironment } from './gate.ts';
 import type { NodePacket, DesignArtifact, VersionRef } from './contracts.ts';
 import { canonical, digest, reference } from './packets.ts';
-import { nativeRoles, parseNative, compileNativePackage, type NativeKind, type NativeGrant, type NativeRun, type NativeReceipt } from '../modules/website/native-exchange-contracts.ts';
-import type { ExecutionRequest } from '../modules/website/execution-contracts.ts';
+import { nativeRoles, parseNative, compileNativePackage, type NativeKind, type NativeGrant, type NativeRun, type NativeReceipt, type NativeInput, type NativeRequest, nativeInputKind, validateNativeReturn } from '../modules/website/native-exchange-contracts.ts';
+import {compileRequest} from './execution-gate.ts';
 import type { Specification, RasterConcept } from '../modules/website/exploration-contracts.ts';
 const eq=(a:unknown,b:unknown,message:string)=>{if(canonical(a)!==canonical(b))throw Error(message);};
-export function nativeFresh(env:GateEnvironment,q:ExecutionRequest):boolean {
+export function nativeFresh(env:GateEnvironment,q:NativeInput):boolean {
   const p=env.lookup(q.spec) as NodePacket<DesignArtifact<Specification>>|null;
   if(!p||p.integrity!==q.specHash)return false;
   const s=p.payload.state;
@@ -26,13 +26,21 @@ export function nativeExchangeGate(p:NodePacket<unknown>,previous:NodePacket<unk
   if(!stored&&(env.projectRefs?.(p.projectId!,4096,false)??[]).some(r=>r.id===p.id&&r.version===p.version))throw Error('Lost native canonical evidence cannot replenish allowance');
   const s=parseNative(a.kind as NativeKind,a.state),deps:VersionRef[]=[];
   const own=<T>(r:VersionRef,kind:string)=>{const n=env.lookup(r) as NodePacket<DesignArtifact<T>>|null;if(!n||n.projectId!==p.projectId||n.payload.kind!==kind)throw Error('Native dependency owner/kind');deps.push(r);return n;};
-  if(a.kind==='native-exchange-grant'){
-    const g=s as NativeGrant,q=own<ExecutionRequest>(g.request,'raster-execution-request');
+  const request=(r:VersionRef)=>{const q=env.lookup(r) as NodePacket<DesignArtifact<NativeInput>>|null;if(!q)throw Error('Native request missing');return own<NativeInput>(r,nativeInputKind(q.payload.state));};
+  if(a.kind==='native-raster-execution-request'){
+    const q=s as NativeRequest,spec=own<Specification>(q.spec,'raster-specification');
+    const compiled=compileRequest(spec,q.width,q.height,r=>env.lookup(r));
+    eq(q,{...compiled,version:2,compiler:'native-raster-execution-v2',dimensionPolicy:q.dimensionPolicy},'Native request compilation');
+    if(q.sources.some(s=>s.entry?.preservation))throw Error('Native preservation unsupported');
+    for(const source of q.sources){own(source.media,'page-media');if(!env.imageMatches?.(source.image))throw Error('Native source original mismatch');}
+    if(previous)throw Error('Native dimension request immutable');
+  } else if(a.kind==='native-exchange-grant'){
+    const g=s as NativeGrant,q=request(g.request);
     if(q.integrity!==g.requestHash||g.maxSubmissions!==g.slots.length||g.slots.some(i=>i>q.payload.state.count))throw Error('Native grant binding/bounds');
     if(previous){const before=(previous.payload as DesignArtifact<NativeGrant>).state;eq({...before,revoked:false},{...g,revoked:false},'Native grant terms immutable');if(before.revoked||!g.revoked)throw Error('Native revocation monotonic');}
     else if(g.revoked)throw Error('New native grant revoked');
   } else if(a.kind==='native-exchange'){
-    const e=s as NativeRun,q=own<ExecutionRequest>(e.request,'raster-execution-request'),g=own<NativeGrant>(e.grant,'native-exchange-grant');
+    const e=s as NativeRun,q=request(e.request),g=own<NativeGrant>(e.grant,'native-exchange-grant');
     if(p.id!==nativeRunId(e.grant)||q.integrity!==e.requestHash)throw Error('Native execution identity');
     eq([e.request,e.requestHash],[g.payload.state.request,g.payload.state.requestHash],'Native request/grant');eq(e.workUnit,q.payload.state.workUnit,'Native unit');eq(e.slots.map(a=>a.slot),g.payload.state.slots,'Native slots');
     const latestGrant=env.lookup({...e.grant,version:env.currentVersion(e.grant.id)!}) as NodePacket<DesignArtifact<NativeGrant>>;
@@ -59,15 +67,15 @@ export function nativeExchangeGate(p:NodePacket<unknown>,previous:NodePacket<unk
       if(slot.receipt){const receipt=own<NativeReceipt>(slot.receipt,'native-exchange-receipt').payload.state;eq([receipt.result.binding.execution.id,receipt.result.binding.slot,receipt.result.packetDigest],[p.id,slot.slot,slot.release?.packetDigest],'Native receipt ownership');if(receipt.outcome!=='historical'&&receipt.outcome!==slot.status)throw Error('Native receipt status');}
     }
   } else {
-    const r=s as NativeReceipt;if(r.payloadHash!==digest(r.result))throw Error('Native payload hash mismatch');const e=own<NativeRun>(r.execution,'native-exchange').payload.state,slot=e.slots.find(a=>a.slot===r.result.binding.slot),q=own<ExecutionRequest>(e.request,'raster-execution-request').payload.state;
+    const r=s as NativeReceipt;if(r.payloadHash!==digest(r.result))throw Error('Native payload hash mismatch');const e=own<NativeRun>(r.execution,'native-exchange').payload.state,slot=e.slots.find(a=>a.slot===r.result.binding.slot),q=request(e.request).payload.state;
     if(!slot?.release||slot.receipt||p.id!=='native-receipt-'+digest({job:slot.release.binding.exchangeJobId,receipt:r.result.receiptId}))throw Error('Native receipt identity');
-    eq(r.result.binding,slot.release.binding,'Native return binding');if(r.result.packetDigest!==slot.release.packetDigest||r.result.attestation.kind!==slot.release.evidence)throw Error('Native return provenance/digest');
+    validateNativeReturn(slot.release,r.result);eq(r.result.binding,slot.release.binding,'Native return binding');if(r.result.packetDigest!==slot.release.packetDigest||r.result.attestation.kind!==slot.release.evidence)throw Error('Native return provenance/digest');
     const late=slot.cancelRequested||['uncertain','withdrawn'].includes(slot.status)||!nativeFresh(env,q)||Date.parse((env.lookup({...e.grant,version:env.currentVersion(e.grant.id)!}) as NodePacket<DesignArtifact<NativeGrant>>).payload.state.expiresAt)<=Date.now()||(env.lookup({...e.grant,version:env.currentVersion(e.grant.id)!}) as NodePacket<DesignArtifact<NativeGrant>>).payload.state.revoked;
     if(!stored){if(env.currentVersion(r.execution.id)!==r.execution.version)throw Error('Native stale intake revision');if(late&&r.outcome!=='historical'||!late&&slot.status!=='claimed')throw Error('Native intake needs reported claim or historical authority');}
     if(r.outcome!=='historical'&&r.outcome!==r.result.outcome)throw Error('Native outcome mismatch');
     if((r.outcome==='returned')!==(r.candidate!==null)||(r.image===null)!==(r.media===null))throw Error('Native output closure');
     if(r.candidate){const c=own<RasterConcept>(r.candidate,'raster-concept');if(c.payload.state.origin!=='imported')throw Error('Native result must retain imported origin');eq([c.payload.state.media,c.payload.state.image],[r.media,r.image],'Native candidate media');}
-    if(r.media){const m=own<{image:unknown;role:string}>(r.media,'page-media');eq(m.payload.state.image,r.image,'Native media facts');eq(r.image,r.result.output?.image,'Native original output');if(!env.imageMatches?.(r.image!)||r.image!.width!==q.width||r.image!.height!==q.height||r.outcome==='historical'&&m.payload.state.role!=='reference')throw Error('Native strict original dimensions/role');}
+    if(r.media){const m=own<{image:unknown;role:string}>(r.media,'page-media');eq(m.payload.state.image,r.image,'Native media facts');eq(r.image,r.result.output?.image,'Native original output');if(!env.imageMatches?.(r.image!)||r.outcome==='historical'&&m.payload.state.role!=='reference')throw Error('Native strict original dimensions/role');}
     if(previous)throw Error('Native receipt immutable');
   }
   eq(p.dependencies,[...new Map(deps.map(r=>[r.id+':'+r.version,r])).values()],'Native exact closure');

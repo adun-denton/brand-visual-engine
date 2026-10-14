@@ -1,0 +1,33 @@
+{
+  "synthetic": true,
+  "requested": [
+    1024,
+    1024
+  ],
+  "actual": [
+    1254,
+    1254
+  ],
+  "policy": {
+    "version": 1,
+    "mode": "native-resolution"
+  },
+  "originalHash": "09d7d21f18891389b13d6362c16d96da7acc403a579e0e6a935c4ca9ec029ff5",
+  "packetDigest": "6526845751b811cede958dbafb58c4e045d1df590a4b8d3c71a68b9b30f77e43",
+  "byteEquality": true,
+  "actualCoordinateDimensions": true,
+  "reconstructionSource": {
+    "id": "09d7d21f18891389b13d6362c16d96da7acc403a579e0e6a935c4ca9ec029ff5",
+    "checksum": "09d7d21f18891389b13d6362c16d96da7acc403a579e0e6a935c4ca9ec029ff5",
+    "width": 1254,
+    "height": 1254,
+    "format": "png",
+    "bytes": 24288
+  },
+  "coldReopen": true,
+  "memory": true,
+  "exports": true,
+  "accepted": [],
+  "dispatches": 0,
+  "nativeCalls": 0
+}

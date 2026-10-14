@@ -1,6 +1,6 @@
 import { canonical } from '../kernel/packets.ts';
 import { checksum } from '../kernel/raster.ts';
-import { parseNativePackage, parseNativeResult, type NativePackage, type NativeResult } from '../modules/website/native-exchange-contracts.ts';
+import { parseNativePackage, parseNativeResult, validateNativeReturn, type NativePackage, type NativeResult } from '../modules/website/native-exchange-contracts.ts';
 import { decode, MAX_IMAGE_BYTES } from './assets.ts';
 import { InputError } from './validation.ts';
 import { tar } from './handoff.ts';
@@ -26,8 +26,8 @@ export class NativeExchangeAdapter {
     return {manifest,files,bytes:tar(new Map([['manifest.json',manifest],...files])),mime:'application/x-tar',filename:'native-request-'+p.binding.exchangeJobId+'.tar'};
   }
   resultManifest(manifest:Buffer):NativeResult {return parseNativeResult(this.json(manifest));}
-  async readResult(manifest:Buffer,files:Map<string,Buffer>):Promise<{result:NativeResult;bytes:Buffer|null}> {
-    const result=this.resultManifest(manifest);this.files(files,new Set(result.output?[result.output.path]:[]));
+  async readResult(manifest:Buffer,files:Map<string,Buffer>,request?:NativePackage):Promise<{result:NativeResult;bytes:Buffer|null}> {
+    const result=this.resultManifest(manifest);if(request)validateNativeReturn(request,result);this.files(files,new Set(result.output?[result.output.path]:[]));
     const bytes=result.output?files.get(result.output.path)!:null;
     if(bytes&&canonical(await decode(bytes))!==canonical(result.output!.image))throw new InputError('Native original hash/descriptor/full decode mismatch');
     return {result,bytes};

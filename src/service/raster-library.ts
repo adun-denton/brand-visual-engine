@@ -1,4 +1,4 @@
-import type {NativeReceipt,NativeRun,NativeGrant} from '../modules/website/native-exchange-contracts.ts';
+import type {NativeReceipt,NativeRun,NativeGrant,NativeInput} from '../modules/website/native-exchange-contracts.ts';
 import type {ExecutionRequest} from '../modules/website/execution-contracts.ts';
 import {sourcePath} from '../modules/website/native-exchange-contracts.ts';
 import type { Workspace } from "./workspace.ts";
@@ -459,7 +459,7 @@ export class RasterLibrary {
       revalidatePacket(receipt,writePort(receipt.type),this.w.kernel.environment());
       const execution=this.w.kernel.get<DesignArtifact<NativeRun>>(receipt.payload.state.execution);
       const grant=this.w.kernel.get<DesignArtifact<NativeGrant>>(execution.payload.state.grant);
-      const request=this.w.kernel.get<DesignArtifact<ExecutionRequest>>(execution.payload.state.request);
+      const request=this.w.kernel.get<DesignArtifact<NativeInput>>(execution.payload.state.request);
       const evidence={version:1,kind:'bve-native-raster-evidence',authority:'operator-attestation-only',sourceMedia:manifest.source.media,records:{request,grant,execution,receipt},generationClaim:receipt.payload.state.result.attestation.kind==='synthetic-fixture'?'not-established':'operator-attested-native-unverified'};
       const files=new Map<string,Buffer>([['manifest.json',Buffer.from(canonical(manifest)+'\n')],['exchange-evidence.json',Buffer.from(canonical(evidence)+'\n')],[manifest.raster.path,bytes]]);
       for(const source of request.payload.state.sources){await this.w.assets.inspect(source.image);files.set(sourcePath(source.image),this.w.assets.read(source.image.id));}

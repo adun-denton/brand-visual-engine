@@ -1,0 +1,13 @@
+{
+  "synthetic": true,
+  "exactDefault": true,
+  "legacyExactPreserved": true,
+  "policyForgeryRejected": true,
+  "ownedScope": true,
+  "hardBounds": true,
+  "sourceSubstitution": true,
+  "provenance": true,
+  "historicalOnly": true,
+  "lostAuthorityBlocks": true,
+  "nativeCalls": 0
+}
