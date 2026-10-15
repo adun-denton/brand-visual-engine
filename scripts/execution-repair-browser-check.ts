@@ -205,6 +205,17 @@ export async function checkExecutionRepairs(
             // Complete viewport setup before measuring the original bounded input action.
             await cancel.scrollIntoViewIfNeeded();
             await expect(cancel).toBeEnabled();
+            const originalControl = await cancel.elementHandle();
+            // Two actual stored-progress responses must retain the control, not merely its label.
+            for (let read = 0; read < 2; read++) {
+              const progress = await page.waitForResponse(response => {
+                const url = new URL(response.url());
+                return url.pathname === "/api/v1/visual/state" && url.searchParams.get("id") === u.id && response.ok();
+              });
+              await progress.finished();
+              await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+              expect(await originalControl!.evaluate(node => node.isConnected)).toBe(true);
+            }
             await cancel.click({ timeout: 250 });
             await expect
               .poll(() => state().run.payload.state.slots[0]!.cancelRequested)

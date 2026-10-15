@@ -186,6 +186,8 @@ async function reload(keepExecutionFocus=false) {
   try { next = (await get("state?" + query(ref(state.unit)))) as State; }
   catch (e) { state = null; workspaceError = e instanceof Error ? e.message : "Stored source unavailable"; render(); throw e; }
   if (ticket !== epoch) return;
+  // Stored-progress reads must not detach an unchanged Cancel/Revoke control during input.
+  if (keepExecutionFocus && state && JSON.stringify(next) === JSON.stringify(state)) return;
   state = next;
   workspaceError = "";
   if (!selectionId && selectionSets()?.length === 1)
