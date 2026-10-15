@@ -1,0 +1,29 @@
+{
+  "formatVersion": 1,
+  "instructionSetVersion": "visual-os-ops-v1",
+  "compatibility": {
+    "featureContract": "bve-vos-local-intake-v1",
+    "projectConfigurationVersions": [
+      1
+    ],
+    "status": "candidate-contract; implementation verification required"
+  },
+  "files": [
+    {
+      "path": "instructions/conductor.md",
+      "sha256": "a4be9c29026ea76f1cd3f6cf497971fbea01948ab0b323c2f3955cf7e117b6f5"
+    },
+    {
+      "path": "instructions/generator.md",
+      "sha256": "0346f91fbf7cfa1304a07b2b75a98f6926b344b1f4aaf1939deb1c8e2b72854e"
+    },
+    {
+      "path": "instructions/butler.md",
+      "sha256": "e67f5273f761c186e0b0778828c2306abd31c52bc0c31593b0ef3b67064522cd"
+    },
+    {
+      "path": "instructions/project-AGENTS.template.md",
+      "sha256": "840dde9ce1f06d042f134c75c914fb47820738ced8eaa080238ea4e3d0e265e7"
+    }
+  ]
+}
