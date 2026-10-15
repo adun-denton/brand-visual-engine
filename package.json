@@ -39,6 +39,7 @@
     "test:browser:auxiliary": "node scripts/auxiliary-browser-check.ts",
     "test:auxiliary:compatibility": "node scripts/auxiliary-compatibility-check.ts",
     "test:native:resolution-compatibility": "node scripts/native-resolution-compatibility.ts",
+    "test:browser:guided-native": "node scripts/guided-native-browser-check.ts",
     "test:browser:native-resolution": "node scripts/native-resolution-browser-check.ts",
     "test:native:repair-compatibility": "node scripts/native-exchange-repair-compatibility.ts",
     "test:native:compatibility": "node scripts/native-exchange-compatibility-check.ts",
