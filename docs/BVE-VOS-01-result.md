@@ -67,6 +67,8 @@ Initial typechecks caught a format-union inference and a tautological test condi
 
 Final recovery audit added read-only canonical identity checks before reopening, a missing-database refusal and a nonempty-unregistered-runtime refusal during partial initialization. Conflict receipts retain independently verified changed-output descriptors and reference media without replacing the job result. All 16 focused tests passed after these changes.
 
+Windows focused CI initially passed 15/16 checks but exposed an unretained workspace in the child-process death fixture: the child could release its SQLite handle through garbage collection. The fixture now retains its workspace in the live timer until the deliberate kill, with bounded startup and unconditional child cleanup. The owning-writer assertion remains unchanged. The dedicated cross-platform focused step now runs before the full suite to surface this evidence directly. See PR-head CI for the corrected Windows result.
+
 The default Playwright browser CDN returned a truncated archive. The exact pinned full Chromium was obtained from the official Chrome-for-Testing location with archive integrity verification, but its process singleton could not open a Unix socket in this environment. The matching official pinned headless shell worked; all reported local browser gates used that shell. No gate was deleted or skipped to obtain a pass.
 
 Git transport could clone/read but had no push credentials. Publication used the user-selected GitHub plugin's blob/tree/commit/ref operations with expected-head checks and no force. The documentation checkpoint's remote content verification preceded all Phase B work.

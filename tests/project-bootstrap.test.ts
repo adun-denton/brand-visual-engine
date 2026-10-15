@@ -50,7 +50,7 @@ test('A14 live app, CLI and direct workspaces cannot acquire competing runtime o
 test('A14 OS releases writer lock after process death, without reset or second job database',async()=>{
  const root=fresh();try{
   const c=initializeProject(root,fixtureInstallation);
-  const child=spawn(process.execPath,['--input-type=module','-e',`import {Workspace} from ${JSON.stringify(new URL('../src/service/workspace.ts',import.meta.url).href)};new Workspace(${JSON.stringify(join(root,'runtime'))});console.log('owned');setInterval(()=>{},1000)`],{stdio:['ignore','pipe','pipe']});
+  const child=spawn(process.execPath,['--input-type=module','-e',`import {Workspace} from ${JSON.stringify(new URL('../src/service/workspace.ts',import.meta.url).href)};const workspace=new Workspace(${JSON.stringify(join(root,'runtime'))});console.log('owned');setInterval(()=>workspace.owner.assert(),1000)`],{stdio:['ignore','pipe','pipe']});
   try{
    await new Promise<void>((resolve,reject)=>{
     const timer=setTimeout(()=>reject(Error('Writer child startup timeout')),30000);
