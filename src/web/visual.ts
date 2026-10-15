@@ -224,8 +224,12 @@ async function executionAction(e:State["executions"][number], owner:VersionRef, 
   const projectId=owner.id, unit=e.run.payload.state.workUnit, operationKey=projectId+":"+e.run.id+":"+attribute;
   if(executionCommands.has(operationKey)||attribute==="run" && (dispatchPending(e.run.id)||e.active))return;
   if(busy && !["cancel","revoke"].includes(attribute))return;
-  executionCommands.set(operationKey,{projectId,unit:key(unit),executionId:e.run.id,action});render();
   const ownsView=()=>pid===projectId && state && key(state.unit)===key(unit);
+  executionCommands.set(operationKey,{projectId,unit:key(unit),executionId:e.run.id,action});
+  if ((attribute === "cancel" || attribute === "revoke") && ownsView()) {
+    // Interrupt input must not synchronously rebuild unrelated workspace controls.
+    root.querySelector<HTMLButtonElement>(`[data-execution-${attribute}="${CSS.escape(key(e.run))}"]`)?.setAttribute("disabled", "");
+  } else render();
   let finished=false, observing=true, reads=0, timer:ReturnType<typeof setTimeout>|undefined;
   const refresh=async()=>{if(ownsView())await reload(true);};
   // These GETs refresh stored progress only. They never call transport.status or spend a grant.

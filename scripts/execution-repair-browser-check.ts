@@ -216,7 +216,7 @@ export async function checkExecutionRepairs(
               await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
               expect(await originalControl!.evaluate(node => node.isConnected)).toBe(true);
             }
-            await cancel.click({ timeout: 250 });
+            await cancel.click({ timeout: 250, noWaitAfter: true });
             await expect
               .poll(() => state().run.payload.state.slots[0]!.cancelRequested)
               .toBe(true);
