@@ -140,11 +140,15 @@ jobs:
       - run: npm run test:browser:native-resolution
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-native-resolution-browser-evidence
+      - run: npm run test:browser:guided-native
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-guided-native-browser-evidence
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: offline-browser-evidence-${{ matrix.os }}
           path: |
+            ${{ runner.temp }}/bve-guided-native-browser-evidence
             ${{ runner.temp }}/bve-native-resolution-unit-evidence
             ${{ runner.temp }}/bve-native-resolution-compatibility-evidence
             ${{ runner.temp }}/bve-native-resolution-browser-evidence

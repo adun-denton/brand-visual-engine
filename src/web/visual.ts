@@ -169,8 +169,12 @@ function executionFocus() {
   if(!n||!root.contains(n))return ()=>{};
   let selector=n.id?"#"+CSS.escape(n.id):n.getAttribute("name")&&n.closest("form")?.id?"#"+CSS.escape(n.closest("form")!.id)+` [name="${CSS.escape(n.getAttribute("name")!)}"]`:"";
   if(!selector)for(const a of ["data-execution-cancel","data-execution-revoke","data-execution-run","data-execution-reconcile","data-execution-delivery","data-library-inspect"]){const value=n.getAttribute(a);if(value){selector=`[${a}^="${CSS.escape(value.split(":")[0]+":")}"]`;break;}}
+  if(!selector && n.hasAttribute("data-native-action")) selector=`[data-native-action="${CSS.escape(n.getAttribute("data-native-action")!)}"][data-native-run="${CSS.escape(n.getAttribute("data-native-run")!)}"][data-slot="${CSS.escape(n.getAttribute("data-slot")!)}"]`;
+  if(!selector && n.hasAttribute("data-native-retry")) selector=`[data-native-retry="${CSS.escape(n.getAttribute("data-native-retry")!)}"][data-slot="${CSS.escape(n.getAttribute("data-slot")!)}"]`;
+  const nativeForm=n.closest<HTMLFormElement>("form[data-native-import]");
+  if(!selector && nativeForm && n.name) selector=`[data-native-import="${CSS.escape(nativeForm.dataset["nativeImport"]!)}"][data-slot="${CSS.escape(nativeForm.dataset["slot"]!)}"] [name="${CSS.escape(n.name)}"]`;
   const start="selectionStart" in n?n.selectionStart:null,end="selectionEnd" in n?n.selectionEnd:null;
-  return ()=>{const target=selector?root.querySelector<HTMLInputElement|HTMLTextAreaElement>(selector):null;target?.focus({preventScroll:true});if(target&&start!==null&&end!==null&&"setSelectionRange" in target)try{target.setSelectionRange(start,end);}catch{}};
+  return ()=>{let target=selector?root.querySelector<HTMLInputElement|HTMLTextAreaElement>(selector):null;if(n.closest("#native-exchange-panel")&&(!target||target.disabled))target=root.querySelector("#native-refresh");target?.focus({preventScroll:true});if(target&&start!==null&&end!==null&&"setSelectionRange" in target)try{target.setSelectionRange(start,end);}catch{}};
 }
 async function reload(keepExecutionFocus=false) {
   if (!state) return;
@@ -1343,7 +1347,7 @@ function bind() {
     }, "Prepared pending attempts only. Image execution is unavailable.");
   });
   if(state) {
-    bindNative(root,state.nativeExchange,state.records.filter(p=>p.payload.kind==="raster-specification"),{pid,project:project!,token,run:(f,m)=>run(async()=>{await f();await reload();},m)});
+    bindNative(root,state.nativeExchange,state.records.filter(p=>p.payload.kind==="raster-specification"),{pid,project:project!,token,run:(f,m)=>{const restore=executionFocus();return run(async()=>{await f();await reload();},m).finally(restore);}});
     on("native-refresh","click",()=>void run(()=>reload(true),"Stored manual progress refreshed; no dispatch."));
   }
   on("execution-grant","submit",e=>{

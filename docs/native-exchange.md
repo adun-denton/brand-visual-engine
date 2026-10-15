@@ -226,3 +226,23 @@ Offline controls: `node --test tests/native-resolution.test.ts`,
 `npm run test:native:resolution-compatibility`, and `npm run test:browser:native-resolution`.
 They use only authored synthetic originals. Rollback uses isolated accepted code and its matching
 complete closed root; do not downgrade roots containing new V2 native jobs.
+
+## Guided manual panel
+
+Both layouts present five explicit steps. Prepare a grant with a frozen page request, deliberate
+slots/lifetime and size policy (exact is the default). Export the selected request to reserve its
+slot, then download the complete return kit for the receiving image-capable session. Request and
+kit remain separate immutable downloads; re-download never permits another invocation.
+
+The administrative handoff can be copied alongside the kit. It binds page/run/slot/job/digest,
+ordered source hashes and size policy, and includes expiry and stop rules. Copying does not approve,
+claim or invoke anything. Obtain separate operator approval, report the claim in BVE before the
+external invocation, and stop on denial, expiry, consumption or uncertainty. BVE does not invoke
+ChatGPT automatically. Clipboard-denied hosts expose selected text for manual copying.
+
+Use the kit's offline builder with the untouched original, then explicitly import its manifest and
+original into the selected run/slot. The incoming preview displays file facts and unverified
+manifest declarations; only server validation admits evidence. Current results are proposals;
+late historical results remain history with no current candidate. Inspect in the existing canvas,
+then separately select, save a whole raster to Library or accept. Refresh/cold reopen reads saved
+state only; it does not poll a provider, retry or restore allowance.
