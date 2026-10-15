@@ -24,6 +24,8 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run build
       - run: npm run typecheck
+      - run: node --test tests/project-bootstrap.test.ts tests/production-intake.test.ts
+        timeout-minutes: 3
       - run: npm test
         env:
           BVE_NATIVE_RESOLUTION_EVIDENCE_DIR: ${{ runner.temp }}/bve-native-resolution-unit-evidence

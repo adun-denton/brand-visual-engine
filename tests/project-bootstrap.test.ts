@@ -94,5 +94,5 @@ test('A14/A15 actual CLI operations reuse the owning HTTP service; closed inspec
   const prepared=command(['prepare',requestPath]);assert.equal(command(['jobs']).length,3);await stageDelivery(root,prepared.jobs[0],await authoredOriginal());assert.equal(command(['intake',prepared.jobs[0].id]).payload.state.disposition,'ready');assert.equal(command(['receipts']).length,1);assert.equal(command(['inspect']).state.projectId,c.projectId);
   const denied=spawnSync(process.execPath,[fileURLToPath(cli),'init','--root',root],{encoding:'utf8',timeout:10000});assert.notEqual(denied.status,0);assert.match(denied.stderr,/owning writer/);
   child.kill('SIGTERM');await once(child,'exit');child=undefined;assert.equal(command(['inspect']).state.jobs.length,3);assert.equal(command(['receipts']).length,1);
- }finally{if(child){child.kill('SIGKILL');await once(child,'exit');}rmSync(root,{recursive:true,force:true});}
+ }finally{if(child&&child.exitCode===null&&child.signalCode===null){child.kill('SIGKILL');await once(child,'exit');}rmSync(root,{recursive:true,force:true});}
 });
