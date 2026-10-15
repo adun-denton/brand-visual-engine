@@ -198,12 +198,14 @@ export async function checkExecutionRepairs(
           );
           await page.locator("#layout").selectOption("film");
           if (scenario === "cancel") {
-            await row()
-              .getByRole("button", {
-                name: "Cancel this execution",
-                exact: true,
-              })
-              .click({ timeout: 250 });
+            const cancel = row().getByRole("button", {
+              name: "Cancel this execution",
+              exact: true,
+            });
+            // Complete viewport setup before measuring the original bounded input action.
+            await cancel.scrollIntoViewIfNeeded();
+            await expect(cancel).toBeEnabled();
+            await cancel.click({ timeout: 250 });
             await expect
               .poll(() => state().run.payload.state.slots[0]!.cancelRequested)
               .toBe(true);
