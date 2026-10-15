@@ -12,7 +12,7 @@ This development branch starts from the reviewed PR21 candidate and carries BVE-
 
 The base supports image-first visual comparison, whole-image and region selection, notes, persistent canonical records, whole-original exports and explicit manual native exchange. Native production is performed by a capable external agent environment; the browser cannot assume it can invoke that environment.
 
-BVE-VOS-01 adds explicit project bootstrap and validated local delivery intake using authored fixtures. Those additions remain pending until the implementation and its independent review establish them. Full durable review submission, product screenshot capture, clipboard continuation and a public updater are subsequent work.
+BVE-VOS-01 adds explicit project bootstrap and validated local delivery intake using authored fixtures. The candidate implementation and authored acceptance checks are present; independent review remains pending. Full durable review submission, product screenshot capture, clipboard continuation and a public updater are subsequent work.
 
 Paid image API execution remains disabled. No sign-in, paid API or local-model installation is required for the visual review reference configuration. An installation check must not consume image-generation quota.
 

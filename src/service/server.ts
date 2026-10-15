@@ -1,3 +1,5 @@
+import {ProductionIntake} from './production-intake.ts';
+import {projectConfig} from './project-bootstrap.ts';
 import {Auxiliary,type OfflineAuxiliaryInjection} from './auxiliary.ts';
 import {exactImageInput} from './session-inputs.ts';
 import {Reconstruction,type OfflineReconstructionInjection} from './reconstruction.ts';
@@ -37,6 +39,7 @@ export interface RunningApp {
   memory: ProjectMemory;
   library: RasterLibrary;
   chat: Chat;
+  production: ProductionIntake | null;
   origin: string;
   close: () => Promise<void>;
 }
@@ -46,6 +49,7 @@ export async function startApp(
   webRoot = join(import.meta.dirname, '../../dist'),
   providerConfig?: ProviderConfig,
   workspaceOptions?: {
+    projectRoot?: string;
     directionFixture?: boolean;
     aiResponseFixture?: boolean;
     executionFixture?: OfflineExecutionInjection;
@@ -55,8 +59,11 @@ export async function startApp(
     chatImageDriver?: ChatImageDriver;
   },
 ): Promise<RunningApp> {
+  if(workspaceOptions?.projectRoot)projectConfig(workspaceOptions.projectRoot);
   const workspace = new Workspace(root, workspaceOptions),
     token = randomBytes(32).toString('hex');
+  try {
+  const production=workspaceOptions?.projectRoot ? new ProductionIntake(workspace,workspaceOptions.projectRoot):null;
   const providers = new Providers(workspace, providerConfig);
   const regions = new Regions(workspace, providers);
   const compositions = new Compositions(workspace);
@@ -123,6 +130,8 @@ export async function startApp(
       )
         throw new InputError('Local host/origin required', 403);
       if (req.method === 'GET') {
+        if(path==='/api/v1/production/state'){if(!production)throw new InputError('No project-bound production service',404);json(200,{projectId:production.config.projectId,runtimeId:production.config.runtimeId,featureContract:production.config.featureContract,initialWorkUnit:production.config.initialWorkUnit,jobs:production.jobs(),iterations:production.iterations(),receipts:production.receipts()},false);return;}
+
         if(path==='/api/v1/visual/auxiliary/state'){json(200,auxiliary.state(id(url.searchParams.get('project')),exactRef(JSON.parse(url.searchParams.get('unit')??'null'))),false);return;}
 
         if(path.startsWith('/api/v1/visual/reconstruction/')){
@@ -349,6 +358,15 @@ export async function startApp(
         throw new InputError('Invalid JSON');
       }
       let result: unknown;
+      if(path.startsWith('/api/v1/production/')){
+        if(!production)throw new InputError('No project-bound production service',404);
+        const action=path.slice('/api/v1/production/'.length);
+        if(action==='prepare')result=production.prepare(input);
+        else if(action==='intake'){const r=record(input,['jobId']);result=await production.intake(id(r['jobId']));}
+        else if(action==='cancel'){const r=record(input,['iteration']);result=production.cancel(exactRef(r['iteration']));}
+        else throw new InputError('Unknown production operation',404);
+        json(200,result,false);return;
+      }
       if(path.startsWith('/api/v1/visual/native/')){
         const outer=record(input,['projectId','input']),pid=id(outer['projectId']),action=path.slice('/api/v1/visual/native/'.length);
         const out=await visual.native.command(pid,action,outer['input']);
@@ -619,10 +637,10 @@ export async function startApp(
   const server = http.server;
   server.requestTimeout = 15000;
   server.headersTimeout = 10000;
-  await new Promise<void>((resolve, reject) => {
+  try {await new Promise<void>((resolve, reject) => {
     server.once('error', reject);
     server.listen(port, '127.0.0.1', () => resolve());
-  });
+  });}catch(error){await providers.close();await chat.close();workspace.close();throw error;}
   const address = server.address();
   if (!address || typeof address === 'string')
     throw new Error('No local address');
@@ -641,6 +659,7 @@ export async function startApp(
     library,
     chat,
     origin,
+    production,
     close: () => {
       if (closePromise) return closePromise;
       closing = true;
@@ -660,4 +679,5 @@ export async function startApp(
       return closePromise;
     },
   };
+  }catch(error){workspace.close();throw error;}
 }

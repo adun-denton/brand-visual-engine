@@ -714,7 +714,7 @@ test("Level2 requested/inferred/observed remain version-bound and unsupported ob
   );
   const newer = s.e.metrics(s.p.id, { ...input, values: [{ ...base, status: "requested", value: 70 }] }, reference(m));
   assert.equal(newer.version, 2);
-  const reopened = s.track(new Workspace(s.root));
+  const reopened = s.track(new Workspace(s.root, {}, s.w.owner));
   const e = new Exploration(reopened);
   assert.equal(e.read(s.p.id, reference(m), "raster-metrics").integrity, m.integrity);
   assert.equal(e.read(s.p.id, reference(newer), "raster-metrics").integrity, newer.integrity);
@@ -1264,7 +1264,7 @@ test("V01 semantic identities cannot revise between kinds or cross legacy bounda
   // Same-kind mutable revisions remain supported and historical packets revalidate.
   const newer = s.e.selections(s.p.id, sel.payload.state, reference(sel));
   assert.equal(newer.version, 2);
-  const reopened = s.track(new Workspace(s.root));
+  const reopened = s.track(new Workspace(s.root, {}, s.w.owner));
   const e = new Exploration(reopened);
   assert.equal(e.read(s.p.id, reference(q), "raster-specification").integrity, q.integrity);
   assert.equal(e.read(s.p.id, reference(sel), "raster-selections").integrity, sel.integrity);

@@ -1,3 +1,5 @@
+import {revalidatePacket,writePort} from '../kernel/gate.ts';
+import type {ProductionProjection,Iteration,Job,ProductionReceipt} from '../modules/website/production-contracts.ts';
 import {NativeExchange} from './native-exchange.ts';
 import { Executions, type OfflineExecutionInjection } from './execution.ts';
 import type { Workspace } from "./workspace.ts";
@@ -129,7 +131,25 @@ export class VisualWorkspace {
         .filter((m) => canonical(m.payload.state.candidate) === canonical(reference(c)))
         .map((m) => this.exploration.read<WorkUnit>(pid, m.payload.state.workUnit, "page-work-unit").payload.state.label);
     }
-    return { ...this.project(pid), unit: u, records, candidates, selectedSources, sourceOrigins, executionAvailability:this.executions.availability(), executions:this.executions.state(pid,unit), nativeExchange:this.native.state(pid,unit) };
+    return { ...this.project(pid), unit: u, records, candidates, selectedSources, sourceOrigins, productionIterations:this.production(pid,unit), executionAvailability:this.executions.availability(), executions:this.executions.state(pid,unit), nativeExchange:this.native.state(pid,unit) };
+  }
+  /** Read-only projection into existing contact-sheet/filmstrip controls. */
+  private production(pid:string,unit:VersionRef):ProductionProjection[] {
+    const read=<T>(ref:VersionRef,kind:string):Work<T>=>{
+      const p=this.w.kernel.get<DesignArtifact<T>>(ref);
+      if(p.projectId!==pid||p.payload.kind!==kind)throw Error('Production visual scope mismatch');
+      revalidatePacket(p,writePort(p.type),this.w.kernel.environment());return p;
+    };
+    const order=this.order(pid);
+    return this.w.kernel.latestPackets().filter(p=>p.projectId===pid&&(p.payload as DesignArtifact<unknown>).kind==='production-iteration')
+      .map(p=>read<Iteration>(reference(p),'production-iteration')).filter(p=>canonical(p.payload.state.workUnit)===canonical(unit)).sort((a,b)=>order(a)-order(b)).map(p=>{
+        const jobs=p.payload.state.jobs.map(id=>read<Job>({id,version:this.w.kernel.currentVersion(id)!,freshness:'pinned'},'production-job'));
+        return {ref:reference(p),status:p.payload.state.status,count:jobs.length,outcomes:jobs.map(j=>j.payload.state.status),proposals:jobs.flatMap(j=>{
+          if(!j.payload.state.receipt)return [];
+          const receipt=read<ProductionReceipt>(j.payload.state.receipt,'production-receipt').payload.state;
+          return receipt.candidate&&receipt.delivery?[{candidate:receipt.candidate,provenance:receipt.delivery.provenance}]:[];
+        })};
+      });
   }
   private order(pid: string) {
     const sequence = new Map<string, number>();

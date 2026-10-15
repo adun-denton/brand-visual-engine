@@ -1,3 +1,5 @@
+import {resolve} from 'node:path';
+import { RuntimeOwner } from './runtime-owner.ts';
 import { explorationRoles } from '../modules/website/exploration-contracts.ts';
 import { matchesImageHeader } from './image-descriptor.ts';
 import { validateCompositionLinks } from './compositions.ts';
@@ -83,6 +85,8 @@ const fields = [
   'density',
 ];
 export class Workspace {
+  readonly owner: RuntimeOwner;
+  private closed=false;
   kernel: KernelStore;
   assets: Assets;
   legacy: LegacyAssets;
@@ -91,8 +95,13 @@ export class Workspace {
   constructor(
     root: string,
     options: { directionFixture?: boolean; aiResponseFixture?: boolean } = {},
+    owner?: RuntimeOwner,
   ) {
+    if(owner && owner.root !== (resolve(root))) throw Error('Runtime ownership path mismatch');
+    this.owner = owner ?? new RuntimeOwner(root);
+    this.owner.attach();
     this.options = options;
+    try {
     this.assets = new Assets(root);
     this.legacy = new LegacyAssets(root);
     this.kernel = new KernelStore(root, {
@@ -108,11 +117,15 @@ export class Workspace {
       assetExists: (a, h) =>
         this.assets.exists(a, h) || this.legacy.exists(a, h),
       grantedPermissions: ['read', 'write', 'accept'],
+      assertWriter: () => this.owner.assert(),
     });
+    } catch(error) { this.owner.detach(); throw error; }
   }
   close(): void {
+    if(this.closed)return;this.closed=true;
     this.kernel.close();
     this.legacy.close();
+    this.owner.detach();
   }
   private owned<T>(
     pointer: VersionRef,

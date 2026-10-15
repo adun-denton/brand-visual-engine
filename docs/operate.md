@@ -10,7 +10,7 @@ Target loop: request three concepts in Chat; view them together in BVE; select, 
 
 ## Candidate scope
 
-BVE-VOS-01 implements explicit project initialization/reopen and verified intake of three authored deliveries into the existing visual workspace. It does not implement the complete target loop, native dispatch, durable review submission, product screenshot capture or clipboard continuation. The implementer must add verified command details and observed results without changing these scope limits.
+BVE-VOS-01 implements explicit project initialization/reopen and verified intake of three authored deliveries into the existing visual workspace. It does not implement the complete target loop, native dispatch, durable review submission, product screenshot capture or clipboard continuation. See INSTALL.md for the verified `bve init`, `inspect`, `start`, `prepare`, `jobs`, `intake`, `receipts` and `cancel` operations. The candidate remains subject to independent review.
 
 Existing visual review supports whole-image/region selection and notes. Existing request controls describe changes for a future iteration; they do not generally edit bitmap pixels. Library/export preserves whole originals under the existing contracts.
 

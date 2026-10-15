@@ -140,6 +140,9 @@ jobs:
       - run: npm run test:browser:native-resolution
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-native-resolution-browser-evidence
+      - run: npm run test:browser:production
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-production-browser-evidence
       - run: npm run test:browser:guided-native
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-guided-native-browser-evidence
@@ -148,6 +151,7 @@ jobs:
         with:
           name: offline-browser-evidence-${{ matrix.os }}
           path: |
+            ${{ runner.temp }}/bve-production-browser-evidence
             ${{ runner.temp }}/bve-guided-native-browser-evidence
             ${{ runner.temp }}/bve-native-resolution-unit-evidence
             ${{ runner.temp }}/bve-native-resolution-compatibility-evidence

@@ -559,7 +559,7 @@ test('acceptance revalidates module inputs inside the kernel transaction after a
   const s = await setup(t),
     op = s.prepare('native', { preservation: 'review-raw' }),
     raw = await s.nativeReturn(op, await pixels());
-  const other = new Workspace(s.root, { directionFixture: true });
+  const other = new Workspace(s.root, { directionFixture: true }, s.w.owner);
   s.track(other);
   const accept = s.w.kernel.accept.bind(s.w.kernel);
   s.w.kernel.accept = (...args: Parameters<typeof accept>) => {

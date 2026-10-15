@@ -6,12 +6,14 @@ import type { IterationBundle, LedgerEvent, NodePacket, PortContract, ProjectLed
 import { contractGate, revalidatePacket, writePort } from './gate.ts';
 import type { GateEnvironment } from './gate.ts';
 import { digest, reference, revise } from './packets.ts';
-export type KernelServices = Pick<GateEnvironment, 'assetExists' | 'imageMatches' | 'rasterFacts' | 'moduleExists' | 'validateArtifact' | 'grantedPermissions'>;
+export type KernelServices = Pick<GateEnvironment, 'assetExists' | 'imageMatches' | 'rasterFacts' | 'moduleExists' | 'validateArtifact' | 'grantedPermissions' | 'assertWriter'>;
 
 /** Additive generic sidecar. Legacy workspace.sqlite and asset bytes are never migrated implicitly. */
 export class KernelStore {
   private db: DatabaseSync;
   private services: KernelServices;
+  private productionAuthority?: (p:NodePacket<unknown>)=>boolean;
+  bindProductionAuthority(authority:(p:NodePacket<unknown>)=>boolean){if(this.productionAuthority)throw Error('Production authority already bound');this.productionAuthority=authority;}
   private nativeAuthority?: (p:NodePacket<unknown>)=>boolean;
   bindNativeAuthority(authority:(p:NodePacket<unknown>)=>boolean){if(this.nativeAuthority)throw Error('Native authority already bound');this.nativeAuthority=authority;}
   private auxiliaryAuthority?: (p:NodePacket<unknown>)=>boolean;
@@ -30,6 +32,7 @@ export class KernelStore {
   }
   close(): void { this.db.close(); }
   private transaction<T>(action: () => T): T {
+    this.services.assertWriter?.();
     this.db.exec('BEGIN IMMEDIATE');
     try { const value = action(); this.db.exec('COMMIT'); return value; }
     catch (error) { this.db.exec('ROLLBACK'); throw error; }
@@ -51,7 +54,7 @@ export class KernelStore {
     return value as NodePacket<T>; // Consumers still validate their port before crossing a boundary.
   }
   environment(): GateEnvironment {
-    return { ...this.services, ...(this.nativeAuthority?{nativeWriteAllowed:this.nativeAuthority}:{}), ...(this.auxiliaryAuthority?{auxiliaryWriteAllowed:this.auxiliaryAuthority}:{}), projectRefs:(pid,max,exclude)=>this.projectRefs(pid,max,exclude), projectEvents:pid=>this.ledger(pid).events, projectSelections:pid=>this.acceptedSelections(pid), lookup: ref => this.lookup(ref), currentVersion: id => this.currentVersion(id),
+    return { ...this.services, ...(this.productionAuthority?{productionWriteAllowed:this.productionAuthority}:{}), ...(this.nativeAuthority?{nativeWriteAllowed:this.nativeAuthority}:{}), ...(this.auxiliaryAuthority?{auxiliaryWriteAllowed:this.auxiliaryAuthority}:{}), projectRefs:(pid,max,exclude)=>this.projectRefs(pid,max,exclude), projectEvents:pid=>this.ledger(pid).events, projectSelections:pid=>this.acceptedSelections(pid), lookup: ref => this.lookup(ref), currentVersion: id => this.currentVersion(id),
       accepted: (pid, ref) => this.ledger(pid).events.some(e => e.kind === 'acceptance' && e.subject.id === ref.id && e.subject.version === ref.version) };
   }
   private event(projectId: string, subject: VersionRef, kind: LedgerEvent['kind'], actor: string,

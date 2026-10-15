@@ -1,3 +1,4 @@
+import type {ProductionProjection} from '../modules/website/production-contracts.ts';
 import {nativeView,bindNative,type NativeViewState} from './native-exchange.ts';
 import { bindAuxiliary, auxiliaryDraftChanged } from "./auxiliary.ts";
 import {
@@ -30,6 +31,7 @@ import { VisualDrafts, type PageDraft } from "./visual-drafts.ts";
 type Work<T> = NodePacket<DesignArtifact<T>>;
 type State = {
   nativeExchange: NativeViewState;
+  productionIterations: ProductionProjection[];
   project: VersionRef;
   title: string;
   units: Work<WorkUnit>[];
@@ -310,12 +312,15 @@ async function add(c: Work<RasterConcept>, anchor: Anchor) {
   draft().scope = entry;
   render();
 }
-const originLabel = (c: Work<RasterConcept>) =>
-  c.payload.state.origin === "synthetic"
+const originLabel = (c: Work<RasterConcept>) => {
+  const proposal=state?.productionIterations.flatMap(i=>i.proposals).find(p=>key(p.candidate)===key(c));
+  if(proposal)return proposal.provenance==='authored-fixture'?'Authored delivery · verified bytes':'Reported native · verified bytes';
+  return c.payload.state.origin === "synthetic"
     ? "Synthetic interaction fixture"
     : c.payload.state.origin === "imported"
       ? "Imported raster"
       : "Raster reference";
+};
 function card(c: Work<RasterConcept>, i: number, strip = false) {
   const whole = selected(c).some((e) => e.anchor.kind === "whole");
   return `<article class="candidate ${key(c) === focused ? "focused" : ""}" data-candidate="${esc(key(c))}"><button class="open-image" data-open="${esc(key(c))}" aria-label="Focus candidate ${i + 1}, revision ${c.version}"><img src="${imageURL(c)}" alt="Page composition ${i + 1}, revision ${c.version}" loading="lazy"></button><div class="card-meta"><strong>Concept ${i + 1} <small>v${c.version}</small></strong><span class="origin">${originLabel(c)}</span></div><div class="card-actions"><button data-whole="${esc(key(c))}" aria-pressed="${whole}">${whole ? "Whole selected" : "Select whole"}</button><button data-compare="${esc(key(c))}" aria-pressed="${compared.includes(key(c))}">Compare</button></div></article>`;
@@ -1022,6 +1027,11 @@ function groups() {
     const candidates=e.outputs.map(r=>state!.candidates.find(c=>key(c)===key(r))).filter((c):c is Work<RasterConcept>=>!!c);
     candidates.forEach(c=>assigned.add(key(c)));
     if(candidates.length)html+=`<div class="batch-group"><h2>Offline execution ${i+1} <small>Synthetic fixtures · ${e.slots.map(s=>s.displayStatus).join(" / ")}</small></h2><div class="card-grid">${candidates.map(c=>card(c,state!.candidates.indexOf(c))).join("")}</div></div>`;
+  }
+  for(const [i,iteration] of state!.productionIterations.entries()) {
+    const candidates=iteration.proposals.map(p=>state!.candidates.find(c=>key(c)===key(p.candidate))).filter((c):c is Work<RasterConcept>=>!!c);
+    candidates.forEach(c=>assigned.add(key(c)));
+    html+=`<div class="batch-group"><h2>Production iteration ${i+1} <small>${esc(iteration.status)} · ${candidates.length}/${iteration.count} proposals</small></h2><div class="card-grid">${candidates.map(c=>card(c,state!.candidates.indexOf(c))).join("")}</div></div>`;
   }
   const imports = state!.candidates.filter((c) => !assigned.has(key(c)));
   return (

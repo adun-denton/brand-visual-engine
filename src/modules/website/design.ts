@@ -1,3 +1,4 @@
+import {validateProductionRecord} from './production-contracts.ts';
 import {validateNativeRecord} from './native-exchange-contracts.ts';
 import {auxiliaryRoles,parseAuxiliary} from './auxiliary-contracts.ts';
 import {validateReconstructionRecord} from './reconstruction-contracts.ts';
@@ -27,6 +28,7 @@ export const explorationTemplate: BundleTemplate = { name: 'Landing page broad e
     { family: 'Styling', key: 'edge-expression', relative: 0.5 }, { family: 'Dynamics', key: 'motion-intent', relative: 0.5 }],
   capabilityIds: ['design.explore'], variationStrategy: 'coherent-grid' };
 export function validateWebsiteArtifact(payload: Record<string, unknown>): void {
+  if(validateProductionRecord(payload))return;
   if(Object.hasOwn(auxiliaryRoles,String(payload['kind']))){parseAuxiliary(String(payload['kind']),payload['state']);return;}
   if(validateReconstructionRecord(payload))return;
   if(validateLibraryRecord(payload))return;

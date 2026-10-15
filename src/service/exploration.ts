@@ -269,7 +269,7 @@ export class Exploration {
     this.w.kernel.put(next);
     return next;
   }
-  private specificationPacket(
+  specificationPacket(
     projectId: string,
     input: unknown,
   ): Work<Specification> {
