@@ -1,0 +1,87 @@
+{
+  "packet": "BVE-VOS-01",
+  "revision": 1,
+  "softwareBase": "1a4864994fcbcbfce7a4b5a4e9d281b8c18c2e85",
+  "instructionSetVersion": "visual-os-ops-v1",
+  "instructions": "Promote coordinator-authored sources to destinations in Phase A. Verify source hashes and any existing destination base hash first. Keep the source snapshot unchanged.",
+  "files": [
+    {
+      "source": "docs/implementation-packets/BVE-VOS-01-source/AGENTS.md",
+      "destination": "AGENTS.md",
+      "sha256": "38728141325b4fc8a23e7c9d5d404bb13787016cceb1a5398015ff6b7810b188",
+      "baseFileSha256": "d72c0aab032a5c3538eb35edd3f18a6c15a95caa43c922cc2209e6ceebeeb5e8"
+    },
+    {
+      "source": "docs/implementation-packets/BVE-VOS-01-source/docs/development-handoff.md",
+      "destination": "docs/development-handoff.md",
+      "sha256": "af788dc9d699636caec67f0e317aa6610d23ef4d36e3860febbb7c2635743b8a",
+      "baseFileSha256": null
+    },
+    {
+      "source": "docs/implementation-packets/BVE-VOS-01-source/docs/operate.md",
+      "destination": "docs/operate.md",
+      "sha256": "97e9e848d098c1f28a598630a0a2564d6dd60c3b107695eeb7e4aa21e86d3842",
+      "baseFileSha256": null
+    },
+    {
+      "source": "docs/implementation-packets/BVE-VOS-01-source/docs/project-initialization-prompt.md",
+      "destination": "docs/project-initialization-prompt.md",
+      "sha256": "80c26e09680d2605da7607a873393fe0eb0024ffff42cfb3961058c4c51855f6",
+      "baseFileSha256": null
+    },
+    {
+      "source": "docs/implementation-packets/BVE-VOS-01-source/docs/reporting.md",
+      "destination": "docs/reporting.md",
+      "sha256": "38cdb2e2b85937f30a53beec58d215187379593fcebe790de3d2d814dd8e77ad",
+      "baseFileSha256": null
+    },
+    {
+      "source": "docs/implementation-packets/BVE-VOS-01-source/docs/updates.md",
+      "destination": "docs/updates.md",
+      "sha256": "eb234dbf6fcdf5821befb8d56ad8f6d1675e62aaa999e3b7bf540a1861e6ed5c",
+      "baseFileSha256": null
+    },
+    {
+      "source": "docs/implementation-packets/BVE-VOS-01-source/INSTALL.md",
+      "destination": "INSTALL.md",
+      "sha256": "e67ca4e37f737ed726daa56bf4a0aad2d4467d3cf911847bc35cc7dfe02fc1ee",
+      "baseFileSha256": null
+    },
+    {
+      "source": "docs/implementation-packets/BVE-VOS-01-source/instructions/butler.md",
+      "destination": "instructions/butler.md",
+      "sha256": "e67f5273f761c186e0b0778828c2306abd31c52bc0c31593b0ef3b67064522cd",
+      "baseFileSha256": null
+    },
+    {
+      "source": "docs/implementation-packets/BVE-VOS-01-source/instructions/conductor.md",
+      "destination": "instructions/conductor.md",
+      "sha256": "a4be9c29026ea76f1cd3f6cf497971fbea01948ab0b323c2f3955cf7e117b6f5",
+      "baseFileSha256": null
+    },
+    {
+      "source": "docs/implementation-packets/BVE-VOS-01-source/instructions/generator.md",
+      "destination": "instructions/generator.md",
+      "sha256": "0346f91fbf7cfa1304a07b2b75a98f6926b344b1f4aaf1939deb1c8e2b72854e",
+      "baseFileSha256": null
+    },
+    {
+      "source": "docs/implementation-packets/BVE-VOS-01-source/instructions/manifest.json",
+      "destination": "instructions/manifest.json",
+      "sha256": "200a8ff92bd90290159e4b69f0dc092ecf706afdeb5c73eea325064ed3c6ec5f",
+      "baseFileSha256": null
+    },
+    {
+      "source": "docs/implementation-packets/BVE-VOS-01-source/instructions/project-AGENTS.template.md",
+      "destination": "instructions/project-AGENTS.template.md",
+      "sha256": "840dde9ce1f06d042f134c75c914fb47820738ced8eaa080238ea4e3d0e265e7",
+      "baseFileSha256": null
+    },
+    {
+      "source": "docs/implementation-packets/BVE-VOS-01-source/README.md",
+      "destination": "README.md",
+      "sha256": "f713bb4285d89792e83b101c3c96946a999d170adfb80542ebe7a9533c8a04fb",
+      "baseFileSha256": "e3c3cd035d8e0042419318f1ea315e935ab5ab63eb3baa5adfed97184c9f9d71"
+    }
+  ]
+}
