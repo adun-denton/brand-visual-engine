@@ -1,7 +1,7 @@
 import {fileURLToPath} from 'node:url';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,rmSync,readFileSync,writeFileSync,mkdirSync,existsSync,symlinkSync} from 'node:fs';
+import {mkdtempSync,rmSync,readFileSync,writeFileSync,mkdirSync,existsSync,symlinkSync,renameSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync,spawn} from 'node:child_process';
@@ -16,6 +16,8 @@ test('A01/A03/A10 durable initialization resume, same identities and local addit
  const root=fresh();try{
   assert.throws(()=>initializeProject(root,fixtureInstallation,'Authored project',phase=>{if(phase==='identity')throw Error('interrupted');}),/interrupted/);
   const identity=JSON.parse(readFileSync(join(root,'.bve-init.json'),'utf8')).config;
+  mkdirSync(join(root,'runtime'));writeFileSync(join(root,'runtime/foreign.txt'),'Unregistered runtime');
+  assert.throws(()=>initializeProject(root,fixtureInstallation),/adoption required/);assert.equal(existsSync(join(root,'runtime/bve.runtime.json')),false);assert.equal(existsSync(join(root,'runtime/kernel.sqlite')),false);rmSync(join(root,'runtime'),{recursive:true});
   assert.throws(()=>initializeProject(root,fixtureInstallation,'Ignored',phase=>{if(phase==='runtime')throw Error('interrupted-runtime');}),/interrupted-runtime/);
   const c=initializeProject(root,fixtureInstallation,'Ignored');assert.deepEqual(c,identity);
   writeFileSync(join(root,'instructions/local.md'),'User local additions');writeFileSync(join(root,'AGENTS.md'),'User project instructions');writeFileSync(join(root,'references/keep.txt'),'Keep reference');
@@ -31,6 +33,8 @@ test('A02 incompatible/foreign/inconsistent roots refuse without canonical mutat
   const kernel=readFileSync(join(root,'runtime/kernel.sqlite'));
   writeFileSync(join(root,'bve.project.json'),JSON.stringify({...c,formatVersion:2}));assert.throws(()=>initializeProject(root,fixtureInstallation),/Unsupported/);assert.deepEqual(readFileSync(join(root,'runtime/kernel.sqlite')),kernel);
   writeFileSync(join(root,'bve.project.json'),JSON.stringify({...c,runtimeId:'wrong'}));assert.throws(()=>projectConfig(root),/Inconsistent/);
+  writeFileSync(join(root,'bve.project.json'),JSON.stringify(c));renameSync(join(root,'runtime/kernel.sqlite'),join(root,'references/closed-kernel.sqlite'));
+  assert.throws(()=>initializeProject(root,fixtureInstallation),/Missing or redirected/);assert.equal(existsSync(join(root,'runtime/kernel.sqlite')),false);renameSync(join(root,'references/closed-kernel.sqlite'),join(root,'runtime/kernel.sqlite'));
  }finally{rmSync(root,{recursive:true,force:true});}
 });
 test('A14 live app, CLI and direct workspaces cannot acquire competing runtime ownership',async()=>{

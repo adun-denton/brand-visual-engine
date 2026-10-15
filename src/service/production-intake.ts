@@ -9,7 +9,7 @@ import {packet,reference,revise,digest,canonical} from '../kernel/packets.ts';
 import {revalidatePacket,writePort} from '../kernel/gate.ts';
 import {productionInput,productionFresh,productionReceiptId} from '../kernel/production-gate.ts';
 import type {DesignArtifact,NodePacket,VersionRef} from '../kernel/contracts.ts';
-import {parseProduction,parseDelivery,parseOutput,type Iteration,type Job,type ProductionReceipt,type ProductionKind,same} from '../modules/website/production-contracts.ts';
+import {parseProduction,parseDelivery,parseOutput,type Iteration,type Job,type ProductionReceipt,type ProductionKind,type Delivery,same} from '../modules/website/production-contracts.ts';
 import {Exploration} from './exploration.ts';
 import {parseSpecification,type Specification} from '../modules/website/exploration-contracts.ts';
 import {record,id} from './validation.ts';
@@ -57,10 +57,16 @@ export class ProductionIntake {
  }
  cancel(iteration:VersionRef){const p=this.read<Iteration>(iteration,'production-iteration');if(this.w.kernel.currentVersion(p.id)!==p.version)throw Error('Stale iteration');if(p.payload.state.status!=='active')return p;const next=revise(p,{...p.payload,state:{...p.payload.state,status:'cancelled' as const}},'local-operator','Explicit production cancellation; no invocation');this.write([next]);return next;}
  private stagingDirectory(j:Job){const dir=join(this.root,j.staging);assertNoLinks(dir);mkdirSync(dir,{recursive:true,mode:0o700});return dir;}
- private diagnostic(job:ProductionWork<Job>,disposition:'incomplete'|'conflict',submissionHash:string,message:string){
+ private diagnostic(job:ProductionWork<Job>,disposition:'incomplete'|'conflict',submissionHash:string,message:string,delivery:Delivery|null=null,bytes:Buffer|null=null,observed:ProductionReceipt['observed']=null){
   const identity=productionReceiptId(job.id,submissionHash),prior=this.w.kernel.lookup({id:identity,version:1,freshness:'pinned'});if(prior)return this.read<ProductionReceipt>(reference(prior),'production-receipt');
-  const receipt=this.make<ProductionReceipt>('production-receipt',{version:1,job:reference(job),delivery:null,submissionHash,disposition,message,observed:null,media:null,candidate:null,membership:null,verification:'no-output',provenanceProof:'declaration-only'},[reference(job)],identity);this.write([receipt]);return receipt;
+  const writes:NodePacket<unknown>[]=[];let media:VersionRef|null=null;
+  if(bytes&&observed){
+   const m=packet({type:'media-asset',id:'production-conflict-media-'+digest({job:job.id,submissionHash}),projectId:this.config.projectId,assets:[{id:observed.id,checksum:observed.checksum}],payload:{moduleId:'website',kind:'page-media',scope:'media',lockedValues:{},state:{image:observed,label:'Conflicting production original · reference only',role:'reference',permission:'Declared '+delivery!.provenance+'; conflicting output, no replacement'}},provenance:{actor:'local-butler',source:'Verified conflicting original retained without active membership',previous:null}});
+   this.w.assets.save(bytes,observed);media=reference(m);writes.push(m);
+  }
+  const receipt=this.make<ProductionReceipt>('production-receipt',{version:1,job:reference(job),delivery,submissionHash,disposition,message,observed,media,candidate:null,membership:null,verification:observed?'independently-decoded-original':'no-output',provenanceProof:'declaration-only'},[reference(job),...(media?[media]:[])],identity);this.write([...writes,receipt]);return receipt;
  }
+
  async intake(jobId:string){
   id(jobId);const version=this.w.kernel.currentVersion(jobId);if(version===null)throw Error('Unknown production job');const j=this.read<Job>({id:jobId,version,freshness:'pinned'},'production-job'),s=j.payload.state;
   const dir=this.stagingDirectory(s),marker=join(dir,'complete.json');
@@ -78,7 +84,7 @@ export class ProductionIntake {
   const submissionHash=digest({delivery:d,observed}),receiptId=productionReceiptId(j.id,submissionHash),prior=this.w.kernel.lookup({id:receiptId,version:1,freshness:'pinned'});
   if(prior)return this.read<ProductionReceipt>(reference(prior),'production-receipt');
   const current=this.read<Job>({id:jobId,version:this.w.kernel.currentVersion(jobId)!,freshness:'pinned'},'production-job');
-  if(current.payload.state.receipt)return this.diagnostic(current,'conflict',submissionHash,'Same job returned a changed delivery; original result retained');
+  if(current.payload.state.receipt)return this.diagnostic(current,'conflict',submissionHash,'Same job returned a changed delivery; original result retained',d,bytes,observed);
   // A scope change while decoding forces historical evidence, never a current membership.
   const fresh=productionFresh(this.w.kernel.environment(),s),disposition=fresh?d.outcome:'historical';
   const writes:NodePacket<unknown>[]=[];let media:VersionRef|null=null,candidate:VersionRef|null=null,membership:VersionRef|null=null;

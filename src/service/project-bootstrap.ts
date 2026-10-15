@@ -48,6 +48,19 @@ export function projectConfig(root:string):ProjectConfig {
  const runtime=boundedJson(join(root,c.locations.runtime,'bve.runtime.json'));
  if(canonical(runtime)!==canonical({version:1,projectId:c.projectId,runtimeId:c.runtimeId}))throw Error('Inconsistent project/runtime identity');
  for(const location of Object.values(c.locations))assertNoLinks(join(root,location));
+ const database=join(root,c.locations.runtime,'kernel.sqlite');assertNoLinks(database);
+ if(!existsSync(database)||!lstatSync(database).isFile()||lstatSync(database).nlink!==1)throw Error('Missing or redirected authoritative runtime; restore a complete closed project');
+ const db=new DatabaseSync(database,{readOnly:true});
+ try{
+  if(db.prepare('PRAGMA user_version').get()?.['user_version']!==1)throw Error('Unsupported authoritative runtime schema');
+  for(const [identity,kind] of [[c.projectId,'module-project'],[c.initialWorkUnit.id,'page-work-unit']] as const){
+   const row=kind==='module-project'?db.prepare('SELECT body FROM kernel_packets WHERE id=? ORDER BY version DESC LIMIT 1').get(identity):db.prepare('SELECT body FROM kernel_packets WHERE id=? AND version=?').get(identity,c.initialWorkUnit.version);
+   if(!row)throw Error('Inconsistent project/page identity in authoritative runtime');
+   const p=JSON.parse(String(row['body'])) as import('../kernel/contracts.ts').NodePacket<{kind?:string}>;const {integrity,...body}=p;
+   if(digest(body)!==integrity||p.id!==identity||p.projectId!==c.projectId||(kind==='module-project'?p.type!=='module-project':p.type!=='work-record'||p.payload.kind!==kind))throw Error('Inconsistent project/page integrity in authoritative runtime');
+  }
+ }finally{db.close();}
+
  const from=relative(c.installation.path,resolve(root));if(from===''||!from.startsWith('..')&&!isAbsolute(from))throw Error('Private project must be outside software installation');return c;
 }
 export function verifyProject(w:Workspace,c:ProjectConfig) {
@@ -82,7 +95,7 @@ export function initializeProject(root:string,installation:{path:string;commit:s
   const runtimeOwner=new RuntimeOwner(runtime);
   try{
    if(existsSync(marker)){if(canonical(boundedJson(marker))!==canonical(identity))throw Error('Inconsistent runtime identity');}
-   else atomicJson(marker,identity);
+   else {if(readdirSync(runtime).length)throw Error('Nonempty unregistered runtime: adoption required');atomicJson(marker,identity);}
    w=new Workspace(runtime,{},runtimeOwner);
   }catch(e){runtimeOwner.close();throw e;}
   const project=w.kernel.lookup({id:c.projectId,version:1,freshness:'pinned'}),unit=w.kernel.lookup(c.initialWorkUnit);
