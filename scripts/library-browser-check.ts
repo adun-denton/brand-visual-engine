@@ -402,7 +402,8 @@ try {
     );
     await expect(interrupt).toBeEnabled();
     await interrupt.evaluate((n) => n.scrollIntoView({ block: "center" }));
-    if (action === "cancel") await interrupt.click({ timeout: 250 });
+    // This control does not navigate; the Library request is deliberately still held.
+    if (action === "cancel") await interrupt.click({ timeout: 250, noWaitAfter: true });
     else {
       await interrupt.focus();
       await page.keyboard.press("Enter");
