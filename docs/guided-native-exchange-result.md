@@ -32,7 +32,8 @@ still authoritatively validates scope, digest, bytes/hash, full decode, dimensio
 No archive parser, automatic file search, URL fetch or re-encoding is added. Received evidence shows
 imported/operator-attested provenance and source media/candidate associations. Historical evidence
 is explicitly not a current proposal. Selection, whole-raster Library save and acceptance stay
-separate; no automatic selection/adoption is added. Keyboard focus is restored after native actions,
+separate; no automatic selection/adoption is added. Pending slot export mirrors the existing serial-slot rule: finish or withdraw the earlier released
+slot before exporting the next. Keyboard focus is restored after native actions,
 falling back to refresh when the triggering control becomes disabled or disappears.
 
 Changed paths: web native view/handlers, narrow native styles, narrowly scoped focus restoration;
@@ -59,7 +60,10 @@ isolation, refresh/restart/replay without restored allowance, source-bound kit b
 or dispatch. Exact-head CI logs, screenshots and summary outcomes accompany publication separately.
 
 During development, invalid authored markup/page-type fixture inputs and a literal ordered-list
-number assertion were corrected; these were fixture errors, not waived gates. Browser evidence
+number assertion were corrected. First CI exposed a new fixture that attempted slot2 before
+finishing claimed slot1; the backend correctly rejected it. The fixture now follows serial ordering,
+and the UI explains/disables that blocked export without changing backend behavior. These are
+corrected failures, not waived gates. Browser evidence
 must be judged from the final exact-head run, not this intended coverage description.
 
 ## Limits and rollback

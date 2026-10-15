@@ -47,11 +47,12 @@ export function nativeSlots(text: string): number[] {
 export function nativeView(state:NativeViewState,esc:(x:unknown)=>string,specs:Work<unknown>[],open=false) {
   const slotView = (e: RunView, a: SlotView) => {
     const p = a.release, receipt = a.receipt?.payload.state, handoffId = `native-handoff-${e.run.id}-${a.slot}`;
+    const serialBlocked = !p && e.slots.some(other=>other.slot!==a.slot&&other.release&&!other.receipt&&other.status!=='withdrawn');
     const attrs = `data-native-run="${esc(e.run.id)}" data-slot="${a.slot}"`;
     return `<section class="native-slot" aria-label="Slot ${a.slot}"><h4>Slot ${a.slot}</h4><p>Saved state: <strong>${esc(a.status)}</strong>${a.cancelRequested?' · cancellation intent retained; termination unknown':''}</p>
       <p class="native-guidance">${esc(nativeGuidance(a))}</p>
-      <div class="native-step"><h5>2. Download the bound handoff</h5><p>The complete return kit is the receiving-session artifact: frozen request, ordered original sources, schema, templates and offline builder. Export the request first to reserve this slot. Downloads retain the same frozen bytes.</p>
-      <button data-native-action="export" ${attrs} ${['pending','awaiting-operator','claimed'].includes(a.status)&&!e.grant.payload.state.revoked&&!a.cancelRequested?'':'disabled'}>${p?'Re-download request':'Export request'}</button>
+      <div class="native-step"><h5>2. Download the bound handoff</h5><p>The complete return kit is the receiving-session artifact: frozen request, ordered original sources, schema, templates and offline builder. Export the request first to reserve this slot. Downloads retain the same frozen bytes. Slots run serially: finish or withdraw an earlier released slot before exporting the next.${serialBlocked?' This slot is waiting for the earlier released slot.':''}</p>
+      <button data-native-action="export" ${attrs} ${['pending','awaiting-operator','claimed'].includes(a.status)&&!e.grant.payload.state.revoked&&!a.cancelRequested&&!serialBlocked?'':'disabled'}>${p?'Re-download request':'Export request'}</button>
       <button data-native-action="return-kit" ${attrs} ${p?'':'disabled'}>Export return kit</button>
       ${p?`<details class="native-handoff"><summary>Administrative handoff · run / slot ${a.slot}</summary><label for="${esc(handoffId)}">Copy with the complete kit; this text grants no approval<textarea id="${esc(handoffId)}" readonly rows="9">${esc(nativeHandoff(e,a))}</textarea></label><button type="button" data-native-copy="${esc(handoffId)}">Copy handoff instructions</button><p data-native-copy-status role="status"></p></details>`:''}</div>
       <div class="native-step"><h5>3. Report claim before external invocation</h5><p>Use a separately approved image-capable session. BVE does not invoke ChatGPT. Stop on denial or expiry; a saved claim is attestation, not proof of generation.</p>
