@@ -26,7 +26,7 @@ jobs:
       - run: npm run typecheck
       - run: node --test tests/project-bootstrap.test.ts tests/production-intake.test.ts
         timeout-minutes: 3
-      - run: npm test
+      - run: ${{ runner.os == 'Windows' && 'node --test --test-concurrency=2 tests/*.test.ts' || 'npm test' }}
         env:
           BVE_NATIVE_RESOLUTION_EVIDENCE_DIR: ${{ runner.temp }}/bve-native-resolution-unit-evidence
           BVE_NATIVE_REPAIR_EVIDENCE_DIR: ${{ runner.temp }}/bve-native-repair-unit-evidence
