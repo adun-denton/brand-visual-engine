@@ -51,8 +51,17 @@ test('A14 OS releases writer lock after process death, without reset or second j
  const root=fresh();try{
   const c=initializeProject(root,fixtureInstallation);
   const child=spawn(process.execPath,['--input-type=module','-e',`import {Workspace} from ${JSON.stringify(new URL('../src/service/workspace.ts',import.meta.url).href)};new Workspace(${JSON.stringify(join(root,'runtime'))});console.log('owned');setInterval(()=>{},1000)`],{stdio:['ignore','pipe','pipe']});
-  await once(child.stdout!,'data');assert.throws(()=>new Workspace(join(root,'runtime')),/owning writer/);child.kill('SIGKILL');await once(child,'exit');
-  assert.deepEqual(initializeProject(root,fixtureInstallation),c);
+  try{
+   await new Promise<void>((resolve,reject)=>{
+    const timer=setTimeout(()=>reject(Error('Writer child startup timeout')),30000);
+    child.stdout!.once('data',()=>{clearTimeout(timer);resolve();});
+    child.once('error',error=>{clearTimeout(timer);reject(error);});
+    child.once('exit',code=>{clearTimeout(timer);reject(Error('Writer child exited before readiness: '+code));});
+   });
+   let unexpected:Workspace|undefined;try{assert.throws(()=>{unexpected=new Workspace(join(root,'runtime'));},/owning writer/);}finally{unexpected?.close();}
+   child.kill('SIGKILL');await once(child,'exit');
+   assert.deepEqual(initializeProject(root,fixtureInstallation),c);
+  }finally{if(child.exitCode===null&&child.signalCode===null){child.kill('SIGKILL');await once(child,'exit');}}
  }finally{rmSync(root,{recursive:true,force:true});}
 });
 test('A14 occupied loopback port fails without retaining its writer',async()=>{
