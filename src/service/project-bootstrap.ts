@@ -18,11 +18,12 @@ export interface ProjectConfig {
  initialWorkUnit:VersionRef; capabilities:{capture:'deferred';continuation:'deferred';generation:'unverified'};
 }
 /** Atomic replacement; leftovers from an interrupted rename are disposable, never identity. */
-export function atomicJson(path:string,data:unknown) {
+function atomicFile(path:string,content:string|Buffer) {
  assertNoLinks(path);const temp=path+'.'+randomUUID()+'.tmp';const fd=openSync(temp,'wx',0o600);
- try {writeFileSync(fd,JSON.stringify(data,null,2)+'\n');fsyncSync(fd);}finally{closeSync(fd);}renameSync(temp,path);
+ try {writeFileSync(fd,content);fsyncSync(fd);}finally{closeSync(fd);}renameSync(temp,path);
  if(process.platform!=='win32'){const dir=openSync(dirname(path),'r');try{fsyncSync(dir);}finally{closeSync(dir);}}
 }
+export function atomicJson(path:string,data:unknown) {atomicFile(path,JSON.stringify(data,null,2)+'\n');}
 export function boundedJson(path:string,max=65536):unknown {
  assertNoLinks(path);const st=lstatSync(path);if(!st.isFile()||st.nlink!==1||st.size>max)throw Error('Unsafe or oversized JSON file');return JSON.parse(readFileSync(path,'utf8'));
 }
@@ -95,7 +96,7 @@ export function initializeProject(root:string,installation:{path:string;commit:s
   const runtimeOwner=new RuntimeOwner(runtime);
   try{
    if(existsSync(marker)){if(canonical(boundedJson(marker))!==canonical(identity))throw Error('Inconsistent runtime identity');}
-   else {if(readdirSync(runtime).length)throw Error('Nonempty unregistered runtime: adoption required');atomicJson(marker,identity);}
+   else {if(readdirSync(runtime).some(name=>!/^bve\.runtime\.json\.[a-f0-9-]+\.tmp$/.test(name)))throw Error('Nonempty unregistered runtime: adoption required');atomicJson(marker,identity);}
    w=new Workspace(runtime,{},runtimeOwner);
   }catch(e){runtimeOwner.close();throw e;}
   const project=w.kernel.lookup({id:c.projectId,version:1,freshness:'pinned'}),unit=w.kernel.lookup(c.initialWorkUnit);
@@ -113,10 +114,10 @@ export function initializeProject(root:string,installation:{path:string;commit:s
   for(const f of manifest.files){
    if(!/^instructions\/[A-Za-z0-9.-]+$/.test(f.path))throw Error('Invalid installed instruction path');
    const bytes=readFileSync(join(c.installation.path,f.path));if(createHash('sha256').update(bytes).digest('hex')!==f.sha256)throw Error('Installed instruction integrity mismatch');
-   const destination=join(root,f.path);if(!existsSync(destination))writeFileSync(destination,bytes,{flag:'wx',mode:0o600});
+   const destination=join(root,f.path);if(!existsSync(destination))atomicFile(destination,bytes);
    else if(!readFileSync(destination).equals(bytes))throw Error('Pinned instruction changed; preserve additions in instructions/local.md');
   }
-  const agents=join(root,'AGENTS.md');if(!existsSync(agents))writeFileSync(agents,readFileSync(join(c.installation.path,'instructions/project-AGENTS.template.md')),{flag:'wx',mode:0o600});
+  const agents=join(root,'AGENTS.md');if(!existsSync(agents))atomicFile(agents,readFileSync(join(c.installation.path,'instructions/project-AGENTS.template.md')));
   atomicJson(configPath,c);return c;
  }finally{w?.close();owner.close();}
 }

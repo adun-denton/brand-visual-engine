@@ -18,6 +18,7 @@ test('A01/A03/A10 durable initialization resume, same identities and local addit
   const identity=JSON.parse(readFileSync(join(root,'.bve-init.json'),'utf8')).config;
   mkdirSync(join(root,'runtime'));writeFileSync(join(root,'runtime/foreign.txt'),'Unregistered runtime');
   assert.throws(()=>initializeProject(root,fixtureInstallation),/adoption required/);assert.equal(existsSync(join(root,'runtime/bve.runtime.json')),false);assert.equal(existsSync(join(root,'runtime/kernel.sqlite')),false);rmSync(join(root,'runtime'),{recursive:true});
+  mkdirSync(join(root,'runtime'));writeFileSync(join(root,'runtime/bve.runtime.json.00000000-0000-0000-0000-000000000000.tmp'),'Interrupted atomic marker bytes');
   assert.throws(()=>initializeProject(root,fixtureInstallation,'Ignored',phase=>{if(phase==='runtime')throw Error('interrupted-runtime');}),/interrupted-runtime/);
   const c=initializeProject(root,fixtureInstallation,'Ignored');assert.deepEqual(c,identity);
   writeFileSync(join(root,'instructions/local.md'),'User local additions');writeFileSync(join(root,'AGENTS.md'),'User project instructions');writeFileSync(join(root,'references/keep.txt'),'Keep reference');
