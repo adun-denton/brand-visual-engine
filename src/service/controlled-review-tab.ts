@@ -2,15 +2,18 @@ import {randomBytes,randomUUID} from 'node:crypto';
 import {chromium,type Browser,type Page} from '@playwright/test';
 import {canonical,digest} from '../kernel/packets.ts';
 export type CaptureView={version:1;tabId:string;origin:string;mode:'visible-controlled-tab'|'headless-authored-test'|'visible-authored-test';documentId:string;visibility:'visible';surface:unknown;feedbackHash:string;images:unknown[];geometry:unknown;browser:{engine:'chromium';version:string};visualScale:number;project:string;targetPage:string;layout:string;viewport:{width:number;height:number;deviceScale:number};scroll:{x:number;y:number};zoom:number;focused:string|null;regionTool:string|null;activeElement:string;focus:string[];comparison:string[];displayed:string[];overlays:string;area:'visible-viewport'};
-export interface CaptureAdapter {readonly tabId:string;readonly secret:string;readonly mode:CaptureView['mode'];measure():Promise<CaptureView>;screenshot(view:CaptureView,deadline?:number):Promise<Buffer>;close():Promise<void>}
+export interface CaptureAdapter {readonly available?:boolean;readonly tabId:string;readonly secret:string;readonly mode:CaptureView['mode'];measure():Promise<CaptureView>;screenshot(view:CaptureView,deadline?:number):Promise<Buffer>;close():Promise<void>}
 /** Owns exactly one purpose-launched tab. No CDP endpoint or personal profile is exposed. */
 export class ControlledReviewTab implements CaptureAdapter {
  readonly tabId=randomUUID();readonly secret=randomBytes(32).toString('hex');readonly mode:CaptureView['mode'];readonly page:Page;readonly browser:Browser;private origin:string;
  private constructor(browser:Browser,page:Page,origin:string,headless:boolean,authoredTest:boolean){this.browser=browser;this.page=page;this.origin=origin;this.mode=headless?'headless-authored-test':authoredTest?'visible-authored-test':'visible-controlled-tab';}
+ get available(){return this.browser.isConnected()&&!this.page.isClosed();}
  static async launch(origin:string,options:{headless?:boolean;authoredTest?:boolean;executablePath?:string;viewport?:{width:number;height:number}}={}){
   if(!/^http:\/\/127\.0\.0\.1:\d+$/.test(origin))throw Error('Controlled browser requires the owning loopback service');
   const headless=options.headless??false,browser=await chromium.launch({headless,...(options.executablePath?{executablePath:options.executablePath}:{})});
   try{const viewport=options.viewport??(headless?{width:1440,height:1050}:null),context=await browser.newContext({viewport,...(viewport?{deviceScaleFactor:1}:{}),acceptDownloads:true,serviceWorkers:'block'}),page=await context.newPage(),adapter=new ControlledReviewTab(browser,page,origin,headless,options.authoredTest??false);
+   // Preserve native prompts for the visible operator; never automatically discard dirty feedback.
+   if(!headless)page.on('dialog',()=>{});
    // Secret stays in automation request headers, never URL, DOM, bundle or output.
    await page.route('**/*',async route=>{const url=new URL(route.request().url());if(url.origin!==origin){await route.abort('blockedbyclient');return;}await route.continue({headers:{...route.request().headers(),'x-bve-capture-tab':adapter.secret}});});
    await page.addInitScript(()=>{Object.defineProperty(window,'bveReviewDocument',{value:crypto.randomUUID(),writable:false});});
@@ -47,6 +50,16 @@ export class ControlledReviewTab implements CaptureAdapter {
   const remaining=()=>{const ms=deadline-Date.now();if(ms<=0)throw Error('Capture deadline exceeded');return ms;};remaining();
   const check=async()=>{remaining();if(canonical(await this.measure())!==canonical(expected))throw Error('Capture interrupted: view changed');};
   await check();const bytes=await this.page.screenshot({type:'png',fullPage:false,timeout:Math.min(10000,remaining()),animations:'allow',caret:'initial'});await check();return bytes;
+ }
+ /** Consult the application's dirty/pending/unresolved unload guard before graceful owner shutdown. */
+ async canClose(freeze=false){
+  if(!this.available)return true;let timer:ReturnType<typeof setTimeout>|undefined;
+  try{return await Promise.race([this.page.evaluate(({freeze,deadline})=>{
+   if(Date.now()>deadline)return false;
+   const event=new Event('beforeunload',{cancelable:true});window.dispatchEvent(event);
+   if(event.defaultPrevented||Date.now()>deadline)return false;
+   if(freeze)document.body.inert=true;return true;
+  },{freeze,deadline:Date.now()+4000}),new Promise<boolean>(resolve=>{timer=setTimeout(()=>resolve(false),5000);})]);}catch{return false;}finally{clearTimeout(timer);}
  }
  async close(){await this.browser.close();}
 }

@@ -25,10 +25,17 @@ if(action==='init'){
   const headlessTest=args.includes('--headless-test');if(headlessTest)args.splice(args.indexOf('--headless-test'),1);
   const port=Number(args[0]??0);if(!Number.isInteger(port)||port<0||port>65535)throw Error('Invalid loopback port');
   const app=await startApp(join(root,c.locations.runtime),port,undefined,undefined,{projectRoot:root}),owner=randomUUID();
-  if(action==='review-browser'){try{const adapter=await ControlledReviewTab.launch(app.origin,{headless:headlessTest,...(process.env['BVE_CHROMIUM_EXECUTABLE']?{executablePath:process.env['BVE_CHROMIUM_EXECUTABLE']}:{})});app.continuation!.attach(adapter);}catch(error){await app.close();throw error;}}
+  let controlled:ControlledReviewTab|null=null;
+  if(action==='review-browser'){try{const adapter=await ControlledReviewTab.launch(app.origin,{headless:headlessTest,...(process.env['BVE_CHROMIUM_EXECUTABLE']?{executablePath:process.env['BVE_CHROMIUM_EXECUTABLE']}:{})});app.continuation!.attach(adapter);controlled=adapter;}catch(error){await app.close();throw error;}}
   atomicJson(discovery,{origin:app.origin,projectId:c.projectId,runtimeId:c.runtimeId,owner,pid:process.pid});
   console.log(JSON.stringify({url:app.origin,projectId:c.projectId,runtimeId:c.runtimeId,installation:app.installation,selectedInstallation:c.installation,instructionSetVersion:c.instructionSetVersion,continuation:app.continuation!.capabilities(),generation:'unverified',calls:0},null,2));
-  for(const signal of ['SIGINT','SIGTERM'] as const)process.on(signal,()=>{void app.close().then(()=>{if(existsSync(discovery)&&(boundedJson(discovery) as {owner?:string}).owner===owner)rmSync(discovery);process.exit(0);});});
+  let stopping=false;
+  for(const signal of ['SIGINT','SIGTERM'] as const)process.on(signal,()=>{if(stopping)return;stopping=true;void (async()=>{
+   try{
+    if(controlled&&!await controlled.canClose(true)){console.error('BVE kept open: Save/discard review edits or reconcile the unresolved submission, then stop again. No local review was discarded.');return;}
+    await app.close();if(existsSync(discovery)&&(boundedJson(discovery) as {owner?:string}).owner===owner)rmSync(discovery);process.exit(0);
+   }catch{console.error('BVE could not finish graceful shutdown; inspect the owning service before restarting.');}finally{stopping=false;}
+  })();});
  }else{
   let local:Awaited<ReturnType<typeof startApp>>|undefined;
   try{
