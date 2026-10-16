@@ -1,0 +1,35 @@
+{
+  "packet": "BVE-VOS-02 revision 1",
+  "reviewedHead": "dda6fc9ff32adaa6bd76005cd35637467d7c3981",
+  "candidate": "repair working tree; exact committed-head CI is linked in PR23",
+  "runtime": "Node 24.19.0; Linux",
+  "browser": "Playwright 1.58.2; official Chrome for Testing headless shell 145.0.7632.6",
+  "browserArchiveMD5": "e24ac3e7452aab1e4db871f1c153180e",
+  "checks": {
+    "typecheck": "passed",
+    "build": "passed",
+    "focused": "29 passed; zero failed/skipped",
+    "fullUnits": "430 total; 429 passed; zero failed; one existing Windows-only ACL skip",
+    "reviewBrowser": "passed; F1/F2 plus retained R01-R15 review checks",
+    "productionBrowser": "passed",
+    "combinedCompatibility": "passed",
+    "nativeCompatibility": "passed",
+    "nativeRepairCompatibility": "passed",
+    "nativeResolutionCompatibility": "passed"
+  },
+  "visuallyInspected": [
+    "historical-draft-page-revision-narrow.png",
+    "historical-submission-page-revision-desktop.png",
+    "document-navigation-stay-narrow.png"
+  ],
+  "sha256": {
+    "document-navigation-stay-narrow.png": "c6ee070cf23184236aaef83590030090f1a6076f1cd85ee0ce5fa34bb53b4068",
+    "historical-draft-page-revision-narrow.png": "d0aa2c3ec2132f64297dd73ea8d51521510e3917f28d020d8e388daec150afda",
+    "historical-submission-page-revision-desktop.png": "878f3ac345a13841ba7e8d10cb46f00be503ff0f8a4bc6bf5e435319743c34d9",
+    "summary.json": "6cacb5c661d2ffdeb4ff47e8814f2b75ba6b4c18e729b80e4b9fa8e66d0f7e7e"
+  },
+  "liveCalls": 0,
+  "extraWorkers": 0,
+  "acceptances": 0,
+  "privateTaskWrites": 0
+}

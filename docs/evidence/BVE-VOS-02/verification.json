@@ -1,0 +1,54 @@
+{
+  "packet": "BVE-VOS-02 revision 1",
+  "documentationSnapshot": "bf47c94969f6efec88373a3ef0b31ad206a81c37",
+  "acceptedExecutable": "46ae9bf89efe58c2c4d8b1f368a703256a60e4fa",
+  "node": "v24.19.0",
+  "platform": "linux",
+  "browser": "Chrome for Testing headless shell 145.0.7632.6",
+  "browserZIP": {
+    "bytes": 116288461,
+    "md5": "e24ac3e7452aab1e4db871f1c153180e",
+    "integrityVerified": true
+  },
+  "focused": {
+    "total": 28,
+    "passed": 28,
+    "failed": 0
+  },
+  "fullUnits": {
+    "total": 429,
+    "passed": 428,
+    "failed": 0,
+    "skipped": 1,
+    "skip": "Existing Windows-only ACL anonymous-read probe"
+  },
+  "localPassed": [
+    "typecheck",
+    "build",
+    "combined compatibility v05/r8",
+    "native compatibility",
+    "native repair compatibility",
+    "native resolution compatibility",
+    "review-submission browser",
+    "production browser",
+    "Execution browser including held controls",
+    "Library browser",
+    "project-memory browser"
+  ],
+  "visuallyInspected": [
+    "sheet-saved-desktop.png",
+    "cold-reopen-film-narrow.png",
+    "unavailable-original-readonly.png"
+  ],
+  "sha256": {
+    "sheet-saved-desktop.png": "21790757af1263d5e74e294471b812beb86202f1641161a3026e39ba2e9da9e7",
+    "unavailable-original-readonly.png": "b9f33ada7124cac601d7cffc1a0da7dea2782521d727cd8d1583995533b66708",
+    "summary.json": "553146ba620abccc2759b13429d0ef993cdf33f9aa09128fa8ae864594f6241c",
+    "revision-conflict-desktop.png": "c332146074d6940951328b463dc82819cbb4e7149afc49122b4a0aeebb918d1d",
+    "submitted-recovered-narrow.png": "81c65f76a3069f6df4ac918f938068e231c325e62aac181f57f67fa4708229ba",
+    "film-saved-narrow.png": "13a4b12c95ac38447fb79f6a83c6385f67f9550b1c5b0cfae9ad023b164fac2f",
+    "submitted-sheet-desktop.png": "c5e49c80b7cea7a017681e83f262ffd19a79f6cca99573b54c2659d1cab9854e",
+    "cold-reopen-film-narrow.png": "9918647a300fab3e40873ebd9ccf685607bcaada78388fd0fd85a2e7c2dbdce4"
+  },
+  "provenance": "Authored SVG fixtures, locally rasterized. No agents or model calls. Local working-tree evidence; exact published-head Windows/Linux evidence is uploaded by CI."
+}
