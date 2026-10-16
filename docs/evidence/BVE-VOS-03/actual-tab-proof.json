@@ -1,0 +1,601 @@
+{
+  "candidate": "working-tree-on-v2-checkpoint",
+  "testOnly": true,
+  "adapter": "purpose-launched Playwright tab; no reconstruction",
+  "sameTabReviewedSubmittedCaptured": true,
+  "desktop": {
+    "version": 1,
+    "tabId": "df5700d7-9395-4fee-8b98-b091bc5ee3fe",
+    "origin": "http://127.0.0.1:45713",
+    "mode": "headless-authored-test",
+    "visibility": "visible",
+    "feedbackHash": "bbfc063cf72dfabc46431a176157a6a83875e8b2cba9a361910410a189257aac",
+    "browser": {
+      "engine": "chromium",
+      "version": "145.0.7632.6"
+    },
+    "focused": "production-candidate-53b43a6a9268e258f2211929f6819a064c9e2d0cdbba54510cf28677d352edcd:1",
+    "regionTool": "rectangle",
+    "activeElement": "BODY",
+    "images": [
+      {
+        "candidate": "production-candidate-c715601362d94d5a19e06ea26850cad542eb3290f82240dff33f3ba1ae764fb3:1",
+        "kind": "review-original",
+        "project": "website-3e0f16af-d077-49a1-80a8-7f79628c3ace",
+        "id": null,
+        "version": null,
+        "record": {
+          "id": "review-submission-9ceafdc5f695fa74ff279eccc233a8c87442cffda224dba73657a4538750491c",
+          "version": 1,
+          "freshness": "pinned"
+        },
+        "index": 0,
+        "width": 960,
+        "height": 640
+      },
+      {
+        "candidate": "production-candidate-53b43a6a9268e258f2211929f6819a064c9e2d0cdbba54510cf28677d352edcd:1",
+        "kind": "review-original",
+        "project": "website-3e0f16af-d077-49a1-80a8-7f79628c3ace",
+        "id": null,
+        "version": null,
+        "record": {
+          "id": "review-submission-9ceafdc5f695fa74ff279eccc233a8c87442cffda224dba73657a4538750491c",
+          "version": 1,
+          "freshness": "pinned"
+        },
+        "index": 1,
+        "width": 960,
+        "height": 640
+      },
+      {
+        "candidate": "production-candidate-2dccf52491668f302ced74ed29d6736d460bdcba9ff1be8ae8a9fea46a1d8c1f:1",
+        "kind": "review-original",
+        "project": "website-3e0f16af-d077-49a1-80a8-7f79628c3ace",
+        "id": null,
+        "version": null,
+        "record": {
+          "id": "review-submission-9ceafdc5f695fa74ff279eccc233a8c87442cffda224dba73657a4538750491c",
+          "version": 1,
+          "freshness": "pinned"
+        },
+        "index": 2,
+        "width": 960,
+        "height": 640
+      },
+      {
+        "candidate": "production-candidate-c715601362d94d5a19e06ea26850cad542eb3290f82240dff33f3ba1ae764fb3:1",
+        "kind": "candidate-preview",
+        "project": "website-3e0f16af-d077-49a1-80a8-7f79628c3ace",
+        "id": "production-candidate-c715601362d94d5a19e06ea26850cad542eb3290f82240dff33f3ba1ae764fb3",
+        "version": "1",
+        "record": null,
+        "index": null,
+        "width": 960,
+        "height": 640
+      },
+      {
+        "candidate": "production-candidate-53b43a6a9268e258f2211929f6819a064c9e2d0cdbba54510cf28677d352edcd:1",
+        "kind": "candidate-preview",
+        "project": "website-3e0f16af-d077-49a1-80a8-7f79628c3ace",
+        "id": "production-candidate-53b43a6a9268e258f2211929f6819a064c9e2d0cdbba54510cf28677d352edcd",
+        "version": "1",
+        "record": null,
+        "index": null,
+        "width": 960,
+        "height": 640
+      },
+      {
+        "candidate": "production-candidate-2dccf52491668f302ced74ed29d6736d460bdcba9ff1be8ae8a9fea46a1d8c1f:1",
+        "kind": "candidate-preview",
+        "project": "website-3e0f16af-d077-49a1-80a8-7f79628c3ace",
+        "id": "production-candidate-2dccf52491668f302ced74ed29d6736d460bdcba9ff1be8ae8a9fea46a1d8c1f",
+        "version": "1",
+        "record": null,
+        "index": null,
+        "width": 960,
+        "height": 640
+      },
+      {
+        "candidate": "production-candidate-c715601362d94d5a19e06ea26850cad542eb3290f82240dff33f3ba1ae764fb3:1",
+        "kind": "candidate-preview",
+        "project": "website-3e0f16af-d077-49a1-80a8-7f79628c3ace",
+        "id": "production-candidate-c715601362d94d5a19e06ea26850cad542eb3290f82240dff33f3ba1ae764fb3",
+        "version": "1",
+        "record": null,
+        "index": null,
+        "width": 960,
+        "height": 640
+      },
+      {
+        "candidate": "production-candidate-53b43a6a9268e258f2211929f6819a064c9e2d0cdbba54510cf28677d352edcd:1",
+        "kind": "candidate-preview",
+        "project": "website-3e0f16af-d077-49a1-80a8-7f79628c3ace",
+        "id": "production-candidate-53b43a6a9268e258f2211929f6819a064c9e2d0cdbba54510cf28677d352edcd",
+        "version": "1",
+        "record": null,
+        "index": null,
+        "width": 960,
+        "height": 640
+      }
+    ],
+    "geometry": [
+      {
+        "tag": "SECTION",
+        "id": "production-review",
+        "box": [
+          50.39,
+          -1418.81,
+          1339.22,
+          1220.91
+        ]
+      },
+      {
+        "tag": "TEXTAREA",
+        "id": "review-comment",
+        "box": [
+          67.39,
+          -1163.02,
+          1305.22,
+          62
+        ]
+      },
+      {
+        "tag": "IMG",
+        "id": "",
+        "box": [
+          67.39,
+          -979.42,
+          320,
+          213.33
+        ]
+      },
+      {
+        "tag": "IMG",
+        "id": "",
+        "box": [
+          403.39,
+          -979.42,
+          320,
+          213.33
+        ]
+      },
+      {
+        "tag": "IMG",
+        "id": "",
+        "box": [
+          739.39,
+          -979.42,
+          320,
+          213.33
+        ]
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "box": [
+          65.39,
+          272.09,
+          498.61,
+          490
+        ]
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "box": [
+          574,
+          272.09,
+          498.61,
+          490
+        ]
+      },
+      {
+        "tag": "TEXTAREA",
+        "id": "review-note-review-entry-c619da1a-bd2b-4181-987f-b977d494bbad",
+        "box": [
+          1137.2,
+          5.48,
+          224.81,
+          62
+        ]
+      },
+      {
+        "tag": "TEXTAREA",
+        "id": "review-note-review-entry-484c5323-4fac-41ac-ba0b-6d6f785a3ad4",
+        "box": [
+          1137.2,
+          466.03,
+          224.81,
+          62
+        ]
+      }
+    ],
+    "visualScale": 1,
+    "project": "website-3e0f16af-d077-49a1-80a8-7f79628c3ace",
+    "targetPage": "page-work-unit-608c8a12-3926-4290-8f01-3ba43195a0fd:1",
+    "documentId": "fdd150eb-a742-4f9e-ae46-e26f132174dd",
+    "surface": {
+      "submission": {
+        "id": "review-submission-9ceafdc5f695fa74ff279eccc233a8c87442cffda224dba73657a4538750491c",
+        "version": 1,
+        "freshness": "pinned"
+      },
+      "integrity": "04c9972a16d87f501e0d86fcb396433e10a2e9190ebf57c1ed804c4b921fb123",
+      "project": "website-3e0f16af-d077-49a1-80a8-7f79628c3ace",
+      "workUnit": {
+        "id": "page-work-unit-608c8a12-3926-4290-8f01-3ba43195a0fd",
+        "version": 1,
+        "freshness": "pinned"
+      },
+      "iteration": {
+        "id": "production-iteration-2c6122f1-5eef-4597-98e8-2ed71a4c939c",
+        "version": 1,
+        "freshness": "pinned"
+      },
+      "entries": [
+        {
+          "id": "review-entry-c619da1a-bd2b-4181-987f-b977d494bbad",
+          "candidate": {
+            "id": "production-candidate-c715601362d94d5a19e06ea26850cad542eb3290f82240dff33f3ba1ae764fb3",
+            "version": 1,
+            "freshness": "pinned"
+          },
+          "anchor": {
+            "kind": "whole"
+          }
+        },
+        {
+          "id": "review-entry-484c5323-4fac-41ac-ba0b-6d6f785a3ad4",
+          "candidate": {
+            "id": "production-candidate-c715601362d94d5a19e06ea26850cad542eb3290f82240dff33f3ba1ae764fb3",
+            "version": 1,
+            "freshness": "pinned"
+          },
+          "anchor": {
+            "kind": "rectangle",
+            "x": 0.1,
+            "y": 0.2,
+            "width": 0.3,
+            "height": 0.4
+          }
+        }
+      ]
+    },
+    "layout": "sheet",
+    "viewport": {
+      "width": 1440,
+      "height": 1050,
+      "deviceScale": 1
+    },
+    "scroll": {
+      "x": 0,
+      "y": 1792
+    },
+    "zoom": 1.5,
+    "focus": [
+      "production-candidate-c715601362d94d5a19e06ea26850cad542eb3290f82240dff33f3ba1ae764fb3:1",
+      "production-candidate-53b43a6a9268e258f2211929f6819a064c9e2d0cdbba54510cf28677d352edcd:1"
+    ],
+    "comparison": [
+      "production-candidate-c715601362d94d5a19e06ea26850cad542eb3290f82240dff33f3ba1ae764fb3:1",
+      "production-candidate-53b43a6a9268e258f2211929f6819a064c9e2d0cdbba54510cf28677d352edcd:1"
+    ],
+    "displayed": [
+      "production-candidate-c715601362d94d5a19e06ea26850cad542eb3290f82240dff33f3ba1ae764fb3:1",
+      "production-candidate-53b43a6a9268e258f2211929f6819a064c9e2d0cdbba54510cf28677d352edcd:1",
+      "production-candidate-2dccf52491668f302ced74ed29d6736d460bdcba9ff1be8ae8a9fea46a1d8c1f:1"
+    ],
+    "overlays": "<rect class=\"whole-anchor\" x=\"1\" y=\"1\" width=\"998\" height=\"998\"></rect><rect x=\"100\" y=\"200\" width=\"300\" height=\"400\"></rect>",
+    "area": "visible-viewport"
+  },
+  "narrow": {
+    "version": 1,
+    "tabId": "df5700d7-9395-4fee-8b98-b091bc5ee3fe",
+    "origin": "http://127.0.0.1:45713",
+    "mode": "headless-authored-test",
+    "visibility": "visible",
+    "feedbackHash": "bbfc063cf72dfabc46431a176157a6a83875e8b2cba9a361910410a189257aac",
+    "browser": {
+      "engine": "chromium",
+      "version": "145.0.7632.6"
+    },
+    "focused": "production-candidate-53b43a6a9268e258f2211929f6819a064c9e2d0cdbba54510cf28677d352edcd:1",
+    "regionTool": "rectangle",
+    "activeElement": "BODY",
+    "images": [
+      {
+        "candidate": "production-candidate-c715601362d94d5a19e06ea26850cad542eb3290f82240dff33f3ba1ae764fb3:1",
+        "kind": "review-original",
+        "project": "website-3e0f16af-d077-49a1-80a8-7f79628c3ace",
+        "id": null,
+        "version": null,
+        "record": {
+          "id": "review-submission-9ceafdc5f695fa74ff279eccc233a8c87442cffda224dba73657a4538750491c",
+          "version": 1,
+          "freshness": "pinned"
+        },
+        "index": 0,
+        "width": 960,
+        "height": 640
+      },
+      {
+        "candidate": "production-candidate-53b43a6a9268e258f2211929f6819a064c9e2d0cdbba54510cf28677d352edcd:1",
+        "kind": "review-original",
+        "project": "website-3e0f16af-d077-49a1-80a8-7f79628c3ace",
+        "id": null,
+        "version": null,
+        "record": {
+          "id": "review-submission-9ceafdc5f695fa74ff279eccc233a8c87442cffda224dba73657a4538750491c",
+          "version": 1,
+          "freshness": "pinned"
+        },
+        "index": 1,
+        "width": 960,
+        "height": 640
+      },
+      {
+        "candidate": "production-candidate-2dccf52491668f302ced74ed29d6736d460bdcba9ff1be8ae8a9fea46a1d8c1f:1",
+        "kind": "review-original",
+        "project": "website-3e0f16af-d077-49a1-80a8-7f79628c3ace",
+        "id": null,
+        "version": null,
+        "record": {
+          "id": "review-submission-9ceafdc5f695fa74ff279eccc233a8c87442cffda224dba73657a4538750491c",
+          "version": 1,
+          "freshness": "pinned"
+        },
+        "index": 2,
+        "width": 960,
+        "height": 640
+      },
+      {
+        "candidate": "production-candidate-c715601362d94d5a19e06ea26850cad542eb3290f82240dff33f3ba1ae764fb3:1",
+        "kind": "candidate-preview",
+        "project": "website-3e0f16af-d077-49a1-80a8-7f79628c3ace",
+        "id": "production-candidate-c715601362d94d5a19e06ea26850cad542eb3290f82240dff33f3ba1ae764fb3",
+        "version": "1",
+        "record": null,
+        "index": null,
+        "width": 960,
+        "height": 640
+      },
+      {
+        "candidate": "production-candidate-53b43a6a9268e258f2211929f6819a064c9e2d0cdbba54510cf28677d352edcd:1",
+        "kind": "candidate-preview",
+        "project": "website-3e0f16af-d077-49a1-80a8-7f79628c3ace",
+        "id": "production-candidate-53b43a6a9268e258f2211929f6819a064c9e2d0cdbba54510cf28677d352edcd",
+        "version": "1",
+        "record": null,
+        "index": null,
+        "width": 960,
+        "height": 640
+      },
+      {
+        "candidate": "production-candidate-c715601362d94d5a19e06ea26850cad542eb3290f82240dff33f3ba1ae764fb3:1",
+        "kind": "candidate-preview",
+        "project": "website-3e0f16af-d077-49a1-80a8-7f79628c3ace",
+        "id": "production-candidate-c715601362d94d5a19e06ea26850cad542eb3290f82240dff33f3ba1ae764fb3",
+        "version": "1",
+        "record": null,
+        "index": null,
+        "width": 960,
+        "height": 640
+      },
+      {
+        "candidate": "production-candidate-53b43a6a9268e258f2211929f6819a064c9e2d0cdbba54510cf28677d352edcd:1",
+        "kind": "candidate-preview",
+        "project": "website-3e0f16af-d077-49a1-80a8-7f79628c3ace",
+        "id": "production-candidate-53b43a6a9268e258f2211929f6819a064c9e2d0cdbba54510cf28677d352edcd",
+        "version": "1",
+        "record": null,
+        "index": null,
+        "width": 960,
+        "height": 640
+      },
+      {
+        "candidate": "production-candidate-2dccf52491668f302ced74ed29d6736d460bdcba9ff1be8ae8a9fea46a1d8c1f:1",
+        "kind": "candidate-preview",
+        "project": "website-3e0f16af-d077-49a1-80a8-7f79628c3ace",
+        "id": "production-candidate-2dccf52491668f302ced74ed29d6736d460bdcba9ff1be8ae8a9fea46a1d8c1f",
+        "version": "1",
+        "record": null,
+        "index": null,
+        "width": 960,
+        "height": 640
+      }
+    ],
+    "geometry": [
+      {
+        "tag": "SECTION",
+        "id": "production-review",
+        "box": [
+          16,
+          -2503.62,
+          358,
+          2360.13
+        ]
+      },
+      {
+        "tag": "TEXTAREA",
+        "id": "review-comment",
+        "box": [
+          33,
+          -2157.83,
+          324,
+          62
+        ]
+      },
+      {
+        "tag": "IMG",
+        "id": "",
+        "box": [
+          33,
+          -1801.05,
+          320,
+          213.33
+        ]
+      },
+      {
+        "tag": "IMG",
+        "id": "",
+        "box": [
+          33,
+          -1548.72,
+          320,
+          213.33
+        ]
+      },
+      {
+        "tag": "IMG",
+        "id": "",
+        "box": [
+          33,
+          -1296.39,
+          320,
+          213.33
+        ]
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "box": [
+          31,
+          -30.5,
+          328,
+          410
+        ]
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "box": [
+          31,
+          389.5,
+          328,
+          410
+        ]
+      },
+      {
+        "tag": "TEXTAREA",
+        "id": "review-note-review-entry-c619da1a-bd2b-4181-987f-b977d494bbad",
+        "box": [
+          43.59,
+          1359.27,
+          302.81,
+          62
+        ]
+      },
+      {
+        "tag": "TEXTAREA",
+        "id": "review-note-review-entry-484c5323-4fac-41ac-ba0b-6d6f785a3ad4",
+        "box": [
+          43.59,
+          1744.63,
+          302.81,
+          62
+        ]
+      }
+    ],
+    "visualScale": 1,
+    "project": "website-3e0f16af-d077-49a1-80a8-7f79628c3ace",
+    "targetPage": "page-work-unit-608c8a12-3926-4290-8f01-3ba43195a0fd:1",
+    "documentId": "fdd150eb-a742-4f9e-ae46-e26f132174dd",
+    "surface": {
+      "submission": {
+        "id": "review-submission-9ceafdc5f695fa74ff279eccc233a8c87442cffda224dba73657a4538750491c",
+        "version": 1,
+        "freshness": "pinned"
+      },
+      "integrity": "04c9972a16d87f501e0d86fcb396433e10a2e9190ebf57c1ed804c4b921fb123",
+      "project": "website-3e0f16af-d077-49a1-80a8-7f79628c3ace",
+      "workUnit": {
+        "id": "page-work-unit-608c8a12-3926-4290-8f01-3ba43195a0fd",
+        "version": 1,
+        "freshness": "pinned"
+      },
+      "iteration": {
+        "id": "production-iteration-2c6122f1-5eef-4597-98e8-2ed71a4c939c",
+        "version": 1,
+        "freshness": "pinned"
+      },
+      "entries": [
+        {
+          "id": "review-entry-c619da1a-bd2b-4181-987f-b977d494bbad",
+          "candidate": {
+            "id": "production-candidate-c715601362d94d5a19e06ea26850cad542eb3290f82240dff33f3ba1ae764fb3",
+            "version": 1,
+            "freshness": "pinned"
+          },
+          "anchor": {
+            "kind": "whole"
+          }
+        },
+        {
+          "id": "review-entry-484c5323-4fac-41ac-ba0b-6d6f785a3ad4",
+          "candidate": {
+            "id": "production-candidate-c715601362d94d5a19e06ea26850cad542eb3290f82240dff33f3ba1ae764fb3",
+            "version": 1,
+            "freshness": "pinned"
+          },
+          "anchor": {
+            "kind": "rectangle",
+            "x": 0.1,
+            "y": 0.2,
+            "width": 0.3,
+            "height": 0.4
+          }
+        }
+      ]
+    },
+    "layout": "film",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "deviceScale": 1
+    },
+    "scroll": {
+      "x": 0,
+      "y": 3177
+    },
+    "zoom": 1.5,
+    "focus": [
+      "production-candidate-c715601362d94d5a19e06ea26850cad542eb3290f82240dff33f3ba1ae764fb3:1",
+      "production-candidate-53b43a6a9268e258f2211929f6819a064c9e2d0cdbba54510cf28677d352edcd:1"
+    ],
+    "comparison": [
+      "production-candidate-c715601362d94d5a19e06ea26850cad542eb3290f82240dff33f3ba1ae764fb3:1",
+      "production-candidate-53b43a6a9268e258f2211929f6819a064c9e2d0cdbba54510cf28677d352edcd:1"
+    ],
+    "displayed": [
+      "production-candidate-c715601362d94d5a19e06ea26850cad542eb3290f82240dff33f3ba1ae764fb3:1",
+      "production-candidate-53b43a6a9268e258f2211929f6819a064c9e2d0cdbba54510cf28677d352edcd:1",
+      "production-candidate-2dccf52491668f302ced74ed29d6736d460bdcba9ff1be8ae8a9fea46a1d8c1f:1"
+    ],
+    "overlays": "<rect class=\"whole-anchor\" x=\"1\" y=\"1\" width=\"998\" height=\"998\"></rect><rect x=\"100\" y=\"200\" width=\"300\" height=\"400\"></rect>",
+    "area": "visible-viewport"
+  },
+  "interruptedViewRejected": true,
+  "actualDocumentNavigationRejected": true,
+  "clipboardCopySucceeded": true,
+  "deniedExpiredClipboardFallback": true,
+  "portableFreshClientValid": true,
+  "wrongTabRejected": true,
+  "displayedFeedbackAndSourceMismatchRejected": true,
+  "additiveVerification": true,
+  "childLostResponseReloadRecovered": true,
+  "authoredChildResults": 3,
+  "coldRestartNoWork": true,
+  "missingOriginalDegrades": true,
+  "immutableSubmissionPreserved": true,
+  "actualCliReadRetryExportInspect": true,
+  "actualControlledCliLaunchNoWork": true,
+  "visibleLaunch": {
+    "supportedConfiguration": "headless:false (default)",
+    "observedHere": false,
+    "reason": "Local execution uses labeled headless authored test evidence"
+  },
+  "generationCalls": 0,
+  "acceptances": 0,
+  "errors": []
+}

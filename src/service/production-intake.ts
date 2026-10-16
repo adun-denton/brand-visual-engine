@@ -36,7 +36,8 @@ export class ProductionIntake {
  jobs(){return this.w.kernel.latestPackets().filter(p=>p.projectId===this.config.projectId&&(p.payload as DesignArtifact<unknown>).kind==='production-job').map(p=>this.read<Job>(reference(p),'production-job'));}
  receipts(){return this.w.kernel.latestPackets().filter(p=>p.projectId===this.config.projectId&&(p.payload as DesignArtifact<unknown>).kind==='production-receipt').map(p=>this.read<ProductionReceipt>(reference(p),'production-receipt'));}
  iterations(){return this.w.kernel.latestPackets().filter(p=>p.projectId===this.config.projectId&&(p.payload as DesignArtifact<unknown>).kind==='production-iteration').map(p=>this.read<Iteration>(reference(p),'production-iteration'));}
- prepare(input:unknown){
+ // Internal owning-service hook appends lineage inside the same transaction; HTTP callers cannot supply it.
+ prepare(input:unknown,lineage?:(iteration:ProductionWork<Iteration>,specification:ProductionWork<Specification>,jobs:ProductionWork<Job>[])=>NodePacket<unknown>){
   const r=record(input,['specification','output','worker']);const spec=parseSpecification(r['specification']),output=parseOutput(r['output']);
   const project=this.w.project(this.config.projectId);if(!same(spec.project,reference(project)))throw Error('Wrong/stale production project');
   const unit=this.w.kernel.get<DesignArtifact<unknown>>(spec.workUnit);if(unit.projectId!==project.id||unit.payload.kind!=='page-work-unit')throw Error('Wrong production page');
@@ -50,7 +51,7 @@ export class ProductionIntake {
    return this.make('production-job',state,[reference(iteration),reference(q)],jobId);
   });
   const superseded=this.iterations().filter(p=>same(p.payload.state.workUnit,spec.workUnit)&&p.payload.state.status==='active').map(p=>revise(p,{...p.payload,state:{...p.payload.state,status:'superseded' as const}},'local-operator','Explicit new production iteration'));
-  this.write([...superseded,q,iteration,...jobs]);
+  this.write([...superseded,q,iteration,...jobs,...(lineage?[lineage(iteration,q,jobs)]:[])]);
   // Disposable staging can be reconstructed from jobs if interrupted here.
   for(const j of jobs)this.stagingDirectory(j.payload.state);
   return {specification:q,iteration,jobs};

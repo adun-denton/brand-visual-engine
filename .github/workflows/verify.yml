@@ -24,7 +24,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run build
       - run: npm run typecheck
-      - run: node --test tests/reviews.test.ts tests/project-bootstrap.test.ts tests/production-intake.test.ts
+      - run: node --test tests/continuation.test.ts tests/reviews.test.ts tests/project-bootstrap.test.ts tests/production-intake.test.ts
         timeout-minutes: 3
       - name: Windows account-storage cold-start probe
         if: runner.os == 'Windows'
@@ -150,6 +150,20 @@ jobs:
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-review-submission-browser-evidence
           BVE_CANDIDATE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      - run: npm run test:browser:continuation
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-continuation-browser-evidence
+          BVE_CANDIDATE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      - run: xvfb-run -a npm run test:browser:controlled-visible
+        if: runner.os == 'Linux'
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-controlled-visible-evidence
+          BVE_CANDIDATE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+      - run: npm run test:browser:controlled-visible
+        if: runner.os == 'Windows'
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-controlled-visible-evidence
+          BVE_CANDIDATE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
       - run: npm run test:browser:production
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-production-browser-evidence
@@ -161,6 +175,8 @@ jobs:
         with:
           name: offline-browser-evidence-${{ matrix.os }}
           path: |
+            ${{ runner.temp }}/bve-continuation-browser-evidence
+            ${{ runner.temp }}/bve-controlled-visible-evidence
             ${{ runner.temp }}/bve-review-submission-browser-evidence
             ${{ runner.temp }}/bve-production-browser-evidence
             ${{ runner.temp }}/bve-guided-native-browser-evidence

@@ -1,0 +1,58 @@
+{
+  "formatVersion": 1,
+  "packet": "BVE-VOS-03",
+  "revision": 1,
+  "instructionSetVersion": "visual-os-ops-v2",
+  "files": [
+    {
+      "source": "instructions/AGENTS.md",
+      "destination": "instructions/AGENTS.md",
+      "sha256": "27f608b50b0568a315c967c9aea1658d168cfef8b73290ebc5feed684e4bb34d"
+    },
+    {
+      "source": "instructions/project-AGENTS.template.md",
+      "destination": "instructions/project-AGENTS.template.md",
+      "sha256": "b5ff70b3204b8169ba9bc48305d12b36c6e2a76d994fd4c097678618af59a13a"
+    },
+    {
+      "source": "instructions/conductor.md",
+      "destination": "instructions/conductor.md",
+      "sha256": "b51efae4c71a929004ebc264bd7fa5666fa69dc9707786be8068e2550c1916c2"
+    },
+    {
+      "source": "instructions/butler.md",
+      "destination": "instructions/butler.md",
+      "sha256": "e20cad7e7d6a806dcc6bf59b69c2579ddae8dc844795ffcabdc69468c5de4465"
+    },
+    {
+      "source": "instructions/generator.md",
+      "destination": "instructions/generator.md",
+      "sha256": "8d8f649307959cb9ada99ab3d777f088cd44aa3d91b245d9693e3f8563c92ce2"
+    },
+    {
+      "source": "instructions/bootstrap.md",
+      "destination": "instructions/bootstrap.md",
+      "sha256": "c194548e273d0319379b8184b871b9d9c0e4413b7816924bf08dbf01ac9b8335"
+    },
+    {
+      "source": "instructions/foreman.md",
+      "destination": "instructions/foreman.md",
+      "sha256": "e7e002f0e0c2bbb18a83594ca412344b31b3161b4f0cfcae345c9519ace8ca36"
+    },
+    {
+      "source": "instructions/reviewer.md",
+      "destination": "instructions/reviewer.md",
+      "sha256": "31adc6dd0b60deead3fb987f8f6282d3ce329c0202c37059478fa3b44f5ed805"
+    },
+    {
+      "source": "instructions/manifest.json",
+      "destination": "instructions/manifest.json",
+      "sha256": "afabc7282bf8fc19bb781d6430acb8ccce76a19d09cac5b816d79564388d28c0"
+    },
+    {
+      "source": "docs/project-structure-and-setup.md",
+      "destination": "docs/project-structure-and-setup.md",
+      "sha256": "7f142a9908c686c7aa76b980988306a0ebe86600f90fbef969ddf756ec1aba65"
+    }
+  ]
+}

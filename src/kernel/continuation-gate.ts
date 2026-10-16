@@ -1,0 +1,44 @@
+import type {GateEnvironment} from './gate.ts';
+import {revalidatePacket,writePort} from './gate.ts';
+import type {NodePacket,DesignArtifact,VersionRef} from './contracts.ts';
+import {reference,digest,canonical} from './packets.ts';
+import {continuationRoles,parseContinuation,reviewSurface,renderedFeedback,type ContinuationKind,type CaptureRequest,type CaptureEvidence,type Finalization,type ChildLineage,type ContinuationWork} from '../modules/website/continuation-contracts.ts';
+import type {ReviewSubmission} from '../modules/website/review-contracts.ts';
+import type {Iteration,Job} from '../modules/website/production-contracts.ts';
+import type {Specification} from '../modules/website/exploration-contracts.ts';
+export const continuationId=(kind:string,pid:string,key:string)=>kind+'-'+digest({pid,key});
+export function ownContinuation<T>(env:GateEnvironment,pid:string,ref:VersionRef,kind:string){const p=env.lookup(ref) as ContinuationWork<T>|null;if(!p||p.projectId!==pid||p.payload.kind!==kind)throw Error('Continuation exact owner/kind mismatch');return p;}
+const eq=(a:unknown,b:unknown)=>{if(canonical(a)!==canonical(b))throw Error('Continuation binding mismatch');};
+export function verificationChecks(env:GateEnvironment,pid:string,submission:VersionRef,capture:VersionRef|null){
+ const sub=ownContinuation<ReviewSubmission>(env,pid,submission,'production-review-submission');revalidatePacket(sub,writePort(sub.type),env);
+ const originals=sub.payload.state.scope.proposals.every(p=>!!env.rasterFacts?.(p.image));let screenshot=false;
+ if(capture){const cap=ownContinuation<CaptureEvidence>(env,pid,capture,'review-capture');eq(cap.payload.state.submission,submission);revalidatePacket(cap,writePort(cap.type),env);const request=ownContinuation<CaptureRequest>(env,pid,cap.payload.state.request,'review-capture-request');revalidatePacket(request,writePort(request.type),env);screenshot=cap.payload.state.status==='available'&&!!cap.payload.state.image&&!!env.rasterFacts?.(cap.payload.state.image);}
+ return {feedback:true,originals,capture:screenshot};
+}
+export const verificationIssues=(c:Finalization['checks'])=>[...(!c.originals?['Exact original media missing or corrupt']:[]),...(!c.capture?['Actual controlled-tab capture missing, interrupted or corrupt']:[])];
+export function continuationGate(p:NodePacket<unknown>,previous:NodePacket<unknown>|null,env:GateEnvironment){
+ const a=p.payload as DesignArtifact<unknown>,old=previous?.payload as DesignArtifact<unknown>|undefined;if(old&&Object.hasOwn(continuationRoles,old.kind)&&old.kind!==a.kind)throw Error('Continuation kind immutable');if(!Object.hasOwn(continuationRoles,a.kind))return;
+ if(previous)throw Error('Continuation evidence is immutable');const stored=env.lookup(reference(p));if(!stored&&!env.continuationWriteAllowed?.(p))throw Error('Continuation writes require owning service');
+ if(p.type!=='work-record'||p.approval!=='proposal'||p.contextRefs.length||p.assets.length||p.constraints.length||p.placeholders.length||p.provenance.actor!=='local-butler')throw Error('Continuation envelope mismatch');
+ const s=parseContinuation(a.kind as ContinuationKind,a.state),pid=p.projectId!,deps:VersionRef[]=[];
+ if(a.kind==='review-capture-request'){
+  const r=s as CaptureRequest,sub=ownContinuation<ReviewSubmission>(env,pid,r.submission,'production-review-submission');revalidatePacket(sub,writePort(sub.type),env);eq(r.submissionIntegrity,sub.integrity);eq(r.view.surface,reviewSurface(sub));eq(r.view.feedbackHash,digest(renderedFeedback(sub)));
+  for(const raw of r.view.images){const image=raw as {candidate:string;kind:string;project:string;id:string|null;version:string|null;record:VersionRef|null;index:number|null};if(image.project!==pid||!r.view.displayed.includes(image.candidate))throw Error('Capture displayed source owner mismatch');const n=image.candidate.lastIndexOf(':'),source={id:image.candidate.slice(0,n),version:Number(image.candidate.slice(n+1)),freshness:'pinned' as const};ownContinuation(env,pid,source,'raster-concept');if(image.kind==='candidate-preview')eq([image.id,image.version],[source.id,String(source.version)]);else if(image.kind==='review-original'){eq(image.record,r.submission);if(image.index===null)throw Error('Missing captured source index');eq(sub.payload.state.scope.proposals[image.index]?.candidate,source);}else throw Error('Unknown captured source route');}
+  eq(r.view.project,pid);if(r.view.targetPage.slice(0,r.view.targetPage.lastIndexOf(':'))!==sub.payload.state.scope.workUnit.id)throw Error('Capture current page mismatch');eq(r.viewHash,digest(r.view));eq(r.requestHash,digest({submission:r.submission}));eq(p.id,continuationId('capture-request',pid,r.key));
+  for(const displayed of r.view.displayed){const n=displayed.lastIndexOf(':'),ref={id:displayed.slice(0,n),version:Number(displayed.slice(n+1)),freshness:'pinned' as const};const source=ownContinuation(env,pid,ref,'raster-concept');deps.push(reference(source));}
+  deps.unshift(r.submission);
+ }else if(a.kind==='review-capture'){
+  const c=s as CaptureEvidence,r=ownContinuation<CaptureRequest>(env,pid,c.request,'review-capture-request');eq(c.submission,r.payload.state.submission);eq(c.requestIntegrity,r.integrity);eq(c.viewHash,r.payload.state.viewHash);eq(c.submissionIntegrity,r.payload.state.submissionIntegrity);eq(p.id,continuationId('capture',pid,r.id));deps.push(c.submission,c.request);
+  if(c.image){const elapsed=Date.parse(c.capturedAt)-Date.parse(r.payload.state.requestedAt);if(elapsed<0||elapsed>15000)throw Error('Capture deadline exceeded');if(c.image.format!=='png'||c.image.width!==Math.round(r.payload.state.view.viewport.width*r.payload.state.view.viewport.deviceScale)||c.image.height!==Math.round(r.payload.state.view.viewport.height*r.payload.state.view.viewport.deviceScale))throw Error('Capture bytes/area not independently verified');if(!stored&&!env.rasterFacts?.(c.image))throw Error('Capture bytes/area not independently verified');}
+ }else if(a.kind==='review-finalization'){
+  const f=s as Finalization,sub=ownContinuation<ReviewSubmission>(env,pid,f.submission,'production-review-submission');eq(f.submissionIntegrity,sub.integrity);eq(f.captureIntegrity,f.capture?ownContinuation<CaptureEvidence>(env,pid,f.capture,'review-capture').integrity:null);eq(p.id,continuationId('finalization',pid,f.key));eq(f.requestHash,digest({submission:f.submission,capture:f.capture}));deps.push(f.submission,...(f.capture?[f.capture]:[]));
+  eq(f.issues,verificationIssues(f.checks));eq(f.status,Object.values(f.checks).every(Boolean)?'verified':'degraded');if(!f.checks.feedback)throw Error('Finalization requires structurally valid feedback');
+  if(!stored){const checks=verificationChecks(env,pid,f.submission,f.capture);eq(f.checks,checks);eq(f.issues,verificationIssues(checks));eq(f.status,Object.values(checks).every(Boolean)?'verified':'degraded');}
+ }else{
+  const l=s as ChildLineage,f=ownContinuation<Finalization>(env,pid,l.receipt,'review-finalization'),sub=ownContinuation<ReviewSubmission>(env,pid,l.parent,'production-review-submission'),it=ownContinuation<Iteration>(env,pid,l.iteration,'production-iteration'),q=ownContinuation<Specification>(env,pid,l.specification,'raster-specification');
+  eq(f.payload.state.submission,l.parent);if(f.payload.state.status!=='verified')throw Error('Child requires verified parent');eq(it.payload.state.spec,l.specification);const j=ownContinuation<Job>(env,pid,{id:it.payload.state.jobs[0]!,version:1,freshness:'pinned'},'production-job'),prep={specification:q.payload.state,output:j.payload.state.output,worker:j.payload.state.worker};eq(l.preparationHash,digest(prep));eq(l.requestHash,digest({parent:l.parent,receipt:l.receipt,preparation:prep}));for(const resource of q.payload.state.resources)if(!sub.payload.state.scope.proposals.some(p=>canonical(p.media)===canonical(resource.media)&&canonical(p.image)===canonical(resource.image)))throw Error('Child resource not in parent');for(const e of q.payload.state.selectionSnapshot?.entries??[])if(!sub.payload.state.scope.proposals.some(p=>canonical(p.candidate)===canonical(e.candidate)&&p.integrity===e.integrity&&canonical(p.image)===canonical(e.image)))throw Error('Child selected source not in parent');if(q.payload.state.workUnit.id!==sub.payload.state.scope.workUnit.id)throw Error('Child target page mismatch');
+  eq(p.id,continuationId('child-lineage',pid,l.key));deps.push(l.parent,l.receipt,l.iteration,l.specification);
+  if(!stored){if(env.currentVersion(q.payload.state.workUnit.id)!==q.payload.state.workUnit.version)throw Error('Child target is stale');const checks=verificationChecks(env,pid,l.parent,f.payload.state.capture);if(!Object.values(checks).every(Boolean))throw Error('Child parent evidence unavailable');}
+ }
+ eq(p.dependencies,[...new Map(deps.map(r=>[r.id+':'+r.version,r])).values()]);
+}

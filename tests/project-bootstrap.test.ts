@@ -35,7 +35,7 @@ test('A02 incompatible/foreign/inconsistent roots refuse without canonical mutat
   writeFileSync(join(root,'foreign.txt'),'untouched');assert.throws(()=>initializeProject(root,fixtureInstallation),/adoption required/);assert.equal(existsSync(join(root,'runtime')),false);assert.equal(existsSync(join(root,'bve.project.json')),false);
   rmSync(join(root,'foreign.txt'));mkdirSync(join(root,'.git'));assert.throws(()=>initializeProject(root,fixtureInstallation),/outside source control/);rmSync(join(root,'.git'),{recursive:true});const c=initializeProject(root,fixtureInstallation);
   const kernel=readFileSync(join(root,'runtime/kernel.sqlite'));
-  writeFileSync(join(root,'bve.project.json'),JSON.stringify({...c,formatVersion:2}));assert.throws(()=>initializeProject(root,fixtureInstallation),/Unsupported/);assert.deepEqual(readFileSync(join(root,'runtime/kernel.sqlite')),kernel);
+  writeFileSync(join(root,'bve.project.json'),JSON.stringify({...c,formatVersion:99}));assert.throws(()=>initializeProject(root,fixtureInstallation),/Unsupported/);assert.deepEqual(readFileSync(join(root,'runtime/kernel.sqlite')),kernel);
   writeFileSync(join(root,'bve.project.json'),JSON.stringify({...c,runtimeId:'wrong'}));assert.throws(()=>projectConfig(root),/Inconsistent/);
   writeFileSync(join(root,'bve.project.json'),JSON.stringify(c));renameSync(join(root,'runtime/kernel.sqlite'),join(root,'references/closed-kernel.sqlite'));
   assert.throws(()=>initializeProject(root,fixtureInstallation),/Missing or redirected/);assert.equal(existsSync(join(root,'runtime/kernel.sqlite')),false);renameSync(join(root,'references/closed-kernel.sqlite'),join(root,'runtime/kernel.sqlite'));
@@ -81,7 +81,7 @@ test('A15 versioned JSON schema and read-only inspection preserve identity, byte
  const root=fresh();try{
   const c=initializeProject(root,fixtureInstallation),before=readFileSync(join(root,'runtime/kernel.sqlite'));
   const validate=new Ajv().compile(JSON.parse(readFileSync(new URL('../schemas/project-config.schema.json',import.meta.url),'utf8')));
-  assert.equal(validate(c),true);assert.equal(validate({...c,formatVersion:2}),false);assert.equal(validate({...c,extra:true}),false);
+  assert.equal(validate(c),true);assert.equal(validate({...c,formatVersion:99}),false);assert.equal(validate({...c,extra:true}),false);
   const state=inspectRecords(root);assert.equal(state.projectId,c.projectId);assert.equal(state.jobs.length,0);assert.deepEqual(readFileSync(join(root,'runtime/kernel.sqlite')),before);
   assert.equal(inspection(root).environment.generationCalls,0);assert.equal(inspection(root).environment.nativeGeneration,'unverified');assert.equal(existsSync(join(root,'runtime/chat-account-private')),false);
  }finally{rmSync(root,{recursive:true,force:true});}
@@ -154,5 +154,23 @@ test('F2 pinned missing/changed/unsafe instructions are diagnosed read-only and 
   }
   // Reproduce the review's simultaneous changed Butler + missing Generator case.
   writeFileSync(role,'Changed role bytes');rmSync(join(root,'instructions/generator.md'));const report=inspection(root);assert.equal(report.instructions.files.filter(f=>f.status!=='ok').length,2);assert.throws(()=>projectConfig(root),/Pinned instructions incompatible/);
+ }finally{rmSync(root,{recursive:true,force:true});}
+});
+
+test('C01 exact v2 complete inventory, local spelling conflict, and v1 configuration refusal are read-only',async()=>{
+ const root=fresh();try{
+  const c=initializeProject(root,fixtureInstallation);assert.equal(c.formatVersion,2);assert.equal(c.featureContract,'bve-vos-continuation-v1');assert.equal(c.instructionSetVersion,'visual-os-ops-v2');
+  const manifest=JSON.parse(readFileSync(new URL('../instructions/manifest.json',import.meta.url),'utf8'));
+  assert.equal(inspection(root).instructions.files.length,9);
+  for(const f of [...manifest.files,{path:'instructions/manifest.json'}]){
+   const path=join(root,f.path),bytes=readFileSync(path);assert.deepEqual(bytes,readFileSync(new URL('../'+f.path,import.meta.url)));
+   if(f.sha256)assert.equal(createHash('sha256').update(bytes).digest('hex'),f.sha256);
+   for(const mode of ['missing','changed']){if(mode==='missing')rmSync(path);else writeFileSync(path,'Authored changed pin');const before=canonicalSnapshot(root);assert.throws(()=>projectConfig(root),/Pinned instructions/);assert.deepEqual(canonicalSnapshot(root),before);writeFileSync(path,bytes);}
+  }
+  writeFileSync(join(root,'instructions.local.md'),'Legacy local additions');assert.deepEqual(initializeProject(root,fixtureInstallation),c);
+  writeFileSync(join(root,'instructions/local.md'),'Conflicting modern local additions');const local=inspection(root).instructions.localAdditions;assert.equal(local.conflict,true);assert.throws(()=>projectConfig(root),/Conflicting/);assert.equal(readFileSync(join(root,'instructions.local.md'),'utf8'),'Legacy local additions');
+  writeFileSync(join(root,'instructions/local.md'),'Legacy local additions');assert.deepEqual(initializeProject(root,fixtureInstallation),c);
+  writeFileSync(join(root,'bve.project.json'),JSON.stringify({...c,formatVersion:1,featureContract:'bve-vos-local-intake-v1',instructionSetVersion:'visual-os-ops-v1',capabilities:{capture:'deferred',continuation:'deferred',generation:'unverified'}}));const before=canonicalSnapshot(root);
+  assert.throws(()=>initializeProject(root,fixtureInstallation),/Unsupported/);await assert.rejects(startApp(join(root,'runtime'),0,undefined,undefined,{projectRoot:root}),/Unsupported/);assert.equal(inspection(root).compatibility?.compatible,false);assert.deepEqual(canonicalSnapshot(root),before);
  }finally{rmSync(root,{recursive:true,force:true});}
 });

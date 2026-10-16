@@ -4,6 +4,8 @@ Instruction revision: visual-os-ops-v1. Coordinator-authored for BVE-VOS-01.
 
 ## Choose the applicable workflow
 
+- BVE-VOS-03 development: use the exact operator-supplied snapshot of docs/implementation-packets/BVE-VOS-03.md. Its v2 instruction source is staged, not active until matching code/inventory checks are integrated. Follow its instruction checkpoint and then continue directly to its scoped implementation. Do not apply the private-project template to this repository root.
+
 - Installation or operation: read INSTALL.md, docs/project-initialization-prompt.md and the compatible installed role instructions. Public instructions are sufficient; private MSB access is not required.
 - Development: read the exact user-approved packet and the development contract below. For BVE-VOS-01, arrange the supplied files first, commit/push/read back that checkpoint, then proceed directly to scoped code.
 - Review: the originating architectural chat independently verifies implementation. A coding session cannot accept its own result, mark private canonical tasks complete, merge or release.

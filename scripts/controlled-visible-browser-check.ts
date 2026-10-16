@@ -1,0 +1,20 @@
+/** Automated headed-display proof. This is not a live human/design evaluation. */
+import {expect} from '@playwright/test';
+import {mkdtempSync,mkdirSync,rmSync,writeFileSync} from 'node:fs';
+import {join,resolve} from 'node:path';
+import {tmpdir} from 'node:os';
+import {initializeProject} from '../src/service/project-bootstrap.ts';
+import {startApp} from '../src/service/server.ts';
+import {ControlledReviewTab} from '../src/service/controlled-review-tab.ts';
+import {fixtureInstallation,fixturePreparation,authoredOriginal,stageDelivery} from './production-fixture.ts';
+import {reference} from '../src/kernel/packets.ts';
+import {exportContinuation,inspectContinuationBundle} from '../src/service/continuation-bundle.ts';
+const root=mkdtempSync(join(tmpdir(),'bve-headed-proof-')),c=initializeProject(root,fixtureInstallation),app=await startApp(join(root,'runtime'),0,undefined,undefined,{projectRoot:root}),evidence=resolve(process.env['BVE_EVIDENCE_DIR']??'/tmp/bve-visible-proof');mkdirSync(evidence,{recursive:true});let tab:ControlledReviewTab|undefined;
+try{
+ const it=app.production!.prepare(fixturePreparation(app.workspace,c,1));await stageDelivery(root,it.jobs[0]!,await authoredOriginal());await app.production!.intake(it.jobs[0]!.id);
+ tab=await ControlledReviewTab.launch(app.origin,{headless:false,authoredTest:true,...(process.env['BVE_CHROMIUM_EXECUTABLE']?{executablePath:process.env['BVE_CHROMIUM_EXECUTABLE']}:{})});app.continuation!.attach(tab);const page=tab.page;
+ await page.goto(app.origin+'/?'+new URLSearchParams({project:c.projectId,page:c.initialWorkUnit.id+':1',reviewIteration:it.iteration.id}));await page.locator('#review-comment').click();await page.locator('#review-comment').fill('Authored headed-window same-tab proof');expect(await tab.canClose()).toBe(false);
+ const dialog=page.waitForEvent('dialog'),reloading=page.evaluate(()=>location.reload()),prompt=await dialog;expect(prompt.type()).toBe('beforeunload');await prompt.dismiss();await reloading;
+ await expect(page.locator('#review-comment')).toHaveValue('Authored headed-window same-tab proof');await page.locator('#review-submit').click();await expect(page.locator('#continuation-capture')).toBeEnabled();await page.locator('#continuation-capture').click();await expect(page.locator('#continuation-status')).toContainText('Actual controlled-tab viewport');
+ const sub=app.reviews!.state(c.projectId,c.initialWorkUnit,it.iteration.id).submissions[0]!.submission,status=app.continuation!.status(reference(sub)),capture=status.captures[0]!;expect(capture.payload.state.status).toBe('available');expect(status.requests[0]!.payload.state.view.mode).toBe('visible-authored-test');expect(sub.payload.state.finalDraft.version).toBe(1);const receipt=app.continuation!.finalize({submission:reference(sub),capture:reference(capture),key:'headed-direct-portable'}),locator=app.continuation!.continuation(reference(sub),app.origin).locator;expect((await inspectContinuationBundle(exportContinuation(app.continuation!,reference(sub),reference(receipt)),locator)).valid).toBe(true);writeFileSync(join(evidence,'headed-same-tab.png'),app.workspace.assets.read(capture.payload.state.image!.id));writeFileSync(join(evidence,'headed-proof.json'),JSON.stringify({candidate:process.env['BVE_CANDIDATE_COMMIT']??('working-tree-on-'+fixtureInstallation.commit),testOnly:true,humanTrial:false,actualHeadedWindow:true,sameTabReviewedSubmittedCaptured:true,directFirstVersionPortableValid:true,submittedDraftVersion:sub.payload.state.finalDraft.version,nativeReloadStayRetainsEdits:true,ownedShutdownGuard:true,platform:process.platform,display:process.platform==='linux'?'CI Xvfb authored display':'CI Windows authored desktop',view:status.requests[0]!.payload.state.view,capture:reference(capture),image:capture.payload.state.image,productionLaunchDefault:{headless:false,authoredTest:false,personalProfile:false,remoteDebuggingPort:false},generationCalls:0},null,2)+'\n');console.log('Headed controlled-tab proof passed; automated authored display, no human/live trial.');
+}finally{await app.close();if(!app.continuation)await tab?.close();rmSync(root,{recursive:true,force:true});}

@@ -1,0 +1,116 @@
+{
+  "packet": "BVE-VOS-03 revision 1",
+  "approvedSnapshot": "0cb2f350282a4fe17e5c0583b76ecf13afe19da3",
+  "acceptedExecutable": "c8915d2b2c4ddbdb1374c2cab4c74cc4f7805d41",
+  "instructionCheckpoint": "64ccb8f77e9a3e7aec9cb5bc3f025244ecee7f3c",
+  "instructionCheckpointTree": "d74dfa203029ec989b66a877d84f17aedcbeffda",
+  "localRuntime": "Node 24.19.0 / Linux",
+  "browser": "Playwright 1.58.2 / official Chrome for Testing headless shell 145.0.7632.6",
+  "browserArchiveMD5": "e24ac3e7452aab1e4db871f1c153180e",
+  "localEvidence": "implementation working tree on v2 checkpoint; exact published-head CI evidence linked in PR return",
+  "checks": {
+    "typecheck": "passed",
+    "build": "passed",
+    "instructionCheckpointFocused": "30 passed, zero failures/skips",
+    "finalFocused": "36 passed, zero failures/skips",
+    "fullShared": "437 total, 436 passed, zero failed, one existing Windows-only ACL skip on Linux",
+    "continuationBrowser": "passed: same tab, both layouts, overlay/comparison/zoom, source/text binding, clipboard success/fallback, export validation, child/restart/CLI recovery",
+    "retainedReviewBrowser": "passed including PR23 F1/F2",
+    "retainedProductionBrowser": "passed",
+    "combinedCompatibility": "passed",
+    "nativeCompatibility": "passed",
+    "nativeRepairCompatibility": "passed",
+    "nativeResolutionCompatibility": "passed",
+    "headedLocal": "not run: no local display; OS dependency provisioning denied by environment; separate actual headed Windows/Linux CI proof required",
+    "ci": "retained Windows/Linux workflow plus headless continuation and headed-display proof; exact completed results recorded in PR return"
+  },
+  "sourceManifest": [
+    {
+      "source": "instructions/AGENTS.md",
+      "destination": "instructions/AGENTS.md",
+      "sha256": "27f608b50b0568a315c967c9aea1658d168cfef8b73290ebc5feed684e4bb34d",
+      "sourceVerified": true,
+      "activeInstructionMatches": true
+    },
+    {
+      "source": "instructions/project-AGENTS.template.md",
+      "destination": "instructions/project-AGENTS.template.md",
+      "sha256": "b5ff70b3204b8169ba9bc48305d12b36c6e2a76d994fd4c097678618af59a13a",
+      "sourceVerified": true,
+      "activeInstructionMatches": true
+    },
+    {
+      "source": "instructions/conductor.md",
+      "destination": "instructions/conductor.md",
+      "sha256": "b51efae4c71a929004ebc264bd7fa5666fa69dc9707786be8068e2550c1916c2",
+      "sourceVerified": true,
+      "activeInstructionMatches": true
+    },
+    {
+      "source": "instructions/butler.md",
+      "destination": "instructions/butler.md",
+      "sha256": "e20cad7e7d6a806dcc6bf59b69c2579ddae8dc844795ffcabdc69468c5de4465",
+      "sourceVerified": true,
+      "activeInstructionMatches": true
+    },
+    {
+      "source": "instructions/generator.md",
+      "destination": "instructions/generator.md",
+      "sha256": "8d8f649307959cb9ada99ab3d777f088cd44aa3d91b245d9693e3f8563c92ce2",
+      "sourceVerified": true,
+      "activeInstructionMatches": true
+    },
+    {
+      "source": "instructions/bootstrap.md",
+      "destination": "instructions/bootstrap.md",
+      "sha256": "c194548e273d0319379b8184b871b9d9c0e4413b7816924bf08dbf01ac9b8335",
+      "sourceVerified": true,
+      "activeInstructionMatches": true
+    },
+    {
+      "source": "instructions/foreman.md",
+      "destination": "instructions/foreman.md",
+      "sha256": "e7e002f0e0c2bbb18a83594ca412344b31b3161b4f0cfcae345c9519ace8ca36",
+      "sourceVerified": true,
+      "activeInstructionMatches": true
+    },
+    {
+      "source": "instructions/reviewer.md",
+      "destination": "instructions/reviewer.md",
+      "sha256": "31adc6dd0b60deead3fb987f8f6282d3ce329c0202c37059478fa3b44f5ed805",
+      "sourceVerified": true,
+      "activeInstructionMatches": true
+    },
+    {
+      "source": "instructions/manifest.json",
+      "destination": "instructions/manifest.json",
+      "sha256": "afabc7282bf8fc19bb781d6430acb8ccce76a19d09cac5b816d79564388d28c0",
+      "sourceVerified": true,
+      "activeInstructionMatches": true
+    },
+    {
+      "source": "docs/project-structure-and-setup.md",
+      "destination": "docs/project-structure-and-setup.md",
+      "sha256": "7f142a9908c686c7aa76b980988306a0ebe86600f90fbef969ddf756ec1aba65",
+      "sourceVerified": true,
+      "activeInstructionMatches": null
+    }
+  ],
+  "visualInspection": [
+    "controlled-sheet-desktop.png",
+    "controlled-film-narrow.png",
+    "continuation-ui-narrow.png"
+  ],
+  "sha256": {
+    "actual-tab-proof.json": "e4695b0abf67130d03d4aca01798579037e5d172c1d26694b05cb7c14f856b12",
+    "continuation-ui-narrow.png": "c633bf9ed7133c8aa26893d08a27c18ebdc7d8f7b550d854ba4671dac4a6028a",
+    "controlled-film-narrow.png": "27267f60a23720c1bab72c808ac4baf91aaca650c4c03137d2a76daf876f19d3",
+    "controlled-sheet-desktop.png": "223bc48d95eaba390b036fa20f15b50be85d70f5cb78bee762be4e17c6291fbc"
+  },
+  "liveGenerationCalls": 0,
+  "extraWorkers": 0,
+  "existingRootMigrations": 0,
+  "foremanExecutions": 0,
+  "acceptanceWrites": 0,
+  "privateTaskWrites": 0
+}

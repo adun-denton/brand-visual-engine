@@ -46,7 +46,9 @@
     "test:browser:native": "node scripts/native-exchange-browser-check.ts",
     "bve": "node scripts/bve.ts",
     "test:browser:production": "node scripts/production-browser-check.ts",
-    "test:browser:review-submission": "node scripts/review-browser-check.ts"
+    "test:browser:review-submission": "node scripts/review-browser-check.ts",
+    "test:browser:continuation": "node scripts/continuation-browser-check.ts",
+    "test:browser:controlled-visible": "node scripts/controlled-visible-browser-check.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.58.2",

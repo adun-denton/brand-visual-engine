@@ -1,3 +1,4 @@
+import {assertNoLinks} from './runtime-owner.ts';
 import sharp from 'sharp';
 import { createHash, randomUUID } from 'node:crypto';
 import {
@@ -10,6 +11,7 @@ import {
   fsyncSync,
   closeSync,
   lstatSync,
+  fstatSync,readSync,constants,
 } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -100,11 +102,21 @@ export class Assets {
   read(id: string): Buffer {
     if (!/^[a-f0-9]{64}$/.test(id))
       throw new InputError('Invalid asset identity');
-    const path = join(this.root, id);
+    const path = join(this.root, id);assertNoLinks(path);
     const stat = lstatSync(path);
-    if (!stat.isFile() || stat.isSymbolicLink() || stat.size > MAX_IMAGE_BYTES)
+    if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink!==1 || stat.size > MAX_IMAGE_BYTES)
       throw new InputError('Unsafe asset file');
-    const bytes = readFileSync(path);
+    const fd=openSync(path,constants.O_RDONLY|(constants.O_NOFOLLOW??0));let bytes:Buffer;
+    try {
+      const opened=fstatSync(fd);
+      if(!opened.isFile()||opened.nlink!==1||opened.ino!==stat.ino||opened.dev!==stat.dev||opened.size!==stat.size)throw new InputError('Asset changed while opening');
+      const buffer=Buffer.alloc(stat.size+1);let size=0,n:number;
+      while(size<buffer.length&&(n=readSync(fd,buffer,size,buffer.length-size,null))>0)size+=n;
+      if(size!==stat.size)throw new InputError('Asset changed while reading');
+      bytes=buffer.subarray(0,size);assertNoLinks(path);
+      const after=lstatSync(path);
+      if(after.ino!==stat.ino||after.dev!==stat.dev||after.nlink!==1)throw new InputError('Asset path changed while reading');
+    }finally{closeSync(fd);}
     if (hash(bytes) !== id) throw new InputError('Asset checksum mismatch');
     return bytes;
   }
@@ -132,6 +144,7 @@ export class Assets {
     }catch{return null;}
   }
   save(bytes: Buffer, info: Pick<ImageInfo, 'id' | 'checksum'>): void {
+    assertNoLinks(this.root);
     if (
       bytes.length > MAX_IMAGE_BYTES ||
       hash(bytes) !== info.checksum ||

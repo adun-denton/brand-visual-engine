@@ -1,0 +1,78 @@
+{
+  "reviewedHead": "101aaeed81956895c0d55bcc774e07855685bd63",
+  "repairSourceCommit": "d5246b9293e1c36ff6a46df2ff29285f78242888",
+  "repairSourceTree": "44f8b29b2977f9970dcfc04c4de1d19d0def4dc1",
+  "localExecution": "repair working tree on reviewed head; final exact-head CI reported in PR24",
+  "runtime": "Node 24.19.0 / Linux",
+  "browser": "Playwright 1.58.2 / official Chrome-for-Testing headless shell 145.0.7632.6",
+  "beforeRepair": {
+    "unit": "missing draft predecessor confirmed",
+    "actualSavedEditedBrowser": "stored revision predecessor unavailable"
+  },
+  "passed": {
+    "typecheck": true,
+    "build": true,
+    "focused": {
+      "tests": 38,
+      "passed": 38,
+      "failed": 0,
+      "skipped": 0
+    },
+    "shared": {
+      "tests": 439,
+      "passed": 438,
+      "failed": 0,
+      "skipped": 1,
+      "reason": "existing Windows-only anonymous-token ACL check"
+    },
+    "coldCliSaveCounts": [
+      0,
+      1,
+      3
+    ],
+    "actualBrowserSubmittedDraftVersion": 2,
+    "exactLocatorInspection": true,
+    "reviewBrowserIncludingF1F2": true,
+    "productionBrowser": true,
+    "combinedCompatibility": true,
+    "nativeCompatibility": true,
+    "nativeRepairCompatibility": true,
+    "nativeResolutionCompatibility": true,
+    "whitespace": true
+  },
+  "bounds": {
+    "records": 512,
+    "files": 1024,
+    "decodedBytes": 67108864,
+    "jsonBytes": 94371840
+  },
+  "negativeCases": [
+    "missing draft predecessor and intermediate versions",
+    "missing revised project predecessor",
+    "missing predecessor-only context and media",
+    "packet integrity despite rehashed file",
+    "coherent wrong ownership",
+    "coherent invalid lineage",
+    "unrelated record",
+    "1025-file inventory",
+    "real 512-save oversized history refused by both export and inspector"
+  ],
+  "visualInspection": [
+    "controlled-sheet-desktop.png",
+    "continuation-ui-narrow.png"
+  ],
+  "localHeaded": "not run: no local graphical display; final Windows and Linux/Xvfb CI required",
+  "sourceSha256": {
+    "src/service/continuation-bundle.ts": "1d77a674aca46aed80ebdbda5a1015834905545133f85b0a25ff05db369ae10c",
+    "tests/continuation.test.ts": "d014c8bd49ddb3f71ace5aaaa79cd83c1833c0e239741da71fd92ecfc5626d35",
+    "scripts/continuation-browser-check.ts": "e8d61e6570600aa8db8af4aff46e3f93d6bccfb620051a8ba91082333ab7c27d",
+    "scripts/controlled-visible-browser-check.ts": "35ff837f5b9a2c5c9ce776a18320ab72536754ce70ed2bb5fcb17b88c7c35042"
+  },
+  "proofSha256": "cfd5a9a66b76f614c5ab838cbfaa19e7869b2e1fd02faef108c6d7bbd267caa4",
+  "liveGenerationCalls": 0,
+  "extraWorkers": 0,
+  "existingRootMigrations": 0,
+  "foremanExecutions": 0,
+  "newFlowDesignAcceptances": 0,
+  "privateTaskWrites": 0
+}

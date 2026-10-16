@@ -1,18 +1,18 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "BVE private project configuration v1",
+  "title": "BVE private project configuration v2",
   "type": "object",
   "additionalProperties": false,
   "required": ["formatVersion", "featureContract", "projectId", "runtimeId", "locations", "installation", "instructionSetVersion", "initialWorkUnit", "capabilities"],
   "properties": {
-    "formatVersion": {"const": 1},
-    "featureContract": {"const": "bve-vos-local-intake-v1"},
-    "instructionSetVersion": {"const": "visual-os-ops-v1"},
+    "formatVersion": {"const": 2},
+    "featureContract": {"const": "bve-vos-continuation-v1"},
+    "instructionSetVersion": {"const": "visual-os-ops-v2"},
     "projectId": {"type": "string", "pattern": "^[A-Za-z0-9_-]{1,160}$"},
     "runtimeId": {"type": "string", "pattern": "^[A-Za-z0-9_-]{1,160}$"},
     "locations": {"const": {"runtime":"runtime","staging":"staging","references":"references","exports":"exports","backups":"backups","instructions":"instructions"}},
     "installation": {"type":"object","additionalProperties":false,"required":["path","commit"],"properties":{"path":{"type":"string","minLength":1,"maxLength":4096},"commit":{"type":"string","pattern":"^[a-f0-9]{40}$"}}},
     "initialWorkUnit": {"type":"object","additionalProperties":false,"required":["id","version","freshness"],"properties":{"id":{"type":"string","pattern":"^[A-Za-z0-9_-]{1,160}$"},"version":{"type":"integer","minimum":1},"freshness":{"const":"pinned"}}},
-    "capabilities": {"const":{"capture":"deferred","continuation":"deferred","generation":"unverified"}}
+    "capabilities": {"const":{"capture":"host-dependent","continuation":"contract-dependent","generation":"unverified"}}
   }
 }

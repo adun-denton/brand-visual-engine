@@ -1,0 +1,45 @@
+{
+  "formatVersion": 1,
+  "instructionSetVersion": "visual-os-ops-v2",
+  "compatibility": {
+    "featureContract": "bve-vos-continuation-v1",
+    "projectConfigurationVersions": [
+      2
+    ],
+    "status": "candidate-contract; implementation verification required"
+  },
+  "files": [
+    {
+      "path": "instructions/AGENTS.md",
+      "sha256": "27f608b50b0568a315c967c9aea1658d168cfef8b73290ebc5feed684e4bb34d"
+    },
+    {
+      "path": "instructions/project-AGENTS.template.md",
+      "sha256": "b5ff70b3204b8169ba9bc48305d12b36c6e2a76d994fd4c097678618af59a13a"
+    },
+    {
+      "path": "instructions/conductor.md",
+      "sha256": "b51efae4c71a929004ebc264bd7fa5666fa69dc9707786be8068e2550c1916c2"
+    },
+    {
+      "path": "instructions/butler.md",
+      "sha256": "e20cad7e7d6a806dcc6bf59b69c2579ddae8dc844795ffcabdc69468c5de4465"
+    },
+    {
+      "path": "instructions/generator.md",
+      "sha256": "8d8f649307959cb9ada99ab3d777f088cd44aa3d91b245d9693e3f8563c92ce2"
+    },
+    {
+      "path": "instructions/bootstrap.md",
+      "sha256": "c194548e273d0319379b8184b871b9d9c0e4413b7816924bf08dbf01ac9b8335"
+    },
+    {
+      "path": "instructions/foreman.md",
+      "sha256": "e7e002f0e0c2bbb18a83594ca412344b31b3161b4f0cfcae345c9519ace8ca36"
+    },
+    {
+      "path": "instructions/reviewer.md",
+      "sha256": "31adc6dd0b60deead3fb987f8f6282d3ce329c0202c37059478fa3b44f5ed805"
+    }
+  ]
+}
