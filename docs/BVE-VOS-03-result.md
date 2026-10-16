@@ -1,5 +1,43 @@
 # BVE-VOS-03 — implementation candidate result
 
+## PR24 F1 repair — candidate for independent review
+
+Reviewed head: `101aaeed81956895c0d55bcc774e07855685bd63`, tree `fbc86001844c7f516d6f1a798fee906bb02b2432`. Repair source/test commit: `d5246b9293e1c36ff6a46df2ff29285f78242888`, tree `44f8b29b2977f9970dcfc04c4de1d19d0def4dc1`, directly based on that reviewed head. The documentation/evidence commit follows it; the final published head/tree, exact-head CI jobs and artifact hashes are read back in [PR24](https://github.com/adun-denton/brand-visual-engine/pull/24). Accepted dependent base remains `c8915d2b2c4ddbdb1374c2cab4c74cc4f7805d41`. Approved snapshot `0cb2f350282a4fe17e5c0583b76ecf13afe19da3` and v2 checkpoint `64ccb8f77e9a3e7aec9cb5bc3f025244ecee7f3c` are preserved.
+
+F1 was reproduced before changing application code through actual UI Save draft → edit → Submit (draft v2) → actual-tab Capture → deterministic Verify → Export → exact-locator inspection. Inspection threw `stored revision predecessor unavailable`. The added unit case also demonstrated the omitted draft v1.
+
+Export and inspector now share one validation-reference rule: dependencies, context references and the exact pinned `id/version-1` predecessor required by the existing kernel revalidation. Each predecessor recursively brings its own required closure and media; no current-version substitution or arbitrary provenance target is followed. Both traversals enforce 512 distinct records. Existing 1024-file / 64 MiB decoded / 90 MiB JSON limits, ownership, manifest/packet integrity, exact locator, media and kernel lineage validation remain. Kernel code, stored history, submission/receipt schemas, writer/installation checks and instruction pins are unchanged. Extra records remain rejected.
+
+| F1 / C08 requirement | Repair evidence |
+|---|---|
+| Ordinary persisted revisions | Actual controlled-tab browser now saves a baseline, edits and submits v2, then captures, verifies, exports and inspects with the exact locator; v1 must be present. |
+| Direct submit and multiple saves | Unit cases exercise zero, one and three saves (submitted draft v1/v2/v4). The retained headed-window probe additionally validates a direct-submit v1 export against its exact locator. |
+| Revised dependency closure | A project v3 pins a valid predecessor v2 with historical context/media removed from v3. Export must include project v1–v3, the historical context record and byte-identical historical original. |
+| Independent cold inspection | For all three save counts, close the owner/store, run the standalone CLI from a fresh receiving directory with bundle + exact locator and no root/browser, verify no import/root creation and byte-unchanged closed SQLite. |
+| Missing/tampered/unrelated | Remove draft predecessors (including intermediate revisions), project predecessor, historical context or media; reject. Rehashed file with bad packet integrity, coherent wrong ownership/lineage, extra unrelated record and over-limit file inventory also reject. |
+| Bounded history | A real 512-save history exceeds the total closure limit; export and inspection of its stored history both refuse at 512 records. |
+
+Local Node 24.19.0 / Linux, locked dependencies, Playwright 1.58.2 and official Chrome-for-Testing headless shell 145.0.7632.6:
+- Typecheck/build and whitespace check passed.
+- Focused continuation/review/bootstrap/intake: **38 passed**, zero failures/skips. This includes eight continuation tests.
+- Shared suite: **439 total, 438 passed, zero failures, one existing Windows-only anonymous-token ACL skip**.
+- Expanded actual-tab continuation/browser/CLI passed, retaining both layouts/viewport sizes, exact region/source binding, navigation/unresolved protection, Copy/fallback, immutable finalization, parent/child recovery, three authored child results and zero automatic dispatch/design acceptance.
+- Retained review (including PR23 historical/navigation repairs) and Production browser checks passed.
+- Combined v05/r8, native exchange, native repair and native resolution compatibility passed.
+- The final exact-head Windows/Linux workflow retains every gate and both headed-display requirements; completed job/count/artifact results belong to the final PR readback, not these earlier working-tree runs.
+
+Commands: `npm run typecheck`; `npm run build`; `node --test tests/continuation.test.ts tests/reviews.test.ts tests/project-bootstrap.test.ts tests/production-intake.test.ts`; `npm test`; `node scripts/continuation-browser-check.ts`; `node scripts/review-browser-check.ts`; `node scripts/production-browser-check.ts`; `npm run test:combined:compatibility`; `npm run test:native:compatibility`; `npm run test:native:repair-compatibility`; `npm run test:native:resolution-compatibility`; `git diff --check`. Browser runs use the supported explicit executable/evidence environment settings with authored temporary roots; they make no live provider calls.
+
+[Repair actual-tab proof](evidence/BVE-VOS-03-F1/actual-tab-proof.json) records draft v2, saved/edit path, predecessor inclusion and exact-locator/CLI inspection. [Local verification](evidence/BVE-VOS-03-F1/local-verification.json) records commands, source/evidence hashes and limitations. The committed proof is labeled working-tree execution on the reviewed head, not relabeled as committed-head CI. Its desktop capture and narrow completed-continuation image were visually inspected; final CI artifacts preserve exact-head screenshots and headed-window proof.
+
+Failed/unrun checks: the pre-fix unit and browser failures above were intentional reproductions. An early new direct-submit negative asserted a narrower ownership error label; the unchanged gate rejected it as a project/source mismatch, and the assertion was corrected to recognize that rejection. The default browser CDN download returned truncated archives; the official pinned headless archive was separately verified with MD5 `e24ac3e7452aab1e4db871f1c153180e`. Local headed testing was unavailable without a display; actual headed Windows/Linux CI remains required, not claimed as a local run. Automated authored checks do not establish human usefulness or live readiness.
+
+Only F1, its regression evidence and necessary setup/result documentation are changed. The recovered earlier local checkout and its uncommitted follow-ups were preserved; repair used a separate checkout of the exact reviewed head. No existing user root or installation identity was changed. Missing required history/media refuses export/inspection; this does not fabricate predecessors or repair an already incomplete bundle. Portable evidence stays an untrusted snapshot. Acceptance counters here concern the new review/continuation flow; retained legacy tests exercise existing acceptance only in disposable authored roots.
+
+Rollback: close the owning service/browser and preserve the complete closed root. Pair reviewed `101aaeed81956895c0d55bcc774e07855685bd63` (or accepted earlier software) with its matching complete compatible earlier root. Never downgrade evolved data in place or rewrite installation identity. No extra worker, live provider, migration, Foreman execution, private task change, merge or release. PR24 remains draft/unmerged; independent acceptance stays in the originating review chat.
+
+The original implementation report below is retained as historical context; this repair section supersedes its C08 gap and local check counts.
+
 ## Identity and authority
 
 Approved revision 1 snapshot: `0cb2f350282a4fe17e5c0583b76ecf13afe19da3`, including root AGENTS, handoff, packet and immutable source manifest. Accepted executable/base: `c8915d2b2c4ddbdb1374c2cab4c74cc4f7805d41`, tree `32f436196af1812869c3d7980ce2be8bc9f46f42` on `codex/bve-visual-os-review-submission`. The work branch contained only the coordinator documentation snapshot after that base; no subsequent work was reset.
