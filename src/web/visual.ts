@@ -81,7 +81,7 @@ let layout = "sheet",
   epoch = 0;
 let observers: ResizeObserver[] = [];
 const drafts = new VisualDrafts();
-const review = new ProductionReviewUI(()=>render(),(action,input,pid)=>post(action,input,pid));
+const review = new ProductionReviewUI(()=>render(),(action,input,pid)=>post(action,input,pid),message=>{notice.textContent=message;});
 let workspaceError = "", errorUnit = "", pendingRemoval: string[] = [];
 const draft = (): PageDraft => drafts.page(pid, state ? key(state.unit) : errorUnit);
 const allCandidates = () => [...new Map([...(state?.candidates ?? []), ...(state?.selectedSources ?? [])].map(c => [key(c), c])).values()];
@@ -144,12 +144,12 @@ async function get(path: string) {
   return v;
 }
 async function post(action: string, input: unknown, projectId = pid) {
-  const r = await fetch("/api/v1/visual/" + action, {
+  const r = await fetch((action.startsWith("continuation/")?"/api/v1/":"/api/v1/visual/") + action, {
     method: "POST",
     keepalive: action === "auxiliary/close",
     headers: { "Content-Type": "application/json", "X-BVE-Token": token },
     body: JSON.stringify(
-      action === "create" ? input : { projectId, input },
+      action === "create" || action.startsWith("continuation/") ? input : { projectId, input },
     ),
   });
   const v = await r.json();
@@ -359,7 +359,7 @@ function focusView() {
     compared.length > 1
       ? allCandidates().filter((c) => compared.includes(key(c)))
       : [c];
-  return `<section class="focus-view"><div class="focus-toolbar"><span>${esc(sourceLabel(c))}</span><label>Region <select id="region-tool"><option value="rectangle" ${tool === "rectangle" ? "selected" : ""}>Rectangle</option><option value="ellipse" ${tool === "ellipse" ? "selected" : ""}>Ellipse</option></select></label><label>Zoom <select id="zoom">${[1, 1.5, 2].map((z) => `<option value="${z}" ${zoom === z ? "selected" : ""}>${z * 100}%</option>`).join("")}</select></label><button id="clear-compare">Single focus</button></div><div class="comparison ${comparisons.length > 1 ? "multiple" : ""}">${comparisons.map(canvas).join("")}</div>${contextControls()}<p class="hint">Drag on an image to select a region, or enter a region below. Requests do not change these pixels.</p><details class="region-access"><summary>Add region without dragging</summary><form id="region-form"><label>Shape <select name="shape"><option value="rectangle">Rectangle</option><option value="ellipse">Ellipse</option></select></label>${["x", "y", "width", "height"].map((n) => `<label>${n} (%)<input name="${n}" type="number" min="0" max="100" step="0.1" required></label>`).join("")}<button>Add region to focused concept</button></form></details></section>`;
+  return `<section class="focus-view" data-focused="${esc(key(c))}"><div class="focus-toolbar"><span>${esc(sourceLabel(c))}</span><label>Region <select id="region-tool"><option value="rectangle" ${tool === "rectangle" ? "selected" : ""}>Rectangle</option><option value="ellipse" ${tool === "ellipse" ? "selected" : ""}>Ellipse</option></select></label><label>Zoom <select id="zoom">${[1, 1.5, 2].map((z) => `<option value="${z}" ${zoom === z ? "selected" : ""}>${z * 100}%</option>`).join("")}</select></label><button id="clear-compare">Single focus</button></div><div class="comparison ${comparisons.length > 1 ? "multiple" : ""}">${comparisons.map(canvas).join("")}</div>${contextControls()}<p class="hint">Drag on an image to select a region, or enter a region below. Requests do not change these pixels.</p><details class="region-access"><summary>Add region without dragging</summary><form id="region-form"><label>Shape <select name="shape"><option value="rectangle">Rectangle</option><option value="ellipse">Ellipse</option></select></label>${["x", "y", "width", "height"].map((n) => `<label>${n} (%)<input name="${n}" type="number" min="0" max="100" step="0.1" required></label>`).join("")}<button>Add region to focused concept</button></form></details></section>`;
 }
 function selectionView() {
   if(review.active)return review.selections();
@@ -1006,7 +1006,7 @@ function bindMemory() {
 
 function render() {
   const recoveryUnit=units.find(u=>key(u)===errorUnit);
-  review.setContext(state?.reviewAvailable?{pid,unit:ref(state.unit),iterations:state.productionIterations}:workspaceError&&catalog.reviewAvailable&&recoveryUnit?{pid,unit:ref(recoveryUnit),iterations:[],readOnly:true}:null);
+  review.setContext(state?.reviewAvailable?{pid,unit:ref(state.unit),iterations:state.productionIterations,project:state.project,brands:catalog.brands}:workspaceError&&catalog.reviewAvailable&&recoveryUnit?{pid,unit:ref(recoveryUnit),iterations:[],readOnly:true}:null);
   const focusId = (document.activeElement as HTMLElement)?.id;
   root.innerHTML = `<header><a class="wordmark" href="/visual">BVE <span>VISUAL STUDIO</span></a><span class="review-tag">Interaction review · no image execution</span><a href="/legacy">Legacy semantic workspace</a></header><main id="workspace"><div class="workspace-title"><div><p class="eyebrow">WEBSITE EXPLORATION</p><h1>${esc(state?.title ?? (workspaceError?catalog.projects.find(p=>p.ref.id===pid)?.title:undefined) ?? (pid ? "Start a page" : "Start with a page."))}</h1></div><label>Review layout<select id="layout"><option value="sheet" ${layout === "sheet" ? "selected" : ""}>A · Contact sheet + Focus</option><option value="film" ${layout === "film" ? "selected" : ""}>B · Focus + Filmstrip</option></select></label></div><div class="entry-bar"><label>Project<select id="project"><option value="">Choose project</option>${catalog.projects.map((p) => `<option value="${p.ref.id}" ${pid === p.ref.id ? "selected" : ""}>${esc(p.title)}</option>`).join("")}</select></label><details class="entry-extra" ${pid ? "" : "open"}><summary>New project</summary><form id="new-project"><input name="title" required aria-label="New Website project name" placeholder="New Website project"><button>Create project</button></form></details>${pid ? `<label>Page<select id="page"><option value="">Choose page</option>${units.map((u) => `<option value="${key(u)}" ${(state ? key(state.unit) === key(u) : workspaceError && errorUnit === key(u)) ? "selected" : ""}>${esc(u.payload.state.label)}</option>`).join("")}</select></label><details class="entry-extra" id="page-tools" ${state ? "" : "open"}><summary>Add page</summary><form id="new-page"><select name="type" aria-label="Page type"><option value="homepage">Homepage</option><option value="about">About Us</option><option value="custom">Custom page</option></select><input name="label" aria-label="Page label" placeholder="Page label (optional)"><button>Add page</button></form></details>` : ""}</div>${
     state

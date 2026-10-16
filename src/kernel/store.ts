@@ -12,6 +12,8 @@ export type KernelServices = Pick<GateEnvironment, 'assetExists' | 'imageMatches
 export class KernelStore {
   private db: DatabaseSync;
   private services: KernelServices;
+  private continuationAuthority?: (p:NodePacket<unknown>)=>boolean;
+  bindContinuationAuthority(authority:(p:NodePacket<unknown>)=>boolean){if(this.continuationAuthority)throw Error('Continuation authority already bound');this.continuationAuthority=authority;}
   private reviewAuthority?: (p:NodePacket<unknown>)=>boolean;
   bindReviewAuthority(authority:(p:NodePacket<unknown>)=>boolean){if(this.reviewAuthority)throw Error('Review authority already bound');this.reviewAuthority=authority;}
   reviewForDraft(id:string):NodePacket<unknown>|null {
@@ -60,7 +62,7 @@ export class KernelStore {
     return value as NodePacket<T>; // Consumers still validate their port before crossing a boundary.
   }
   environment(): GateEnvironment {
-    return { ...this.services, reviewForDraft:id=>this.reviewForDraft(id), ...(this.reviewAuthority?{reviewWriteAllowed:this.reviewAuthority}:{}), ...(this.productionAuthority?{productionWriteAllowed:this.productionAuthority}:{}), ...(this.nativeAuthority?{nativeWriteAllowed:this.nativeAuthority}:{}), ...(this.auxiliaryAuthority?{auxiliaryWriteAllowed:this.auxiliaryAuthority}:{}), projectRefs:(pid,max,exclude)=>this.projectRefs(pid,max,exclude), projectEvents:pid=>this.ledger(pid).events, projectSelections:pid=>this.acceptedSelections(pid), lookup: ref => this.lookup(ref), currentVersion: id => this.currentVersion(id),
+    return { ...this.services, ...(this.continuationAuthority?{continuationWriteAllowed:this.continuationAuthority}:{}), reviewForDraft:id=>this.reviewForDraft(id), ...(this.reviewAuthority?{reviewWriteAllowed:this.reviewAuthority}:{}), ...(this.productionAuthority?{productionWriteAllowed:this.productionAuthority}:{}), ...(this.nativeAuthority?{nativeWriteAllowed:this.nativeAuthority}:{}), ...(this.auxiliaryAuthority?{auxiliaryWriteAllowed:this.auxiliaryAuthority}:{}), projectRefs:(pid,max,exclude)=>this.projectRefs(pid,max,exclude), projectEvents:pid=>this.ledger(pid).events, projectSelections:pid=>this.acceptedSelections(pid), lookup: ref => this.lookup(ref), currentVersion: id => this.currentVersion(id),
       accepted: (pid, ref) => this.ledger(pid).events.some(e => e.kind === 'acceptance' && e.subject.id === ref.id && e.subject.version === ref.version) };
   }
   private event(projectId: string, subject: VersionRef, kind: LedgerEvent['kind'], actor: string,

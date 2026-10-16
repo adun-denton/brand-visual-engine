@@ -875,3 +875,5 @@ pre {
 .auxiliary-panel .section-head{flex-wrap:wrap;gap:.5rem}.auxiliary-panel .section-head h2{flex-shrink:0;white-space:nowrap}.auxiliary-panel .section-head span{flex:1 1 12rem}
 
 #production-review {margin:1rem 0;padding:1rem;border:1px solid #cbd7cd;border-radius:.75rem;background:#fff}#production-review>label{display:block;margin:.8rem 0}#production-review textarea{width:100%;box-sizing:border-box}.review-originals{display:flex;flex-wrap:wrap;gap:1rem}.review-originals figure{margin:0;flex:1 1 180px;max-width:320px}.review-originals img{width:100%;height:auto}.selections textarea{width:100%;box-sizing:border-box}.selections article{margin:.8rem 0;padding:.6rem;border:1px solid #dce3dd;border-radius:.5rem}#production-review pre{white-space:pre-wrap;overflow-wrap:anywhere}#production-review button{margin:.3rem}.selections select{max-width:100%}
+
+.continuation-captures img{max-width:100%;height:auto;display:block}.continuation-captures p{overflow-wrap:anywhere}#continuation-child fieldset{min-width:0}#continuation-child input[type=checkbox]{width:auto}

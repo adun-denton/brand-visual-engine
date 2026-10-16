@@ -1,3 +1,5 @@
+import {Continuation} from './continuation.ts';
+import {exportContinuation} from './continuation-bundle.ts';
 import {Reviews} from './reviews.ts';
 import {ProductionIntake} from './production-intake.ts';
 import {projectConfig,runningInstallation} from './project-bootstrap.ts';
@@ -42,6 +44,7 @@ export interface RunningApp {
   chat: Chat;
   production: ProductionIntake | null;
   reviews: Reviews | null;
+  continuation:Continuation|null;
   installation: ReturnType<typeof runningInstallation> | null;
   origin: string;
   close: () => Promise<void>;
@@ -68,6 +71,7 @@ export async function startApp(
   try {
   const production=workspaceOptions?.projectRoot ? new ProductionIntake(workspace,workspaceOptions.projectRoot):null;
   const reviews=workspaceOptions?.projectRoot?new Reviews(workspace,workspaceOptions.projectRoot):null;
+  const continuation=reviews&&production&&workspaceOptions?.projectRoot?new Continuation(workspace,reviews,production,workspaceOptions.projectRoot):null;
   const providers = new Providers(workspace, providerConfig);
   const regions = new Regions(workspace, providers);
   const compositions = new Compositions(workspace);
@@ -135,6 +139,18 @@ export async function startApp(
       )
         throw new InputError('Local host/origin required', 403);
       if (req.method === 'GET') {
+        if(path.startsWith('/api/v1/continuation/')){
+          if(!continuation)throw new InputError('No project-bound continuation service',404);
+          const action=path.slice('/api/v1/continuation/'.length);
+          if(action==='capabilities')json(200,continuation.capabilities(),false);
+          else if(action==='pending')json(200,continuation.pending(),false);
+          else if(action==='inspect')json(200,continuation.status(exactRef(JSON.parse(url.searchParams.get('submission')??'null'))),false);
+          else if(action==='image'){const out=continuation.captureImage(exactRef(JSON.parse(url.searchParams.get('capture')??'null')));res.writeHead(200,{'Content-Type':'image/png','Content-Length':out.bytes.length});res.end(out.bytes);}
+          else if(action==='text')json(200,continuation.continuation(exactRef(JSON.parse(url.searchParams.get('submission')??'null')),origin),false);
+          else if(action==='record'){const kind=String(url.searchParams.get('kind'));if(!['review-capture-request','review-capture','review-finalization','review-child-lineage'].includes(kind))throw Error('Unknown continuation kind');json(200,continuation.read(exactRef(JSON.parse(url.searchParams.get('ref')??'null')),kind as import('../modules/website/continuation-contracts.ts').ContinuationKind),false);}
+          else if(action==='submission')json(200,reviews!.read(production!.config.projectId,exactRef(JSON.parse(url.searchParams.get('ref')??'null')),'production-review-submission'),false);
+          else throw new InputError('Unknown continuation read',404);return;
+        }
         if(path.startsWith('/api/v1/visual/review/')){
           if(!reviews)throw new InputError('No project-bound review service',404);
           const pid=id(url.searchParams.get('project')),action=path.slice('/api/v1/visual/review/'.length);
@@ -371,6 +387,17 @@ export async function startApp(
         throw new InputError('Invalid JSON');
       }
       let result: unknown;
+      if(path.startsWith('/api/v1/continuation/')){
+        if(!continuation)throw new InputError('No project-bound continuation service',404);
+        const action=path.slice('/api/v1/continuation/'.length);
+        if(action==='request')result=await continuation.requestCapture(input,req.headers['x-bve-capture-tab'] as string|undefined);
+        else if(action==='capture')result=await continuation.runCapture(input);
+        else if(action==='finalize')result=continuation.finalize(input);
+        else if(action==='child')result=continuation.prepareChild(input);
+        else if(action==='compose-child')result=continuation.composeChild(input);
+        else if(action==='export'){const r=record(input,['submission','receipt']);result=exportContinuation(continuation,exactRef(r['submission']),exactRef(r['receipt']));}
+        else throw new InputError('Unknown continuation operation',404);json(200,result,false);return;
+      }
       if(path.startsWith('/api/v1/visual/review/')){
         if(!reviews)throw new InputError('No project-bound review service',404);
         const r=record(input,['projectId','input']),pid=id(r['projectId']),action=path.slice('/api/v1/visual/review/'.length);
@@ -666,6 +693,7 @@ export async function startApp(
   if (!address || typeof address === 'string')
     throw new Error('No local address');
   origin = 'http://127.0.0.1:' + address.port;
+  continuation?.bindOrigin(origin);
   return {
     server,
     workspace,
@@ -682,6 +710,7 @@ export async function startApp(
     origin,
     production,
     reviews,
+    continuation,
     installation,
     close: () => {
       if (closePromise) return closePromise;
@@ -691,6 +720,7 @@ export async function startApp(
       const reconstructed=reconstruction.close();
       const auxiliaryClosed=auxiliary.close();
       closePromise = (async () => {
+        await continuation?.close();
         await providers.close();
         await drained;
         await visual.executions.close();

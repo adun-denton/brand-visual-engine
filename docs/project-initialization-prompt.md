@@ -16,7 +16,7 @@ Install/start only within my authorization. Ask only for essential unresolved ch
 
 Read instructions/AGENTS.md for role routing, then the assigned role from the compatible installation. Main chat owns creative discussion; BVE owns visual records; the Butler uses supported operations. Do not create a Foreman or a persistent installer agent.
 
-Explain which review, continuation and export features actually work in this version. Do not claim planned capabilities are implemented.
+For this v2 candidate read docs/project-structure-and-setup.md. Use the tested review-browser command only when an actual controlled visible review tab is wanted; ordinary start has no capture adapter. Distinguish implemented commands, bound host adapter, observed authored proof and unverified generation. Explain pending versus completed continuation, explicit Copy/fallback, portable validation and parent-linked preparation. Do not infer an active Butler/Foreman agent or claim live readiness.
 
 ## Development candidate override
 

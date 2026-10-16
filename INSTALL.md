@@ -95,11 +95,11 @@ Intake independently bounds and fully decodes a single original-byte buffer, ver
 
 The runtime has one owning application writer. Agent commands use the running service discovered only in the designated project root; when no service is running, mutating commands own a short-lived loopback service. `inspect`, `jobs` and `receipts` use read-only SQLite inspection when closed. New service operations retain the existing host/origin/session-token protections. Tokens are never stored in project config or discovery. Read operations can fall back to read-only local inspection if discovery is unavailable; they never start a competing writer. If a crash leaves stale `.bve-service.json`, run `start` to reacquire the OS-released writer lock and replace discovery; do not delete database/lock files or terminate an unrelated process. Init refuses while a running service owns the runtime.
 
-The additive endpoints are `GET /api/v1/production/state` and authenticated `POST /api/v1/production/prepare`, `/intake`, `/cancel`. The latter two accept `{ "jobId": "..." }` and `{ "iteration": <exact-ref> }`. No generation, automatic retries, acceptance, submission, capture or cleanup endpoint is added.
+The additive endpoints are `GET /api/v1/production/state` and authenticated `POST /api/v1/production/prepare`, `/intake`, `/cancel`. The latter two accept `{ "jobId": "..." }` and `{ "iteration": <exact-ref> }`. These production endpoints do not invoke generation, retry automatically, accept designs or clean up. Durable review and additive continuation use their separate interfaces below.
 
 Receipt/candidate/membership/job outcome commit in one kernel transaction. Asset writes occur first; a failed database commit can leave unreferenced, recoverable content-addressed bytes. Such bytes are not a successful result and are never automatically deleted. Repeating valid intake can reuse them. Rollback requires matching software plus a complete closed test/pre-adoption root; never downgrade an evolved database in place.
 
-## Durable production review (BVE-VOS-02 candidate)
+## Durable production review (BVE-VOS-02 foundation)
 
 Use a fresh disposable/private root initialized by the exact candidate checkout, then the existing project-bound `bve start --root <private-root> 0`. The installation and pinned instruction checks remain mandatory; do not edit an older root's selected commit to bypass them. This candidate adds no migration.
 
@@ -113,7 +113,7 @@ A late delivery (including diagnostic incomplete/conflict receipts), cancellatio
 
 If unavailable media blocks the legacy workspace, a read-only recovery catalog still exposes stored review feedback and exact-source availability. Restore the exact original or a complete closed backup before new writes.
 
-Original bytes and source versions remain exact. Submitted originals are fetched through the stored review reference, never from the latest candidate. Missing/corrupt originals are explicitly unavailable. Existing memory/portable continuation shows review summaries only (comment/count/scope/authority); it does not export full review feedback, mask geometry or originals. A complete closed root remains the backup/recovery unit.
+Original bytes and source versions remain exact. Submitted originals are fetched through the stored review reference, never from the latest candidate. Missing/corrupt originals are explicitly unavailable. The older Memory/Continue feature shows summaries only. The separate BVE-VOS-03 portable evidence export includes the selected exact review/original/capture closure; it is not a root backup or foreign import. A complete closed root remains the backup/recovery unit.
 
 ### Local review service interface
 
@@ -153,4 +153,13 @@ Selection entries reuse `exploration-contracts.ts`: stable ID, exact candidate/i
 
 Fresh roots use configuration format 2 and `bve-vos-continuation-v1`. The fixed inventory contains eight operational files plus the manifest itself. Their exact bundled and installed bytes are checked before project mutations. V1 configurations refuse read-only; there is no migration. Both immutable instruction source bundles remain available under `docs/implementation-packets/`.
 
-Keep user additions in `instructions/local.md`; legacy `instructions.local.md` is also preserved and diagnosed. If both differ, resolve that conflict explicitly before mutation. Existing private `AGENTS.md` remains user-owned. Capture/continuation configuration marks contract/host dependence, not an available adapter or observed proof. See [project structure/setup](docs/project-structure-and-setup.md); its new-interface section is staged until the authorized implementation is completed.
+Keep user additions in `instructions/local.md`; legacy `instructions.local.md` is also preserved and diagnosed. If both differ, resolve that conflict explicitly before mutation. Existing private `AGENTS.md` remains user-owned. Capture/continuation configuration marks contract/host dependence, not an available adapter or observed proof. See [project structure/setup](docs/project-structure-and-setup.md); it documents the implemented commands, actual controlled-tab boundary, errors and recovery.
+
+
+## Actual capture, verification and continuation (BVE-VOS-03 candidate)
+
+Use a fresh v2 root with matching code. Run `node scripts/bve.ts review-browser --root <private-root> 0` for the purpose-launched visible controlled tab; install the pinned Chromium with `npx playwright install chromium` first. Review and submit in that same tab. A normal browser retains Save/Submit but cannot originate capture. **Capture this review view** or **Alt+Shift+C** records the actual visible viewport; it never replays or reconstructs another page. **Verify stored evidence** adds a deterministic receipt, **Copy continuation** is a separate explicit gesture with selectable/downloadable fallback, and **Export portable evidence** carries a bounded selected closure for a fresh client.
+
+The historical submission field stays `pending-not-implemented`; current operational status is derived from additive capture/verification records and present availability. Old verified receipts cannot hide missing/corrupt originals or captures. Creative acceptance and generation remain separate. The completed panel can explicitly prepare a parent-linked child iteration, with 1–6 attempts, independent Fresh/Follow/Brand and chosen exact original references. Preparation never invokes a generator.
+
+The complete tested [structure/setup/PowerShell and Butler interface guide](docs/project-structure-and-setup.md) covers start/stop/resume, pending/exact reads, request files, `@ref-file` handling, export/inspection, bounds, errors and visible/headless evidence. No existing-root migration or live readiness is claimed. Browser unload and clipboard behavior remains browser-owned; explicit saving and fallback text remain necessary.
