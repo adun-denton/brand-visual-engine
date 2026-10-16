@@ -10,7 +10,7 @@ export class ControlledReviewTab implements CaptureAdapter {
  get available(){return this.browser.isConnected()&&!this.page.isClosed();}
  static async launch(origin:string,options:{headless?:boolean;authoredTest?:boolean;executablePath?:string;viewport?:{width:number;height:number}}={}){
   if(!/^http:\/\/127\.0\.0\.1:\d+$/.test(origin))throw Error('Controlled browser requires the owning loopback service');
-  const headless=options.headless??false,browser=await chromium.launch({headless,...(options.executablePath?{executablePath:options.executablePath}:{})});
+  const headless=options.headless??false,browser=await chromium.launch({headless,handleSIGINT:false,handleSIGTERM:false,handleSIGHUP:false,...(options.executablePath?{executablePath:options.executablePath}:{})});
   try{const viewport=options.viewport??(headless?{width:1440,height:1050}:null),context=await browser.newContext({viewport,...(viewport?{deviceScaleFactor:1}:{}),acceptDownloads:true,serviceWorkers:'block'}),page=await context.newPage(),adapter=new ControlledReviewTab(browser,page,origin,headless,options.authoredTest??false);
    // Preserve native prompts for the visible operator; never automatically discard dirty feedback.
    if(!headless)page.on('dialog',()=>{});

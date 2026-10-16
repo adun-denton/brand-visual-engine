@@ -30,7 +30,7 @@ if(action==='init'){
   atomicJson(discovery,{origin:app.origin,projectId:c.projectId,runtimeId:c.runtimeId,owner,pid:process.pid});
   console.log(JSON.stringify({url:app.origin,projectId:c.projectId,runtimeId:c.runtimeId,installation:app.installation,selectedInstallation:c.installation,instructionSetVersion:c.instructionSetVersion,continuation:app.continuation!.capabilities(),generation:'unverified',calls:0},null,2));
   let stopping=false;
-  for(const signal of ['SIGINT','SIGTERM'] as const)process.on(signal,()=>{if(stopping)return;stopping=true;void (async()=>{
+  for(const signal of ['SIGINT','SIGTERM','SIGHUP'] as const)process.on(signal,()=>{if(stopping)return;stopping=true;void (async()=>{
    try{
     if(controlled&&!await controlled.canClose(true)){console.error('BVE kept open: Save/discard review edits or reconcile the unresolved submission, then stop again. No local review was discarded.');return;}
     await app.close();if(existsSync(discovery)&&(boundedJson(discovery) as {owner?:string}).owner===owner)rmSync(discovery);process.exit(0);
