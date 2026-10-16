@@ -1,5 +1,6 @@
+import {execFileSync} from 'node:child_process';
 import {DatabaseSync} from 'node:sqlite';
-import { existsSync, readdirSync, mkdirSync, readFileSync, writeFileSync, renameSync, openSync, fsyncSync, closeSync, lstatSync } from 'node:fs';
+import { existsSync, readdirSync, mkdirSync, readFileSync, writeFileSync, renameSync, openSync, fsyncSync, closeSync, lstatSync, realpathSync } from 'node:fs';
 import { resolve, join, dirname, isAbsolute, relative } from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
 import { Workspace } from './workspace.ts';
@@ -44,7 +45,7 @@ function outsideSourceControl(root:string) {
   if(dirname(path)===path)break;
  }
 }
-export function projectConfig(root:string):ProjectConfig {
+function storedProjectConfig(root:string):ProjectConfig {
  outsideSourceControl(root);assertNoLinks(root);const c=parseProjectConfig(boundedJson(join(root,'bve.project.json')));
  const runtime=boundedJson(join(root,c.locations.runtime,'bve.runtime.json'));
  if(canonical(runtime)!==canonical({version:1,projectId:c.projectId,runtimeId:c.runtimeId}))throw Error('Inconsistent project/runtime identity');
@@ -64,6 +65,66 @@ export function projectConfig(root:string):ProjectConfig {
 
  const from=relative(c.installation.path,resolve(root));if(from===''||!from.startsWith('..')&&!isAbsolute(from))throw Error('Private project must be outside software installation');return c;
 }
+export interface InstallationIdentity {path:string;commit:string}
+/** Resolve this executing checkout, never the selected project's saved metadata. */
+export function runningInstallation():InstallationIdentity {
+ const path=realpathSync(resolve(import.meta.dirname,'../..'));
+ const commit=execFileSync('git',['rev-parse','HEAD'],{cwd:path,encoding:'utf8',timeout:5000}).trim();
+ if(!/^[a-f0-9]{40}$/.test(commit))throw Error('Cannot resolve running installation commit');
+ return {path,commit};
+}
+export function assertInstallation(selected:InstallationIdentity,running:InstallationIdentity) {
+ // Canonicalize existing checkout paths, including Windows casing, without rebinding saved config.
+ if(!selected||!running||typeof selected.path!=='string'||typeof running.path!=='string'||!isAbsolute(selected.path)||!isAbsolute(running.path)||!(/^[a-f0-9]{40}$/.test(selected.commit))||!(/^[a-f0-9]{40}$/.test(running.commit)))throw Error('Installation mismatch: missing or invalid running/selected identity');
+ const identityPath=(path:string)=>{const actual=realpathSync(path);return process.platform==='win32'?actual.toLowerCase():actual;};
+ if(identityPath(selected.path)!==identityPath(running.path)||selected.commit!==running.commit)throw Error('Installation mismatch: selected checkout/commit differs from running installation; use matching code and a complete closed root; migration is unsupported');
+}
+// Fixed inventory for visual-os-ops-v1; local additions are deliberately outside it.
+const PINNED_INSTRUCTIONS=[
+ {
+  "path": "instructions/conductor.md",
+  "sha256": "a4be9c29026ea76f1cd3f6cf497971fbea01948ab0b323c2f3955cf7e117b6f5"
+ },
+ {
+  "path": "instructions/generator.md",
+  "sha256": "0346f91fbf7cfa1304a07b2b75a98f6926b344b1f4aaf1939deb1c8e2b72854e"
+ },
+ {
+  "path": "instructions/butler.md",
+  "sha256": "e67f5273f761c186e0b0778828c2306abd31c52bc0c31593b0ef3b67064522cd"
+ },
+ {
+  "path": "instructions/project-AGENTS.template.md",
+  "sha256": "840dde9ce1f06d042f134c75c914fb47820738ced8eaa080238ea4e3d0e265e7"
+ }
+] as const;
+function bundledInstructions() {
+ const path=resolve(import.meta.dirname,'../..');
+ const manifest=boundedJson(join(path,'instructions/manifest.json')) as {instructionSetVersion?:unknown;files?:unknown};
+ if(manifest.instructionSetVersion!==INSTRUCTION_VERSION||canonical(manifest.files)!==canonical(PINNED_INSTRUCTIONS))throw Error('Bundled instruction inventory incompatible');
+ return PINNED_INSTRUCTIONS.map(f=>{
+  const source=join(path,f.path);assertNoLinks(source);const st=lstatSync(source);
+  if(!st.isFile()||st.nlink!==1||st.size>65536)throw Error('Unsafe bundled instruction');
+  const bytes=readFileSync(source);if(createHash('sha256').update(bytes).digest('hex')!==f.sha256)throw Error('Bundled instruction integrity mismatch');
+  return {...f,bytes};
+ });
+}
+export function instructionCompatibility(root:string) {
+ let bundleError:string|null=null;
+ try{bundledInstructions();}catch(error){bundleError=String(error);}
+ const files=PINNED_INSTRUCTIONS.map(f=>{
+  const path=join(root,f.path);let status:'ok'|'missing'|'changed'|'unsafe'='ok';
+  try{assertNoLinks(path);if(!existsSync(path))status='missing';else{const st=lstatSync(path);if(!st.isFile()||st.nlink!==1||st.size>65536)status='unsafe';else if(createHash('sha256').update(readFileSync(path)).digest('hex')!==f.sha256)status='changed';}}catch{status='unsafe';}
+  return {path:f.path,status};
+ });
+ return {version:INSTRUCTION_VERSION,compatible:!bundleError&&files.every(f=>f.status==='ok'),bundleError,files};
+}
+export function projectConfig(root:string):ProjectConfig {
+ const c=storedProjectConfig(root);assertInstallation(c.installation,runningInstallation());
+ const instructions=instructionCompatibility(root);
+ if(!instructions.compatible)throw Error('Pinned instructions incompatible: '+JSON.stringify(instructions));
+ return c;
+}
 export function verifyProject(w:Workspace,c:ProjectConfig) {
  w.owner.assert();w.project(c.projectId);
  const unit=w.kernel.get<{kind:string}>(c.initialWorkUnit);
@@ -71,6 +132,7 @@ export function verifyProject(w:Workspace,c:ProjectConfig) {
 }
 export function initializeProject(root:string,installation:{path:string;commit:string},title='Untitled project', interrupt?:(phase:'identity'|'runtime')=>void):ProjectConfig {
  root=resolve(root);outsideSourceControl(root);assertNoLinks(root);installation={path:resolve(installation.path),commit:installation.commit};string(title,100);
+ assertInstallation(installation,runningInstallation());bundledInstructions();
  const from=relative(installation.path,root);if(from===''||!from.startsWith('..')&&!isAbsolute(from))throw Error('Private project must be outside software installation');
  const configPath=join(root,'bve.project.json'),seedPath=join(root,'.bve-init.json');
  const preflight=()=>{if(existsSync(root)&&readdirSync(root).some(n=>!/^\.bve-init\.json\.[a-f0-9-]+\.tmp$/.test(n))&&!existsSync(configPath)&&!existsSync(seedPath))throw Error('Nonempty unregistered root: adoption required');};preflight();
@@ -79,7 +141,7 @@ export function initializeProject(root:string,installation:{path:string;commit:s
  const owner=new RuntimeOwner(root);let w:Workspace|undefined;
  try {
   if(existsSync(configPath)){
-   const c=projectConfig(root);w=new Workspace(join(root,c.locations.runtime));verifyProject(w,c);return c;
+   const c=projectConfig(root);assertInstallation(c.installation,installation);w=new Workspace(join(root,c.locations.runtime));verifyProject(w,c);return c;
   }
   let seed:{config:ProjectConfig;title:string};
   if(existsSync(seedPath)){
@@ -89,7 +151,11 @@ export function initializeProject(root:string,installation:{path:string;commit:s
    seed={config:parseProjectConfig({formatVersion:1,featureContract:FEATURE_CONTRACT,projectId:'website-'+randomUUID(),runtimeId:'runtime-'+randomUUID(),locations:{runtime:'runtime',staging:'staging',references:'references',exports:'exports',backups:'backups',instructions:'instructions'},installation,instructionSetVersion:INSTRUCTION_VERSION,initialWorkUnit:{id:'page-work-unit-'+randomUUID(),version:1,freshness:'pinned'},capabilities:{capture:'deferred',continuation:'deferred',generation:'unverified'}}),title};
    atomicJson(seedPath,seed);
   }
-  interrupt?.('identity');const c=seed.config;
+  const c=seed.config;assertInstallation(c.installation,installation);
+  // A partial bootstrap may fill absent files, but must refuse altered existing pins before history writes.
+  const present=instructionCompatibility(root).files.filter(f=>f.status!=='missing'&&f.status!=='ok');
+  if(present.length)throw Error('Pinned instructions incompatible: '+JSON.stringify(present));
+  interrupt?.('identity');
   for(const path of Object.values(c.locations)){assertNoLinks(join(root,path));mkdirSync(join(root,path),{recursive:true,mode:0o700});}
   const runtime=join(root,c.locations.runtime),marker=join(runtime,'bve.runtime.json'),identity={version:1,projectId:c.projectId,runtimeId:c.runtimeId};
   // Acquire before inspecting/writing marker or opening any authoritative store.
@@ -109,26 +175,24 @@ export function initializeProject(root:string,installation:{path:string;commit:s
   }else if(!project||!unit)throw Error('Partial authoritative bootstrap identity refused');
   verifyProject(w,c);interrupt?.('runtime');
   // Bundled instructions are pinned, independently hash-checked, never fetched as latest.
-  const manifest=boundedJson(join(c.installation.path,'instructions/manifest.json')) as {instructionSetVersion:string;files:{path:string;sha256:string}[]};
-  if(manifest.instructionSetVersion!==INSTRUCTION_VERSION)throw Error('Installed instructions incompatible');
-  for(const f of manifest.files){
-   if(!/^instructions\/[A-Za-z0-9.-]+$/.test(f.path))throw Error('Invalid installed instruction path');
-   const bytes=readFileSync(join(c.installation.path,f.path));if(createHash('sha256').update(bytes).digest('hex')!==f.sha256)throw Error('Installed instruction integrity mismatch');
-   const destination=join(root,f.path);if(!existsSync(destination))atomicFile(destination,bytes);
-   else if(!readFileSync(destination).equals(bytes))throw Error('Pinned instruction changed; preserve additions in instructions/local.md');
+  for(const f of bundledInstructions()){
+   const destination=join(root,f.path);assertNoLinks(destination);
+   if(!existsSync(destination))atomicFile(destination,f.bytes);
+   else {const st=lstatSync(destination);if(!st.isFile()||st.nlink!==1||st.size>65536||!readFileSync(destination).equals(f.bytes))throw Error('Pinned instruction changed; preserve additions in instructions/local.md');}
   }
   const agents=join(root,'AGENTS.md');if(!existsSync(agents))atomicFile(agents,readFileSync(join(c.installation.path,'instructions/project-AGENTS.template.md')));
   atomicJson(configPath,c);return c;
  }finally{w?.close();owner.close();}
 }
 export function inspection(root:string) {
- const c=projectConfig(root);
- return {config:c,environment:{node:process.version,platform:process.platform,architecture:process.arch,supportedNode:/^v24\./.test(process.version)&&Number(process.versions.node.split('.')[1])>=19,featureContract:FEATURE_CONTRACT,nativeGeneration:'unverified',capture:'deferred',continuation:'deferred',generationCalls:0}};
+ const c=storedProjectConfig(root),running=runningInstallation();let installationIssue:string|null=null;
+ try{assertInstallation(c.installation,running);}catch(error){installationIssue=String(error);}
+ return {config:c,installation:{selected:c.installation,running,compatible:installationIssue===null,issue:installationIssue},instructions:instructionCompatibility(root),environment:{node:process.version,platform:process.platform,architecture:process.arch,supportedNode:/^v24\./.test(process.version)&&Number(process.versions.node.split('.')[1])>=19,featureContract:FEATURE_CONTRACT,nativeGeneration:'unverified',capture:'deferred',continuation:'deferred',generationCalls:0}};
 }
 
 /** Read-only inspection never opens an application writer, recovers jobs or changes settings. */
 export function inspectRecords(root:string) {
- const c=projectConfig(root),path=join(root,c.locations.runtime,'kernel.sqlite');assertNoLinks(path);
+ const c=storedProjectConfig(root),path=join(root,c.locations.runtime,'kernel.sqlite');assertNoLinks(path);
  const db=new DatabaseSync(path,{readOnly:true});
  try{
   const rows=db.prepare('SELECT body FROM kernel_packets WHERE (id,version) IN (SELECT id,MAX(version) FROM kernel_packets GROUP BY id) ORDER BY id').all();

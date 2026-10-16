@@ -1,5 +1,6 @@
+import {runningInstallation} from '../src/service/project-bootstrap.ts';
 /** Authored local originals only. Does not invoke a model, provider or synthetic-registration. */
-import {join,resolve} from 'node:path';
+import {join} from 'node:path';
 import {writeFileSync,mkdirSync} from 'node:fs';
 import sharp from 'sharp';
 import {inspectRaster} from '../src/service/assets.ts';
@@ -8,7 +9,7 @@ import type {Job,Delivery} from '../src/modules/website/production-contracts.ts'
 import type {ProjectConfig} from '../src/service/project-bootstrap.ts';
 import type {Workspace} from '../src/service/workspace.ts';
 import {reference} from '../src/kernel/packets.ts';
-export const fixtureInstallation={path:resolve(import.meta.dirname,'..'),commit:'c360b716b3dfc2cb43c71d450cae3d6f49b82c88'};
+export const fixtureInstallation=runningInstallation();
 export const fixtureOutput={preferredWidth:960,preferredHeight:640,formats:['png','jpeg','webp'],maxBytes:8*1024*1024,maxPixels:16_000_000,maxDimension:8192};
 export function fixturePreparation(w:Workspace,c:ProjectConfig,count=3){return {specification:{version:1,compiler:'raster-input-v1',project:reference(w.project(c.projectId)),workUnit:c.initialWorkUnit,medium:'website-raster',operation:'create',selections:null,selectionSnapshot:null,rawIntent:'Three authored website composition studies; fixture only',count,resources:[],direction:'fresh',brand:{enabled:false},sourceScopes:[],facts:[],constraints:[],metricRequests:[],provenance:'Authored BVE-VOS-01 integration fixture',executionAuthorization:null},output:fixtureOutput,worker:{kind:'native-generator',configuration:null,imageModel:null}};}
 export async function authoredOriginal(index=0){

@@ -1,5 +1,5 @@
 import {ProductionIntake} from './production-intake.ts';
-import {projectConfig} from './project-bootstrap.ts';
+import {projectConfig,runningInstallation} from './project-bootstrap.ts';
 import {Auxiliary,type OfflineAuxiliaryInjection} from './auxiliary.ts';
 import {exactImageInput} from './session-inputs.ts';
 import {Reconstruction,type OfflineReconstructionInjection} from './reconstruction.ts';
@@ -40,6 +40,7 @@ export interface RunningApp {
   library: RasterLibrary;
   chat: Chat;
   production: ProductionIntake | null;
+  installation: ReturnType<typeof runningInstallation> | null;
   origin: string;
   close: () => Promise<void>;
 }
@@ -59,7 +60,7 @@ export async function startApp(
     chatImageDriver?: ChatImageDriver;
   },
 ): Promise<RunningApp> {
-  if(workspaceOptions?.projectRoot)projectConfig(workspaceOptions.projectRoot);
+  const installation=workspaceOptions?.projectRoot ? (projectConfig(workspaceOptions.projectRoot),runningInstallation()) : null;
   const workspace = new Workspace(root, workspaceOptions),
     token = randomBytes(32).toString('hex');
   try {
@@ -130,7 +131,7 @@ export async function startApp(
       )
         throw new InputError('Local host/origin required', 403);
       if (req.method === 'GET') {
-        if(path==='/api/v1/production/state'){if(!production)throw new InputError('No project-bound production service',404);json(200,{projectId:production.config.projectId,runtimeId:production.config.runtimeId,featureContract:production.config.featureContract,initialWorkUnit:production.config.initialWorkUnit,jobs:production.jobs(),iterations:production.iterations(),receipts:production.receipts()},false);return;}
+        if(path==='/api/v1/production/state'){if(!production)throw new InputError('No project-bound production service',404);json(200,{projectId:production.config.projectId,runtimeId:production.config.runtimeId,installation,featureContract:production.config.featureContract,initialWorkUnit:production.config.initialWorkUnit,jobs:production.jobs(),iterations:production.iterations(),receipts:production.receipts()},false);return;}
 
         if(path==='/api/v1/visual/auxiliary/state'){json(200,auxiliary.state(id(url.searchParams.get('project')),exactRef(JSON.parse(url.searchParams.get('unit')??'null'))),false);return;}
 
@@ -660,6 +661,7 @@ export async function startApp(
     chat,
     origin,
     production,
+    installation,
     close: () => {
       if (closePromise) return closePromise;
       closing = true;

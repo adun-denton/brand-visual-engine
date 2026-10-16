@@ -1,13 +1,16 @@
+import {createHash} from 'node:crypto';
+import {createServer} from 'node:http';
+import {promisify} from 'node:util';
 import {fileURLToPath} from 'node:url';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,rmSync,readFileSync,writeFileSync,mkdirSync,existsSync,symlinkSync,renameSync} from 'node:fs';
+import {mkdtempSync,rmSync,readFileSync,writeFileSync,mkdirSync,existsSync,symlinkSync,renameSync,readdirSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {spawnSync,spawn} from 'node:child_process';
+import {spawnSync,spawn,execFileSync,execFile} from 'node:child_process';
 import {once} from 'node:events';
 import {DatabaseSync} from 'node:sqlite';
-import {initializeProject,projectConfig} from '../src/service/project-bootstrap.ts';
+import {initializeProject,projectConfig,inspection,runningInstallation} from '../src/service/project-bootstrap.ts';
 import {Workspace} from '../src/service/workspace.ts';
 import {fixtureInstallation} from '../scripts/production-fixture.ts';
 import {startApp} from '../src/service/server.ts';
@@ -90,10 +93,66 @@ test('A14/A15 actual CLI operations reuse the owning HTTP service; closed inspec
   const c=command(['init','Authored CLI project']);const before=readFileSync(join(root,'runtime/kernel.sqlite'));assert.equal(command(['inspect']).config.projectId,c.projectId);assert.deepEqual(readFileSync(join(root,'runtime/kernel.sqlite')),before);
   child=spawn(process.execPath,[fileURLToPath(cli),'start','--root',root,'0'],{stdio:['ignore','pipe','pipe']});
   let output='';await new Promise<void>((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('CLI start timeout')),15000);child!.stdout!.on('data',chunk=>{output+=chunk;try{if(JSON.parse(output).url){clearTimeout(timer);resolve();}}catch{}});child!.once('exit',code=>{clearTimeout(timer);if(code)reject(Error('CLI start exited '+code));});});
+  assert.deepEqual(JSON.parse(output).installation,runningInstallation());assert.deepEqual(JSON.parse(output).selectedInstallation,c.installation);
   const {fixturePreparation,authoredOriginal,stageDelivery}=await import('../scripts/production-fixture.ts');
   const request=fixturePreparation({project:()=>({id:c.projectId,version:1})} as unknown as Workspace,c),requestPath=join(root,'references/request.json');writeFileSync(requestPath,JSON.stringify(request));
   const prepared=command(['prepare',requestPath]);assert.equal(command(['jobs']).length,3);await stageDelivery(root,prepared.jobs[0],await authoredOriginal());assert.equal(command(['intake',prepared.jobs[0].id]).payload.state.disposition,'ready');assert.equal(command(['receipts']).length,1);assert.equal(command(['inspect']).state.projectId,c.projectId);
   const denied=spawnSync(process.execPath,[fileURLToPath(cli),'init','--root',root],{encoding:'utf8',timeout:10000});assert.notEqual(denied.status,0);assert.match(denied.stderr,/owning writer/);
   child.kill('SIGTERM');await once(child,'exit');child=undefined;assert.equal(command(['inspect']).state.jobs.length,3);assert.equal(command(['receipts']).length,1);
  }finally{if(child&&child.exitCode===null&&child.signalCode===null){child.kill('SIGKILL');await once(child,'exit');}rmSync(root,{recursive:true,force:true});}
+});
+
+// Compare canonical bytes and config, rather than trusting an exception or an empty response.
+function canonicalSnapshot(root:string) {
+ const files=(dir:string):string[]=>readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?files(join(dir,e.name)):e.isFile()?[join(dir,e.name)]:[]);
+ // SQLite may create disposable shared-memory and empty WAL files for read-only WAL access.
+ return Object.fromEntries([join(root,'bve.project.json'),...files(join(root,'runtime'))].filter(path=>!path.endsWith('-shm')&&(!path.endsWith('-wal')||readFileSync(path).length>0)).map(path=>[path,createHash('sha256').update(readFileSync(path)).digest('hex')]));
+}
+test('F1 actual installation mismatch refuses reopen/start without rebind or canonical mutation',async()=>{
+ const root=fresh(),other=fresh();
+ try{
+  const c=initializeProject(root,fixtureInstallation),configPath=join(root,'bve.project.json');
+  assert.deepEqual(runningInstallation(),{path:fixtureInstallation.path,commit:execFileSync('git',['rev-parse','HEAD'],{cwd:fixtureInstallation.path,encoding:'utf8'}).trim()});
+  // A different real checkout identity, including the same commit, is not silently selected.
+  execFileSync('git',['clone','--quiet','--shared','--no-checkout',fixtureInstallation.path,other]);
+  for(const installation of [{...c.installation,commit:'8312893f1ef715a1507c3275d991b42c0dbafa1c'},{...c.installation,path:other}]){
+   writeFileSync(configPath,JSON.stringify({...c,installation}));const before=canonicalSnapshot(root);
+   assert.throws(()=>initializeProject(root,fixtureInstallation),/Installation mismatch/);
+   assert.throws(()=>projectConfig(root),/Installation mismatch/);
+   await assert.rejects(startApp(join(root,'runtime'),0,undefined,undefined,{projectRoot:root}),/Installation mismatch/);
+   const report=inspection(root);assert.equal(report.installation.compatible,false);assert.deepEqual(report.installation.selected,installation);assert.deepEqual(report.installation.running,runningInstallation());
+   const cli=spawnSync(process.execPath,[fileURLToPath(new URL('../scripts/bve.ts',import.meta.url)),'inspect','--root',root],{encoding:'utf8',timeout:15000});assert.equal(cli.status,0,cli.stderr);assert.equal(JSON.parse(cli.stdout).installation.compatible,false);
+   assert.deepEqual(canonicalSnapshot(root),before);
+  }
+  writeFileSync(configPath,JSON.stringify(c));assert.deepEqual(initializeProject(root,fixtureInstallation),c);
+  const app=await startApp(join(root,'runtime'),0,undefined,undefined,{projectRoot:root});try{assert.deepEqual(app.installation,c.installation);const state=await fetch(app.origin+'/api/v1/production/state').then(r=>r.json());assert.deepEqual(state.installation,c.installation);}finally{await app.close();}
+ }finally{rmSync(root,{recursive:true,force:true});rmSync(other,{recursive:true,force:true});}
+});
+test('F1 CLI refuses a reused service with different running identity before requesting a token or mutation',async()=>{
+ const root=fresh();let server:ReturnType<typeof createServer>|undefined;
+ try{
+  const c=initializeProject(root,fixtureInstallation),before=canonicalSnapshot(root);let reads=0,otherRequests=0;
+  server=createServer((req,res)=>{if(req.url==='/api/v1/production/state'&&req.method==='GET'){reads++;res.setHeader('content-type','application/json');res.end(JSON.stringify({projectId:c.projectId,runtimeId:c.runtimeId,installation:{...c.installation,commit:'8312893f1ef715a1507c3275d991b42c0dbafa1c'},jobs:[],receipts:[]}));}else{otherRequests++;res.statusCode=500;res.end('{}');}});
+  server.listen(0,'127.0.0.1');await once(server,'listening');const address=server.address();assert.ok(address&&typeof address!=='string');
+  writeFileSync(join(root,'.bve-service.json'),JSON.stringify({origin:'http://127.0.0.1:'+address.port,projectId:c.projectId,runtimeId:c.runtimeId,owner:'authored-service',pid:process.pid}));
+  await assert.rejects(promisify(execFile)(process.execPath,[fileURLToPath(new URL('../scripts/bve.ts',import.meta.url)),'intake','authored-job','--root',root],{timeout:20000}),/Installation mismatch/);
+  assert.equal(reads,1);assert.equal(otherRequests,0);assert.deepEqual(canonicalSnapshot(root),before);
+ }finally{if(server)await new Promise<void>((resolve,reject)=>server!.close(error=>error?reject(error):resolve()));rmSync(root,{recursive:true,force:true});}
+});
+test('F2 pinned missing/changed/unsafe instructions are diagnosed read-only and refuse resume/start',async()=>{
+ const root=fresh();try{
+  const c=initializeProject(root,fixtureInstallation),role=join(root,'instructions/butler.md'),original=readFileSync(role);
+  writeFileSync(join(root,'instructions/local.md'),'Supported local addition');writeFileSync(join(root,'instructions/additional-role.md'),'Local extension');writeFileSync(join(root,'AGENTS.md'),'User-owned project guidance');
+  assert.equal(inspection(root).instructions.compatible,true);assert.deepEqual(initializeProject(root,fixtureInstallation),c);
+  const cases=[{status:'changed',change:()=>writeFileSync(role,'Changed role bytes'),restore:()=>writeFileSync(role,original)}, {status:'missing',change:()=>rmSync(role),restore:()=>writeFileSync(role,original)}, {status:'unsafe',change:()=>{rmSync(role);mkdirSync(role);},restore:()=>{rmSync(role,{recursive:true});writeFileSync(role,original);}}];
+  for(const check of cases){
+   check.change();const before=canonicalSnapshot(root),report=inspection(root);assert.equal(report.instructions.compatible,false);assert.equal(report.instructions.files.find(f=>f.path==='instructions/butler.md')?.status,check.status);
+   assert.throws(()=>initializeProject(root,fixtureInstallation),/Pinned instructions incompatible/);
+   await assert.rejects(startApp(join(root,'runtime'),0,undefined,undefined,{projectRoot:root}),/Pinned instructions incompatible/);
+   const cli=spawnSync(process.execPath,[fileURLToPath(new URL('../scripts/bve.ts',import.meta.url)),'inspect','--root',root],{encoding:'utf8',timeout:15000});assert.equal(cli.status,0,cli.stderr);assert.equal(JSON.parse(cli.stdout).instructions.files.find((f:{path:string})=>f.path==='instructions/butler.md').status,check.status);
+   assert.deepEqual(canonicalSnapshot(root),before);assert.equal(readFileSync(join(root,'AGENTS.md'),'utf8'),'User-owned project guidance');assert.equal(readFileSync(join(root,'instructions/local.md'),'utf8'),'Supported local addition');assert.equal(readFileSync(join(root,'instructions/additional-role.md'),'utf8'),'Local extension');check.restore();
+  }
+  // Reproduce the review's simultaneous changed Butler + missing Generator case.
+  writeFileSync(role,'Changed role bytes');rmSync(join(root,'instructions/generator.md'));const report=inspection(root);assert.equal(report.instructions.files.filter(f=>f.status!=='ok').length,2);assert.throws(()=>projectConfig(root),/Pinned instructions incompatible/);
+ }finally{rmSync(root,{recursive:true,force:true});}
 });
