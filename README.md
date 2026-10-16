@@ -6,6 +6,8 @@ BVE is a local browser visual workspace. Chat handles creative discussion and bo
 
 Start with [INSTALL.md](INSTALL.md) and the [local initialization prompt](docs/project-initialization-prompt.md). Use an approved release for ordinary installation. Private planning access is not required.
 
+For the intended Codex experience, follow [Codex project setup](docs/codex-project-setup.md): private project folder, discoverable AGENTS.md, local setup/capability references, bounded role prompts, verified Codex project association and the first Conductor conversation. The guide is a documentation supplement; retain the exact approved executable when using it for an existing pilot.
+
 This development branch starts from the reviewed PR21 candidate and carries BVE-VOS-01. It is not a public release. At packet preparation, no releases or tags existed. Do not install an unmerged branch as an implicit fallback.
 
 ## Current capability boundary

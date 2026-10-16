@@ -6,6 +6,8 @@ Instruction set: visual-os-ops-v2. Status: candidate foundation, not a public re
 
 Start from the public repository README and this file. Private planning documents are never an installation dependency. Use an approved stable GitHub release for ordinary installation. Resolve its exact commit, release metadata, supported environment and instruction version before obtaining software. A development branch or passing PR is not a release.
 
+For Codex onboarding, complete [Codex project setup](docs/codex-project-setup.md) as part of installation: the private BVE folder is the local Codex project root, with root AGENTS.md, local references, role launch prompts and a verified Conductor chat association. BVE init creates the compatible application files; the setup session creates the local documentation and registers the folder in Codex. Neither operation alone proves that agents are running. The [initialization prompt](docs/project-initialization-prompt.md) includes this full handover.
+
 At preparation of BVE-VOS-01 no release/tag existed. If no approved release is available, report that fact without substituting a development branch. A user explicitly participating in development may use the exact candidate in an authorized packet.
 
 ## Install BVE workflow

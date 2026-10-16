@@ -30,6 +30,8 @@ V2 candidate implementation guide for BVE-VOS-03. The immutable coordinator sour
 
 Runtime subdirectories and service-discovery files are application-managed; never reorganize them by hand. Foreman is defined but inactive. Root private AGENTS.md and local additions remain user-owned, while pinned instruction copies must match their manifest. Preserve any legacy instructions.local.md and report conflicts with instructions/local.md.
 
+When operating in Codex, use [Codex project setup](codex-project-setup.md) to extend this private root with README.md, .ai local references and bounded role launch prompts, add root AGENTS routing without changing pinned instructions, and register the same folder as the local Codex project. Verify both app association and the Conductor's actual working context. This is a setup-session procedure; init does not register the folder in Codex or create worker sessions. Keep the software checkout separate and pinned.
+
 ## Supported setup foundation
 
 Choose an approved release or an exact development candidate explicitly authorized by the operator. A passing draft PR is not a release. Inspect before installing. This code line requires Node `>=24.19.0 <25`; CI uses 24.19.0. Use the candidate lockfile. The following current foundation commands run from the selected software checkout; placeholders must be replaced with explicit operator-selected paths:
