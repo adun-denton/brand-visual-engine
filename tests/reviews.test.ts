@@ -7,6 +7,7 @@ import {tmpdir} from 'node:os';
 import {initializeProject} from '../src/service/project-bootstrap.ts';
 import {Workspace} from '../src/service/workspace.ts';
 import {ProductionIntake} from '../src/service/production-intake.ts';
+import {Exploration} from '../src/service/exploration.ts';
 import {Reviews} from '../src/service/reviews.ts';
 import {reference,packet,revise,digest} from '../src/kernel/packets.ts';
 import type {ReviewInput,ReviewSubmission} from '../src/modules/website/review-contracts.ts';
@@ -120,4 +121,29 @@ test('R08 project/page revision, cancellation and supersession preserve historic
    assert.throws(()=>f.reviews.submit(f.c.projectId,{review,actionKey:'stale-'+mode}),/scope changed/);assert.throws(()=>f.reviews.save(f.c.projectId,review),/scope changed/);assert.equal(snapshot(f.w,f.c.projectId),before);assert.equal(f.reviews.state(f.c.projectId,f.c.initialWorkUnit,f.prepared.iteration.id).drafts[0]!.stale,true);
   }finally{f.close();}
  }
+});
+
+// F1: discovery may cross page revisions, but reads and writes stay exactly pinned.
+test('R08/R10 historical draft and submission catalog survives page revision and cold reopen without crossing owned pages',async()=>{
+ const f=await setup(1);let cold:Workspace|undefined;try{
+  const submitted=f.reviews.submit(f.c.projectId,{review:f.input(),actionKey:'historical-action'});
+  const draft=f.reviews.copy(f.c.projectId,{submission:reference(submitted),draftId:'review-draft-historical-open'});
+  const other=new Exploration(f.w).createWorkUnit(f.c.projectId,{version:1,pageType:'about',label:'Isolated page',source:'Authored fixture'});
+  const page=f.w.kernel.get(f.c.initialWorkUnit),v2=revise(page,page.payload,'local-human','Authored page revision');f.w.kernel.put(v2);
+  const check=(reviews:Reviews,w:Workspace)=>{
+   const before=snapshot(w,f.c.projectId),catalog=reviews.catalog(f.c.projectId,reference(v2));
+   assert.deepEqual(reviews.catalog(f.c.projectId,reference(other)),[]);
+   assert.throws(()=>reviews.state(f.c.projectId,reference(other),f.prepared.iteration.id),/Wrong review iteration\/page/);
+   assert.equal(catalog.length,1);assert.deepEqual(catalog[0]!.workUnit,f.c.initialWorkUnit);
+   const state=reviews.state(f.c.projectId,catalog[0]!.workUnit,catalog[0]!.ref.id);
+   assert.equal(state.current,false);assert.equal(state.drafts.find(d=>d.draft.id===draft.id)!.stale,true);
+   assert.deepEqual(state.submissions[0]!.submission,submitted);assert.deepEqual(state.drafts.find(d=>d.draft.id===draft.id)!.draft,draft);
+   assert.deepEqual(reviews.original(f.c.projectId,reference(draft),0).bytes,w.assets.read(draft.payload.state.scope.proposals[0]!.image.id));
+   assert.throws(()=>reviews.state(f.c.projectId,reference(v2),catalog[0]!.ref.id),/Wrong review iteration\/page/);
+   assert.throws(()=>reviews.catalog('unowned-project',reference(v2)),/Wrong review project/);
+   assert.throws(()=>reviews.submit(f.c.projectId,{review:{draftId:draft.id,expected:reference(draft),scope:draft.payload.state.scope,feedback:draft.payload.state.feedback,parentSubmission:reference(submitted)},actionKey:'historical-stale'}),/scope changed/);
+   assert.equal(snapshot(w,f.c.projectId),before);
+  };
+  check(f.reviews,f.w);f.w.close();cold=new Workspace(join(f.root,'runtime'));check(new Reviews(cold,f.root),cold);
+ }finally{cold?.close();if(!cold)f.w.close();rmSync(f.root,{recursive:true,force:true});}
 });

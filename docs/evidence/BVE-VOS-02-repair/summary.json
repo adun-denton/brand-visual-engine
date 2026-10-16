@@ -1,0 +1,69 @@
+{
+  "packet": "BVE-VOS-02",
+  "fixture": "authored SVG originals rasterized with sharp; no agent",
+  "candidate": "working-tree",
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 1050
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "layouts": [
+    "sheet",
+    "film"
+  ],
+  "savedFeedbackRecovered": true,
+  "pendingEditsIncluded": true,
+  "normalizedRegion": {
+    "x": 0.1,
+    "y": 0.2,
+    "width": 0.3,
+    "height": 0.4
+  },
+  "saveFailurePreserved": true,
+  "twoClientConflict": true,
+  "dirtyPageAndProjectGuard": true,
+  "headerStaySaveDiscard": true,
+  "nativeReloadWarningPreservesEdits": true,
+  "nativeCloseWarningPreservesEdits": true,
+  "nonDefaultPageOldLinkIsolation": true,
+  "unresolvedSubmissionNavigationProtected": true,
+  "historicalPageRevisionDraftAndSubmissionDiscovery": true,
+  "oldPageDeepLinkAndColdRestart": true,
+  "historicalTargetsReadOnly": true,
+  "historicalOriginalsAndRegionsExact": true,
+  "pageProjectIsolation": true,
+  "dirtyIterationGuard": true,
+  "delayedCommittedSaveOwnerGuard": true,
+  "partialOutcomeLabel": true,
+  "lostResponseAndReloadRecoveredOneIdentity": true,
+  "doubleClickOneSubmission": true,
+  "immutableParent": {
+    "id": "review-submission-938b6de7089b3d918aa548d8e0a7679df9caf137ffa4a00de881aad20e38848e",
+    "version": 1,
+    "freshness": "pinned"
+  },
+  "submissionCount": 2,
+  "submittedOriginalHash": "bb19a393b40d58b6ef15d22c849be0d3aad20a32ba99b096502fba352d76ec0f",
+  "coldReopen": true,
+  "unavailableOriginalReadOnlyRecovery": true,
+  "hostTokenGuard": true,
+  "errors": [],
+  "browserWrites": [
+    "/api/v1/visual/review/save",
+    "/api/v1/visual/review/save",
+    "/api/v1/visual/review/save",
+    "/api/v1/visual/review/save",
+    "/api/v1/visual/review/submit",
+    "/api/v1/visual/review/copy",
+    "/api/v1/visual/review/submit",
+    "/api/v1/visual/review/save"
+  ],
+  "generationCalls": 0,
+  "agentSessions": 0,
+  "acceptances": 0
+}

@@ -1,5 +1,7 @@
 # BVE-VOS-02 review submission result
 
+The original candidate below received changes requested at `dda6fc9ff32adaa6bd76005cd35637467d7c3981`. See the [F1/F2 repair result](BVE-VOS-02-repair-result.md) for the follow-up implementation and evidence. Independent acceptance remains pending.
+
 ## Identity
 
 - Packet: BVE-VOS-02 revision 1; approved documentation snapshot `bf47c94969f6efec88373a3ef0b31ad206a81c37`.

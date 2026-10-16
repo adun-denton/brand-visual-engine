@@ -1511,5 +1511,10 @@ void run(async () => {
   catalog = s;
   render();
   const requested=new URL(location.href).searchParams,projectId=requested.get("project"),page=requested.get("page");
-  if(projectId&&catalog.projects.some(p=>p.ref.id===projectId)){await openProject(projectId);if(page&&units.some(u=>key(u)===page)&&(!state||key(state.unit)!==page))await openUnit(page);}
+  if(projectId&&catalog.projects.some(p=>p.ref.id===projectId)){
+    await openProject(projectId);
+    // A historical review URL opens the current owned page, then its exactly pinned review target.
+    const requestedUnit=units.find(u=>key(u)===page)??units.find(u=>u.id===page?.slice(0,page.lastIndexOf(':')));
+    if(requestedUnit&&(!state||key(state.unit)!==key(requestedUnit)))await openUnit(key(requestedUnit));
+  }
 }, "Choose a project or create a Website project");
