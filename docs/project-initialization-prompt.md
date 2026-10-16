@@ -1,6 +1,6 @@
 # Local initialization and resume prompt
 
-Instruction set: visual-os-ops-v1. Run in a sufficiently authorized local agent environment.
+Instruction set: visual-os-ops-v2. Run in a sufficiently authorized local agent environment.
 
 ## Copyable operator prompt
 
@@ -14,7 +14,7 @@ Inspect available native tools, worker configurations, filesystem access and bro
 
 Install/start only within my authorization. Ask only for essential unresolved choices or additional authority. Do not stop unrelated processes. Verify the running version and project identity, give me the actual local BVE URL, and explain how to stop and resume it.
 
-Read instructions/conductor.md, generator.md and butler.md from the compatible installation. Main chat owns creative discussion; BVE owns visual records; the Butler uses supported operations. Do not create a Foreman or a persistent installer agent.
+Read instructions/AGENTS.md for role routing, then the assigned role from the compatible installation. Main chat owns creative discussion; BVE owns visual records; the Butler uses supported operations. Do not create a Foreman or a persistent installer agent.
 
 Explain which review, continuation and export features actually work in this version. Do not claim planned capabilities are implemented.
 

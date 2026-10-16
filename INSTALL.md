@@ -1,6 +1,6 @@
 # Install and resume BVE
 
-Instruction set: visual-os-ops-v1. Status: candidate foundation, not a public release.
+Instruction set: visual-os-ops-v2. Status: candidate foundation, not a public release.
 
 ## Entry and authority
 
@@ -58,7 +58,7 @@ npm run bve -- start --root <private-root> 0
 
 `start` prints the actual loopback URL, project/runtime identities, running installation path/commit, selected installation and instruction version. Reopen and project-bound operations require the selected checkout and commit to match the executing checkout; a different checkout or changed Git HEAD is refused without rebinding. CLI mutations also verify the already-running service identity before obtaining a token. No update/migration is implemented. Git commit identity is not an attestation that a development working tree is clean. `0` requests an unoccupied ephemeral port; another explicit port may be supplied. Stop with Ctrl+C and wait for close before copying the entire private root as a closed backup. An occupied port is an error and its process is left running. Ordinary `npm run dev` retains its existing unregistered-runtime behavior.
 
-`inspect` always reads local canonical records without starting a service. Its `installation` section distinguishes selected and running identities; its `instructions` section lists each pinned file as `ok`, `missing`, `changed` or `unsafe`. These diagnostics remain available on a compatibility mismatch. Init, start and production writes require all four `visual-os-ops-v1` instruction files to match the bundled inventory and SHA-256 hashes. Missing/altered pins are refused, never silently restored; project AGENTS.md and separate local additions remain user-owned. Use matching code and a complete closed backup to recover; do not edit compatibility metadata to bypass refusal.
+`inspect` always reads local canonical records without starting a service. Its `installation` section distinguishes selected and running identities; its `instructions` section lists each pinned file as `ok`, `missing`, `changed` or `unsafe`. These diagnostics remain available on a compatibility mismatch. Init, start and production writes require all nine `visual-os-ops-v2` instruction files to match the bundled inventory and SHA-256 hashes. Missing/altered pins are refused, never silently restored; project AGENTS.md and separate local additions remain user-owned. Use matching code and a complete closed backup to recover; do not edit compatibility metadata to bypass refusal.
 
 Initialization creates one project and Homepage. Repeated initialization reopens those same identities and preserves context, originals, project AGENTS.md and local additions (including instructions.local.md). A durable `.bve-init.json` lets interrupted initialization resume. Unknown roots require adoption, which is outside this candidate. Unsupported/inconsistent identity or compatibility is refused without reset. Locations are fixed child directories for this version; moving the complete closed root is supported, independently remapping children is not. Keep authoritative SQLite files on a local filesystem with working locks, outside source control.
 
@@ -147,3 +147,10 @@ const review = {
 ```
 
 Selection entries reuse `exploration-contracts.ts`: stable ID, exact candidate/integrity/image descriptor, encoded-top-left orientation, normalized-original coordinates, whole/rectangle/ellipse/validated binary mask anchor, intent, existing preservation contract, and bounded notes. Kernel gates independently reconstruct the source/job/receipt closure and check freshness inside the transaction. Revision/scope/action-key conflicts return HTTP 409; syntax errors and missing tokens remain rejected. No browser-supplied author, timestamp or verification result is accepted.
+
+
+## V2 instruction compatibility checkpoint
+
+Fresh roots use configuration format 2 and `bve-vos-continuation-v1`. The fixed inventory contains eight operational files plus the manifest itself. Their exact bundled and installed bytes are checked before project mutations. V1 configurations refuse read-only; there is no migration. Both immutable instruction source bundles remain available under `docs/implementation-packets/`.
+
+Keep user additions in `instructions/local.md`; legacy `instructions.local.md` is also preserved and diagnosed. If both differ, resolve that conflict explicitly before mutation. Existing private `AGENTS.md` remains user-owned. Capture/continuation configuration marks contract/host dependence, not an available adapter or observed proof. See [project structure/setup](docs/project-structure-and-setup.md); its new-interface section is staged until the authorized implementation is completed.

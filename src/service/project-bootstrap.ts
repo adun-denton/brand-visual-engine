@@ -10,13 +10,13 @@ import {exactRef} from '../modules/website/exploration-contracts.ts';
 import {packet,reference,canonical,digest} from '../kernel/packets.ts';
 import {localField,resolveContext} from '../kernel/context.ts';
 import type {VersionRef,ModuleProject} from '../kernel/contracts.ts';
-export const FEATURE_CONTRACT='bve-vos-local-intake-v1';
-export const INSTRUCTION_VERSION='visual-os-ops-v1';
+export const FEATURE_CONTRACT='bve-vos-continuation-v1';
+export const INSTRUCTION_VERSION='visual-os-ops-v2';
 export interface ProjectConfig {
- formatVersion:1; featureContract:typeof FEATURE_CONTRACT; projectId:string; runtimeId:string;
+ formatVersion:2; featureContract:typeof FEATURE_CONTRACT; projectId:string; runtimeId:string;
  locations:{runtime:'runtime';staging:'staging';references:'references';exports:'exports';backups:'backups';instructions:'instructions'};
  installation:{path:string;commit:string}; instructionSetVersion:typeof INSTRUCTION_VERSION;
- initialWorkUnit:VersionRef; capabilities:{capture:'deferred';continuation:'deferred';generation:'unverified'};
+ initialWorkUnit:VersionRef; capabilities:{capture:'host-dependent';continuation:'contract-dependent';generation:'unverified'};
 }
 /** Atomic replacement; leftovers from an interrupted rename are disposable, never identity. */
 function atomicFile(path:string,content:string|Buffer) {
@@ -30,14 +30,14 @@ export function boundedJson(path:string,max=65536):unknown {
 }
 export function parseProjectConfig(input:unknown):ProjectConfig {
  const r=record(input,['formatVersion','featureContract','projectId','runtimeId','locations','installation','instructionSetVersion','initialWorkUnit','capabilities']);
- if(r['formatVersion']!==1||r['featureContract']!==FEATURE_CONTRACT||r['instructionSetVersion']!==INSTRUCTION_VERSION)throw Error('Unsupported project/instruction compatibility; adoption/update required');
+ if(r['formatVersion']!==2||r['featureContract']!==FEATURE_CONTRACT||r['instructionSetVersion']!==INSTRUCTION_VERSION)throw Error('Unsupported project/instruction compatibility; adoption/update required');
  const locations={runtime:'runtime',staging:'staging',references:'references',exports:'exports',backups:'backups',instructions:'instructions'} as const;
  if(canonical(r['locations'])!==canonical(locations))throw Error('Unsupported project locations; adoption required');
- const capabilities={capture:'deferred',continuation:'deferred',generation:'unverified'} as const;
+ const capabilities={capture:'host-dependent',continuation:'contract-dependent',generation:'unverified'} as const;
  if(canonical(r['capabilities'])!==canonical(capabilities))throw Error('Unsupported capability claims');
  const install=record(r['installation'],['path','commit']),path=string(install['path'],4096),commit=string(install['commit'],40);
  if(!isAbsolute(path)||!/^[a-f0-9]{40}$/.test(commit))throw Error('Invalid installation identity');
- return {formatVersion:1,featureContract:FEATURE_CONTRACT,projectId:id(r['projectId']),runtimeId:id(r['runtimeId']),locations,installation:{path,commit},instructionSetVersion:INSTRUCTION_VERSION,initialWorkUnit:exactRef(r['initialWorkUnit']),capabilities};
+ return {formatVersion:2,featureContract:FEATURE_CONTRACT,projectId:id(r['projectId']),runtimeId:id(r['runtimeId']),locations,installation:{path,commit},instructionSetVersion:INSTRUCTION_VERSION,initialWorkUnit:exactRef(r['initialWorkUnit']),capabilities};
 }
 function outsideSourceControl(root:string) {
  for(let path=resolve(root);;path=dirname(path)){
@@ -79,29 +79,49 @@ export function assertInstallation(selected:InstallationIdentity,running:Install
  const identityPath=(path:string)=>{const actual=realpathSync(path);return process.platform==='win32'?actual.toLowerCase():actual;};
  if(identityPath(selected.path)!==identityPath(running.path)||selected.commit!==running.commit)throw Error('Installation mismatch: selected checkout/commit differs from running installation; use matching code and a complete closed root; migration is unsupported');
 }
-// Fixed inventory for visual-os-ops-v1; local additions are deliberately outside it.
+// Fixed inventory for visual-os-ops-v2; local additions are deliberately outside it.
 const PINNED_INSTRUCTIONS=[
  {
-  "path": "instructions/conductor.md",
-  "sha256": "a4be9c29026ea76f1cd3f6cf497971fbea01948ab0b323c2f3955cf7e117b6f5"
- },
- {
-  "path": "instructions/generator.md",
-  "sha256": "0346f91fbf7cfa1304a07b2b75a98f6926b344b1f4aaf1939deb1c8e2b72854e"
- },
- {
-  "path": "instructions/butler.md",
-  "sha256": "e67f5273f761c186e0b0778828c2306abd31c52bc0c31593b0ef3b67064522cd"
+  "path": "instructions/AGENTS.md",
+  "sha256": "27f608b50b0568a315c967c9aea1658d168cfef8b73290ebc5feed684e4bb34d"
  },
  {
   "path": "instructions/project-AGENTS.template.md",
-  "sha256": "840dde9ce1f06d042f134c75c914fb47820738ced8eaa080238ea4e3d0e265e7"
+  "sha256": "b5ff70b3204b8169ba9bc48305d12b36c6e2a76d994fd4c097678618af59a13a"
+ },
+ {
+  "path": "instructions/conductor.md",
+  "sha256": "b51efae4c71a929004ebc264bd7fa5666fa69dc9707786be8068e2550c1916c2"
+ },
+ {
+  "path": "instructions/butler.md",
+  "sha256": "e20cad7e7d6a806dcc6bf59b69c2579ddae8dc844795ffcabdc69468c5de4465"
+ },
+ {
+  "path": "instructions/generator.md",
+  "sha256": "8d8f649307959cb9ada99ab3d777f088cd44aa3d91b245d9693e3f8563c92ce2"
+ },
+ {
+  "path": "instructions/bootstrap.md",
+  "sha256": "c194548e273d0319379b8184b871b9d9c0e4413b7816924bf08dbf01ac9b8335"
+ },
+ {
+  "path": "instructions/foreman.md",
+  "sha256": "e7e002f0e0c2bbb18a83594ca412344b31b3161b4f0cfcae345c9519ace8ca36"
+ },
+ {
+  "path": "instructions/reviewer.md",
+  "sha256": "31adc6dd0b60deead3fb987f8f6282d3ce329c0202c37059478fa3b44f5ed805"
+ },
+ {
+  "path": "instructions/manifest.json",
+  "sha256": "afabc7282bf8fc19bb781d6430acb8ccce76a19d09cac5b816d79564388d28c0"
  }
 ] as const;
 function bundledInstructions() {
  const path=resolve(import.meta.dirname,'../..');
  const manifest=boundedJson(join(path,'instructions/manifest.json')) as {instructionSetVersion?:unknown;files?:unknown};
- if(manifest.instructionSetVersion!==INSTRUCTION_VERSION||canonical(manifest.files)!==canonical(PINNED_INSTRUCTIONS))throw Error('Bundled instruction inventory incompatible');
+ if(createHash('sha256').update(readFileSync(join(path,'instructions/manifest.json'))).digest('hex')!==PINNED_INSTRUCTIONS.at(-1)!.sha256||manifest.instructionSetVersion!==INSTRUCTION_VERSION||canonical(manifest.files)!==canonical(PINNED_INSTRUCTIONS.slice(0,-1)))throw Error('Bundled instruction inventory incompatible');
  return PINNED_INSTRUCTIONS.map(f=>{
   const source=join(path,f.path);assertNoLinks(source);const st=lstatSync(source);
   if(!st.isFile()||st.nlink!==1||st.size>65536)throw Error('Unsafe bundled instruction');
@@ -117,7 +137,11 @@ export function instructionCompatibility(root:string) {
   try{assertNoLinks(path);if(!existsSync(path))status='missing';else{const st=lstatSync(path);if(!st.isFile()||st.nlink!==1||st.size>65536)status='unsafe';else if(createHash('sha256').update(readFileSync(path)).digest('hex')!==f.sha256)status='changed';}}catch{status='unsafe';}
   return {path:f.path,status};
  });
- return {version:INSTRUCTION_VERSION,compatible:!bundleError&&files.every(f=>f.status==='ok'),bundleError,files};
+ const localAdditions={current:existsSync(join(root,'instructions/local.md')),legacy:existsSync(join(root,'instructions.local.md')),conflict:false,issue:null as string|null};
+ try{for(const p of ['instructions/local.md','instructions.local.md'])if(existsSync(join(root,p))){assertNoLinks(join(root,p));const st=lstatSync(join(root,p));if(!st.isFile()||st.nlink!==1||st.size>65536)throw Error('Unsafe local additions');}
+  if(localAdditions.current&&localAdditions.legacy&&!readFileSync(join(root,'instructions/local.md')).equals(readFileSync(join(root,'instructions.local.md'))))throw Error('Conflicting instructions/local.md and legacy instructions.local.md; preserve both and resolve explicitly');
+ }catch(error){localAdditions.conflict=true;localAdditions.issue=String(error);}
+ return {version:INSTRUCTION_VERSION,localAdditions,compatible:!bundleError&&!localAdditions.conflict&&files.every(f=>f.status==='ok'),bundleError,files};
 }
 export function projectConfig(root:string):ProjectConfig {
  const c=storedProjectConfig(root);assertInstallation(c.installation,runningInstallation());
@@ -148,13 +172,13 @@ export function initializeProject(root:string,installation:{path:string;commit:s
    const s=record(boundedJson(seedPath),['config','title']);seed={config:parseProjectConfig(s['config']),title:string(s['title'],100)};
   }else{
    if(readdirSync(root).some(n=>!/^\.bve-init\.json\.[a-f0-9-]+\.tmp$/.test(n)))throw Error('Concurrent unrelated project contents; adoption required');
-   seed={config:parseProjectConfig({formatVersion:1,featureContract:FEATURE_CONTRACT,projectId:'website-'+randomUUID(),runtimeId:'runtime-'+randomUUID(),locations:{runtime:'runtime',staging:'staging',references:'references',exports:'exports',backups:'backups',instructions:'instructions'},installation,instructionSetVersion:INSTRUCTION_VERSION,initialWorkUnit:{id:'page-work-unit-'+randomUUID(),version:1,freshness:'pinned'},capabilities:{capture:'deferred',continuation:'deferred',generation:'unverified'}}),title};
+   seed={config:parseProjectConfig({formatVersion:2,featureContract:FEATURE_CONTRACT,projectId:'website-'+randomUUID(),runtimeId:'runtime-'+randomUUID(),locations:{runtime:'runtime',staging:'staging',references:'references',exports:'exports',backups:'backups',instructions:'instructions'},installation,instructionSetVersion:INSTRUCTION_VERSION,initialWorkUnit:{id:'page-work-unit-'+randomUUID(),version:1,freshness:'pinned'},capabilities:{capture:'host-dependent',continuation:'contract-dependent',generation:'unverified'}}),title};
    atomicJson(seedPath,seed);
   }
   const c=seed.config;assertInstallation(c.installation,installation);
   // A partial bootstrap may fill absent files, but must refuse altered existing pins before history writes.
   const present=instructionCompatibility(root).files.filter(f=>f.status!=='missing'&&f.status!=='ok');
-  if(present.length)throw Error('Pinned instructions incompatible: '+JSON.stringify(present));
+  if(present.length||instructionCompatibility(root).localAdditions.conflict)throw Error('Pinned instructions incompatible: '+JSON.stringify(instructionCompatibility(root)));
   interrupt?.('identity');
   for(const path of Object.values(c.locations)){assertNoLinks(join(root,path));mkdirSync(join(root,path),{recursive:true,mode:0o700});}
   const runtime=join(root,c.locations.runtime),marker=join(runtime,'bve.runtime.json'),identity={version:1,projectId:c.projectId,runtimeId:c.runtimeId};
@@ -185,13 +209,19 @@ export function initializeProject(root:string,installation:{path:string;commit:s
  }finally{w?.close();owner.close();}
 }
 export function inspection(root:string) {
+ try{return compatibleInspection(root);}catch(error){if(!String(error).includes('Unsupported project/instruction compatibility'))throw error;return {config:boundedJson(join(root,'bve.project.json')),installation:{selected:null,running:runningInstallation(),compatible:false,issue:String(error)},environment:{node:process.version,platform:process.platform,architecture:process.arch,supportedNode:true,featureContract:FEATURE_CONTRACT,nativeGeneration:'unverified',capture:'unavailable',continuation:'unavailable',generationCalls:0},compatibility:{compatible:false,issue:String(error)},instructions:instructionCompatibility(root)};}
+}
+function compatibleInspection(root:string) {
  const c=storedProjectConfig(root),running=runningInstallation();let installationIssue:string|null=null;
  try{assertInstallation(c.installation,running);}catch(error){installationIssue=String(error);}
- return {config:c,installation:{selected:c.installation,running,compatible:installationIssue===null,issue:installationIssue},instructions:instructionCompatibility(root),environment:{node:process.version,platform:process.platform,architecture:process.arch,supportedNode:/^v24\./.test(process.version)&&Number(process.versions.node.split('.')[1])>=19,featureContract:FEATURE_CONTRACT,nativeGeneration:'unverified',capture:'deferred',continuation:'deferred',generationCalls:0}};
+ return {config:c,compatibility:{compatible:true,issue:null},installation:{selected:c.installation,running,compatible:installationIssue===null,issue:installationIssue},instructions:instructionCompatibility(root),environment:{node:process.version,platform:process.platform,architecture:process.arch,supportedNode:/^v24\./.test(process.version)&&Number(process.versions.node.split('.')[1])>=19,featureContract:FEATURE_CONTRACT,nativeGeneration:'unverified',capture:'host-dependent',continuation:'contract-dependent',generationCalls:0}};
 }
 
 /** Read-only inspection never opens an application writer, recovers jobs or changes settings. */
-export function inspectRecords(root:string) {
+export function inspectRecords(root:string):{projectId:string;runtimeId:string;jobs:import('../kernel/contracts.ts').NodePacket<unknown>[];receipts:import('../kernel/contracts.ts').NodePacket<unknown>[];iterations:import('../kernel/contracts.ts').NodePacket<unknown>[];issue?:string} {
+ try{return compatibleRecords(root);}catch(error){if(!String(error).includes('Unsupported project/instruction compatibility'))throw error;return {projectId:'unavailable',runtimeId:'unavailable',jobs:[],receipts:[],iterations:[],issue:String(error)};}
+}
+function compatibleRecords(root:string) {
  const c=storedProjectConfig(root),path=join(root,c.locations.runtime,'kernel.sqlite');assertNoLinks(path);
  const db=new DatabaseSync(path,{readOnly:true});
  try{
