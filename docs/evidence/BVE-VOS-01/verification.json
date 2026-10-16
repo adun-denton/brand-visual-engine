@@ -1,0 +1,47 @@
+{
+  "packet": "BVE-VOS-01",
+  "documentationCheckpoint": "c360b716b3dfc2cb43c71d450cae3d6f49b82c88",
+  "node": "24.19.0",
+  "platform": "linux",
+  "fullUnit": {
+    "total": 417,
+    "passed": 416,
+    "failed": 0,
+    "skipped": 1,
+    "skipReason": "Existing Windows anonymous-token private-file ACL test; Linux host"
+  },
+  "focused": {
+    "passed": 16,
+    "failed": 0
+  },
+  "commandsPassed": [
+    "npm ci --ignore-scripts",
+    "npm run typecheck",
+    "npm run build",
+    "npm test",
+    "node --test tests/project-bootstrap.test.ts tests/production-intake.test.ts",
+    "npm run test:native:compatibility",
+    "npm run test:native:resolution-compatibility",
+    "npm run test:native:repair-compatibility",
+    "npm run test:combined:compatibility",
+    "npm run test:browser:production",
+    "npm run test:browser:guided-native",
+    "npm run test:browser:native-resolution",
+    "npm run test:browser:native",
+    "npm run test:browser:visual",
+    "git diff --check"
+  ],
+  "liveCalls": 0,
+  "productionAcceptances": 0,
+  "sourceBundleVerified": 13,
+  "browser": "145.0.7632.6 pinned headless shell",
+  "windows": "Requires actual PR-head CI evidence",
+  "screenshots": {
+    "film-comparison.png": "f1226b02d34339eb99cbed637b73c0633df4aa5ecb7b913aa86351c146b5c5b6",
+    "film-desktop.png": "d87ead2b037c4046efee7422c81ebdc3aee1a0674f132a86c1d19c3201851d5b",
+    "film-narrow.png": "2dc79bb5d725ead9b2acf670b9fe54961b2e27c8abbed741a5cb27b74a195e38",
+    "sheet-comparison.png": "0a4432e6eaaf5593fa024cf574fe3cbce35c6f20a690e9a1037bfa5225f4404f",
+    "sheet-desktop.png": "e3562522e00e9d37acfaa71683f0a00b5a8f640b988d6603ea96dc54aa0029f7",
+    "sheet-narrow.png": "c673eaa0bbf28fb4f8ccb296c2408e3ab3af4a1fdf662b5e28915c012c430009"
+  }
+}

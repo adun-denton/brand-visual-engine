@@ -1,3 +1,4 @@
+import type {ProductionProjection} from '../modules/website/production-contracts.ts';
 import {nativeView,bindNative,type NativeViewState} from './native-exchange.ts';
 import { bindAuxiliary, auxiliaryDraftChanged } from "./auxiliary.ts";
 import {
@@ -30,6 +31,7 @@ import { VisualDrafts, type PageDraft } from "./visual-drafts.ts";
 type Work<T> = NodePacket<DesignArtifact<T>>;
 type State = {
   nativeExchange: NativeViewState;
+  productionIterations: ProductionProjection[];
   project: VersionRef;
   title: string;
   units: Work<WorkUnit>[];
@@ -184,6 +186,8 @@ async function reload(keepExecutionFocus=false) {
   try { next = (await get("state?" + query(ref(state.unit)))) as State; }
   catch (e) { state = null; workspaceError = e instanceof Error ? e.message : "Stored source unavailable"; render(); throw e; }
   if (ticket !== epoch) return;
+  // Stored-progress reads must not detach an unchanged Cancel/Revoke control during input.
+  if (keepExecutionFocus && state && JSON.stringify(next) === JSON.stringify(state)) return;
   state = next;
   workspaceError = "";
   if (!selectionId && selectionSets()?.length === 1)
@@ -220,8 +224,12 @@ async function executionAction(e:State["executions"][number], owner:VersionRef, 
   const projectId=owner.id, unit=e.run.payload.state.workUnit, operationKey=projectId+":"+e.run.id+":"+attribute;
   if(executionCommands.has(operationKey)||attribute==="run" && (dispatchPending(e.run.id)||e.active))return;
   if(busy && !["cancel","revoke"].includes(attribute))return;
-  executionCommands.set(operationKey,{projectId,unit:key(unit),executionId:e.run.id,action});render();
   const ownsView=()=>pid===projectId && state && key(state.unit)===key(unit);
+  executionCommands.set(operationKey,{projectId,unit:key(unit),executionId:e.run.id,action});
+  if ((attribute === "cancel" || attribute === "revoke") && ownsView()) {
+    // Interrupt input must not synchronously rebuild unrelated workspace controls.
+    root.querySelector<HTMLButtonElement>(`[data-execution-${attribute}="${CSS.escape(key(e.run))}"]`)?.setAttribute("disabled", "");
+  } else render();
   let finished=false, observing=true, reads=0, timer:ReturnType<typeof setTimeout>|undefined;
   const refresh=async()=>{if(ownsView())await reload(true);};
   // These GETs refresh stored progress only. They never call transport.status or spend a grant.
@@ -310,12 +318,15 @@ async function add(c: Work<RasterConcept>, anchor: Anchor) {
   draft().scope = entry;
   render();
 }
-const originLabel = (c: Work<RasterConcept>) =>
-  c.payload.state.origin === "synthetic"
+const originLabel = (c: Work<RasterConcept>) => {
+  const proposal=state?.productionIterations.flatMap(i=>i.proposals).find(p=>key(p.candidate)===key(c));
+  if(proposal)return proposal.provenance==='authored-fixture'?'Authored delivery · verified bytes':'Reported native · verified bytes';
+  return c.payload.state.origin === "synthetic"
     ? "Synthetic interaction fixture"
     : c.payload.state.origin === "imported"
       ? "Imported raster"
       : "Raster reference";
+};
 function card(c: Work<RasterConcept>, i: number, strip = false) {
   const whole = selected(c).some((e) => e.anchor.kind === "whole");
   return `<article class="candidate ${key(c) === focused ? "focused" : ""}" data-candidate="${esc(key(c))}"><button class="open-image" data-open="${esc(key(c))}" aria-label="Focus candidate ${i + 1}, revision ${c.version}"><img src="${imageURL(c)}" alt="Page composition ${i + 1}, revision ${c.version}" loading="lazy"></button><div class="card-meta"><strong>Concept ${i + 1} <small>v${c.version}</small></strong><span class="origin">${originLabel(c)}</span></div><div class="card-actions"><button data-whole="${esc(key(c))}" aria-pressed="${whole}">${whole ? "Whole selected" : "Select whole"}</button><button data-compare="${esc(key(c))}" aria-pressed="${compared.includes(key(c))}">Compare</button></div></article>`;
@@ -1022,6 +1033,11 @@ function groups() {
     const candidates=e.outputs.map(r=>state!.candidates.find(c=>key(c)===key(r))).filter((c):c is Work<RasterConcept>=>!!c);
     candidates.forEach(c=>assigned.add(key(c)));
     if(candidates.length)html+=`<div class="batch-group"><h2>Offline execution ${i+1} <small>Synthetic fixtures · ${e.slots.map(s=>s.displayStatus).join(" / ")}</small></h2><div class="card-grid">${candidates.map(c=>card(c,state!.candidates.indexOf(c))).join("")}</div></div>`;
+  }
+  for(const [i,iteration] of state!.productionIterations.entries()) {
+    const candidates=iteration.proposals.map(p=>state!.candidates.find(c=>key(c)===key(p.candidate))).filter((c):c is Work<RasterConcept>=>!!c);
+    candidates.forEach(c=>assigned.add(key(c)));
+    html+=`<div class="batch-group"><h2>Production iteration ${i+1} <small>${esc(iteration.status)} · ${candidates.length}/${iteration.count} proposals</small></h2><div class="card-grid">${candidates.map(c=>card(c,state!.candidates.indexOf(c))).join("")}</div></div>`;
   }
   const imports = state!.candidates.filter((c) => !assigned.has(key(c)));
   return (

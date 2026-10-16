@@ -43,7 +43,9 @@
     "test:browser:native-resolution": "node scripts/native-resolution-browser-check.ts",
     "test:native:repair-compatibility": "node scripts/native-exchange-repair-compatibility.ts",
     "test:native:compatibility": "node scripts/native-exchange-compatibility-check.ts",
-    "test:browser:native": "node scripts/native-exchange-browser-check.ts"
+    "test:browser:native": "node scripts/native-exchange-browser-check.ts",
+    "bve": "node scripts/bve.ts",
+    "test:browser:production": "node scripts/production-browser-check.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.58.2",

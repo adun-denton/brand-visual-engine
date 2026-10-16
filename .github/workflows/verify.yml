@@ -24,7 +24,13 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run build
       - run: npm run typecheck
-      - run: npm test
+      - run: node --test tests/project-bootstrap.test.ts tests/production-intake.test.ts
+        timeout-minutes: 3
+      - name: Windows account-storage cold-start probe
+        if: runner.os == 'Windows'
+        run: node --test tests/chat-auth.test.ts
+        timeout-minutes: 2
+      - run: ${{ runner.os == 'Windows' && 'node --test --test-concurrency=2 tests/*.test.ts' || 'npm test' }}
         env:
           BVE_NATIVE_RESOLUTION_EVIDENCE_DIR: ${{ runner.temp }}/bve-native-resolution-unit-evidence
           BVE_NATIVE_REPAIR_EVIDENCE_DIR: ${{ runner.temp }}/bve-native-repair-unit-evidence
@@ -140,6 +146,9 @@ jobs:
       - run: npm run test:browser:native-resolution
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-native-resolution-browser-evidence
+      - run: npm run test:browser:production
+        env:
+          BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-production-browser-evidence
       - run: npm run test:browser:guided-native
         env:
           BVE_EVIDENCE_DIR: ${{ runner.temp }}/bve-guided-native-browser-evidence
@@ -148,6 +157,7 @@ jobs:
         with:
           name: offline-browser-evidence-${{ matrix.os }}
           path: |
+            ${{ runner.temp }}/bve-production-browser-evidence
             ${{ runner.temp }}/bve-guided-native-browser-evidence
             ${{ runner.temp }}/bve-native-resolution-unit-evidence
             ${{ runner.temp }}/bve-native-resolution-compatibility-evidence

@@ -1,0 +1,58 @@
+{
+  "packet": "BVE-VOS-01",
+  "fixture": "authored SVG originals rasterized locally with sharp",
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 1050
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "layouts": [
+    "sheet",
+    "film"
+  ],
+  "originals": [
+    {
+      "jobId": "production-job-b673ad04f75b9baef05391068581240e1a275ef36c356369366ce5549866baa1",
+      "sha256": "bb19a393b40d58b6ef15d22c849be0d3aad20a32ba99b096502fba352d76ec0f",
+      "candidate": {
+        "id": "production-candidate-a4a09534edb52ddfc1a43aebab59b8aafa052270d385366a4ba1f94e8e632fde",
+        "version": 1,
+        "freshness": "pinned"
+      },
+      "provenance": "authored-fixture"
+    },
+    {
+      "jobId": "production-job-370f06da51669e25c41f71fea972092063ef623788521eb7521b41e325ec7e45",
+      "sha256": "be87bfe0d6d3aa08becf245a91a2f2e97d8b410096a193118888a570c8f8fa53",
+      "candidate": {
+        "id": "production-candidate-d80e885f96abab81e6e74e3b9455287fb808823a3fd1ec991a66334fa8929cfa",
+        "version": 1,
+        "freshness": "pinned"
+      },
+      "provenance": "authored-fixture"
+    },
+    {
+      "jobId": "production-job-66faabce2a46210795b2095a7b489fa471cb5e5a2199582e714df54e64f6c517",
+      "sha256": "cf2c1fc8aa10a5e4d9af0065aa10a10462806a383a01236f4cc84f1ee1986034",
+      "candidate": {
+        "id": "production-candidate-690573e8c6d433a506d3cb11f0ae422aad0234908ac9c4f8f4f56b521d687257",
+        "version": 1,
+        "freshness": "pinned"
+      },
+      "provenance": "authored-fixture"
+    }
+  ],
+  "proposalsVisible": 3,
+  "comparison": true,
+  "reopen": true,
+  "errors": [],
+  "browserWrites": [],
+  "hostTokenGuard": true,
+  "generationCalls": 0,
+  "acceptances": 0
+}

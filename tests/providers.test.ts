@@ -1293,10 +1293,10 @@ test('uncertain run blocks another submission until explicit reconciliation, ret
   );
 });
 
-test('two independent service instances cannot claim the same queued attempt twice', async (t) => {
+test('two service connections under one owning writer cannot claim the same queued attempt twice', async (t) => {
   const root = mkdtempSync(join(tmpdir(), 'bve-provider-claim-'));
   const w1 = new Workspace(root, { directionFixture: true }),
-    w2 = new Workspace(root, { directionFixture: true });
+    w2 = new Workspace(root, { directionFixture: true }, w1.owner);
   let calls = 0;
   const config1 = config(async () => {
     calls++;

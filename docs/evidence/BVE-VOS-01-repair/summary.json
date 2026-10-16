@@ -1,0 +1,59 @@
+{
+  "packet": "BVE-VOS-01",
+  "fixture": "authored SVG originals rasterized locally with sharp",
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 1050
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "layouts": [
+    "sheet",
+    "film"
+  ],
+  "originals": [
+    {
+      "jobId": "production-job-74f096e34dbb542d62a3698b99227e38fc328147904e29c25e0b0850417b5568",
+      "sha256": "bb19a393b40d58b6ef15d22c849be0d3aad20a32ba99b096502fba352d76ec0f",
+      "candidate": {
+        "id": "production-candidate-01c401cd1f4994ba1d9ba9fdf0b6dc3297f8b851c783cb0a43bc6ced8637b9c9",
+        "version": 1,
+        "freshness": "pinned"
+      },
+      "provenance": "authored-fixture"
+    },
+    {
+      "jobId": "production-job-35c97d7e8a2aea1dc3bead8228cb9eda4ca32816b153374e90f822fb8f521d36",
+      "sha256": "be87bfe0d6d3aa08becf245a91a2f2e97d8b410096a193118888a570c8f8fa53",
+      "candidate": {
+        "id": "production-candidate-2425d14f57a27df0d4fc9215fd472b3111a5277803ca539d1bda3792c9cfd38c",
+        "version": 1,
+        "freshness": "pinned"
+      },
+      "provenance": "authored-fixture"
+    },
+    {
+      "jobId": "production-job-1698e7810239eed0b121778d80503f32b4ee12f622f4d5dc2b402a52621b0e4a",
+      "sha256": "cf2c1fc8aa10a5e4d9af0065aa10a10462806a383a01236f4cc84f1ee1986034",
+      "candidate": {
+        "id": "production-candidate-d8d1c4c0bb769e0722a4c9edc1edbb7863d59b6a820bb188fe47f442dd533492",
+        "version": 1,
+        "freshness": "pinned"
+      },
+      "provenance": "authored-fixture"
+    }
+  ],
+  "proposalsVisible": 3,
+  "comparison": true,
+  "reopen": true,
+  "errors": [],
+  "browserWrites": [],
+  "hostTokenGuard": true,
+  "generationCalls": 0,
+  "acceptances": 0,
+  "verificationScope": "Local repair working tree based on 12e977c; exact published-head browser runs are separate CI artifacts."
+}

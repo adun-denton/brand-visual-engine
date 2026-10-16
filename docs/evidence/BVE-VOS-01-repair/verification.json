@@ -1,0 +1,46 @@
+{
+  "scope": "F1/F2 repair working tree based on 12e977c85803e0b4b7d1e000018648c7cad10dc7",
+  "node": "v24.19.0",
+  "platform": "linux",
+  "browser": "Chrome for Testing headless shell 145.0.7632.6",
+  "browserZip": {
+    "bytes": 116288461,
+    "md5": "e24ac3e7452aab1e4db871f1c153180e",
+    "officialObjectChecksumMatched": true
+  },
+  "focused": {
+    "total": 19,
+    "passed": 19
+  },
+  "fullUnits": {
+    "total": 420,
+    "passed": 419,
+    "skipped": 1,
+    "failed": 0,
+    "skip": "Existing Windows-only ACL anonymous read probe"
+  },
+  "passed": [
+    "typecheck",
+    "build",
+    "combined compatibility v05/r8",
+    "native compatibility",
+    "native repair compatibility",
+    "native resolution compatibility",
+    "production browser",
+    "execution browser including repair controls",
+    "Library browser"
+  ],
+  "visuallyInspected": [
+    "sheet-desktop.png",
+    "film-narrow.png"
+  ],
+  "sha256": {
+    "film-comparison.png": "f1226b02d34339eb99cbed637b73c0633df4aa5ecb7b913aa86351c146b5c5b6",
+    "sheet-desktop.png": "e3562522e00e9d37acfaa71683f0a00b5a8f640b988d6603ea96dc54aa0029f7",
+    "sheet-narrow.png": "c673eaa0bbf28fb4f8ccb296c2408e3ab3af4a1fdf662b5e28915c012c430009",
+    "summary.json": "3877f121b31d33042502ba2bbf1e7502306c748358bbd07a0b76cd2cc51e6498",
+    "film-narrow.png": "2dc79bb5d725ead9b2acf670b9fe54961b2e27c8abbed741a5cb27b74a195e38",
+    "sheet-comparison.png": "0a4432e6eaaf5593fa024cf574fe3cbce35c6f20a690e9a1037bfa5225f4404f",
+    "film-desktop.png": "d87ead2b037c4046efee7422c81ebdc3aee1a0674f132a86c1d19c3201851d5b"
+  }
+}
