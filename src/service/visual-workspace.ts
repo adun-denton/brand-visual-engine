@@ -39,6 +39,7 @@ export function plainText(x: unknown, max = 4000): string {
   return text;
 }
 export class VisualWorkspace {
+  reviewAvailable=false;
   readonly w: Workspace;
   readonly exploration: Exploration;
   readonly executions: Executions;
@@ -51,6 +52,7 @@ export class VisualWorkspace {
   }
   catalog() {
     return {
+      reviewAvailable:this.reviewAvailable,
       projects: this.w.kernel
         .latestPackets()
         .filter((p) => p.type === "module-project")
@@ -131,7 +133,7 @@ export class VisualWorkspace {
         .filter((m) => canonical(m.payload.state.candidate) === canonical(reference(c)))
         .map((m) => this.exploration.read<WorkUnit>(pid, m.payload.state.workUnit, "page-work-unit").payload.state.label);
     }
-    return { ...this.project(pid), unit: u, records, candidates, selectedSources, sourceOrigins, productionIterations:this.production(pid,unit), executionAvailability:this.executions.availability(), executions:this.executions.state(pid,unit), nativeExchange:this.native.state(pid,unit) };
+    return { reviewAvailable:this.reviewAvailable, ...this.project(pid), unit: u, records, candidates, selectedSources, sourceOrigins, productionIterations:this.production(pid,unit), executionAvailability:this.executions.availability(), executions:this.executions.state(pid,unit), nativeExchange:this.native.state(pid,unit) };
   }
   /** Read-only projection into existing contact-sheet/filmstrip controls. */
   private production(pid:string,unit:VersionRef):ProductionProjection[] {

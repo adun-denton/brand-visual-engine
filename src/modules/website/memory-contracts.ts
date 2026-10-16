@@ -322,6 +322,10 @@ export function evidenceSummary(p: NodePacket<unknown>): Value | null {
       continuationObservation:
         "Stored reservations/running markers are unresolved evidence, not proof of current transport activity; active calls and pending deliveries are process-only",
     };
+  if(k==='production-review-draft'||k==='production-review-submission'){
+    const s=p.payload as unknown as DesignArtifact<import('./review-contracts.ts').ReviewDraft>;
+    return {version:1,workUnit:s.state.scope.workUnit as unknown as Value,iteration:s.state.scope.iteration as unknown as Value,comment:s.state.feedback.comment,selectionCount:s.state.feedback.selections.entries.length,contentAuthority:k,verification:'pending-not-implemented',portableContent:'summary only; exact feedback/originals require the owning review service'};
+  }
   if (fullKinds.has(k)) return a.state;
   if (
     [

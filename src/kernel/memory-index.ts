@@ -216,7 +216,7 @@ export class CanonicalMemory {
           (!s["scope"] || (s["scope"] as VersionRef).id === scope.id)) ||
         (s &&
           typeof s === "object" &&
-          (s["workUnit"] as VersionRef | undefined)?.id === scope.id)
+          ((s["workUnit"] as VersionRef | undefined)?.id === scope.id || (['production-review-draft','production-review-submission'].includes(k) && (s['scope'] as {workUnit?:VersionRef}|undefined)?.workUnit?.id===scope.id)))
       );
     };
     const add = (r: VersionRef, expected: string | null = null) => {

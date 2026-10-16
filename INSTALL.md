@@ -98,3 +98,52 @@ The runtime has one owning application writer. Agent commands use the running se
 The additive endpoints are `GET /api/v1/production/state` and authenticated `POST /api/v1/production/prepare`, `/intake`, `/cancel`. The latter two accept `{ "jobId": "..." }` and `{ "iteration": <exact-ref> }`. No generation, automatic retries, acceptance, submission, capture or cleanup endpoint is added.
 
 Receipt/candidate/membership/job outcome commit in one kernel transaction. Asset writes occur first; a failed database commit can leave unreferenced, recoverable content-addressed bytes. Such bytes are not a successful result and are never automatically deleted. Repeating valid intake can reuse them. Rollback requires matching software plus a complete closed test/pre-adoption root; never downgrade an evolved database in place.
+
+## Durable production review (BVE-VOS-02 candidate)
+
+Use a fresh disposable/private root initialized by the exact candidate checkout, then the existing project-bound `bve start --root <private-root> 0`. The installation and pinned instruction checks remain mandatory; do not edit an older root's selected commit to bypass them. This candidate adds no migration.
+
+In **Production review**, explicitly choose an owned iteration with at least one reviewable proposal. Select whole images or use the existing rectangle/ellipse controls; add source comments and an overall comment. Existing source intents/preservation constraints remain requests, not new preservation guarantees. **Save draft** explicitly persists the feedback. A reload without saving does not save unsent edits. Review content is separate from legacy selections and next-variation drafts; choose the blank review iteration option to return to those retained controls.
+
+**Submit review** includes current comments and selections, including edits made after Save draft. It commits the final draft revision and immutable submission together through the owning local service. No Butler, Conductor, model or signed-in account is required. Confirmation shows the final draft revision and **operational verification pending / not implemented**; this is not generation or design acceptance. Submitted content is read-only; **Edit as new draft** creates an explicit parent-linked draft and a later submission retains the original.
+
+Dirty page/project/iteration changes offer Save and continue, explicit discard, or Stay. Failed saves/conflicts retain typed feedback. On an unconfirmed submission, use **Reconcile / refresh status** before **Retry same submission**. The same action key with identical canonical input returns the same submission; changed feedback under that key conflicts. Reload/restart discovers the canonical draft/submission relationship. Tab storage preserves unresolved request evidence when available, but is not canonical authority. Reopen URLs identify the project, page and iteration explicitly; otherwise choose them again. Saved history and exact identities are under details, with no manual record bookkeeping in the normal flow.
+
+A late delivery (including diagnostic incomplete/conflict receipts), cancellation, supersession or relevant revision invalidates the frozen review scope. Historical drafts remain readable; they cannot be submitted. Explicitly start a new review of current outcomes rather than rebinding the old draft. Zero-proposal iterations cannot be reviewed; partial iterations freeze and label all observed outcomes. Comment-only feedback is allowed; an empty review is refused. Review snapshots allow 1–6 jobs, up to 64 observed receipts, the existing selection/note/geometry bounds, a 4000-character overall comment, and 10 MiB of feedback. An inventory exceeding these bounds is refused, not silently truncated.
+
+If unavailable media blocks the legacy workspace, a read-only recovery catalog still exposes stored review feedback and exact-source availability. Restore the exact original or a complete closed backup before new writes.
+
+Original bytes and source versions remain exact. Submitted originals are fetched through the stored review reference, never from the latest candidate. Missing/corrupt originals are explicitly unavailable. Existing memory/portable continuation shows review summaries only (comment/count/scope/authority); it does not export full review feedback, mask geometry or originals. A complete closed root remains the backup/recovery unit.
+
+### Local review service interface
+
+All mutations retain the existing local Host/Origin/session-token checks and the owning writer. A future Butler client must use this same service, without changing review content authority. GET operations do not write or invoke anything.
+
+| Operation | Route | Bounded request/result |
+|---|---|---|
+| Read-only recovery catalog | `GET /api/v1/visual/review/catalog` | Query `project` and JSON pinned `unit`; lists registered iteration identities/outcomes without requiring readable original bytes |
+| List/load | `GET /api/v1/visual/review/state` | Query `project`, JSON pinned `unit`, and `iteration` ID; returns current frozen `scope`, `current`, partial outcome summary, saved drafts and submissions with original availability |
+| Save | `POST /api/v1/visual/review/save` | `{projectId,input:review}`; returns the exact saved draft packet |
+| Submit | `POST /api/v1/visual/review/submit` | `{projectId,input:{review,actionKey}}`; returns one immutable submission packet with `finalDraft`, integrity/content/request hashes, server timestamp and pending verification |
+| Edit as new | `POST /api/v1/visual/review/copy` | `{projectId,input:{submission:<pinned ref>,draftId:<new stable review-draft UUID>}}`; returns the saved parent-linked draft; stale scope refuses rather than rebinding |
+| Exact original | `GET /api/v1/visual/review/original` | Query `project`, JSON pinned `record`, and zero-based `index`; returns the verified original or explicit unavailable error |
+
+A review input takes this form; use the exact `scope` returned by the service, not a hand-built proposal inventory:
+
+```js
+const review = {
+  draftId: "review-draft-" + crypto.randomUUID(), // retain across retries
+  expected: null, // or the exact last saved draft ref; never a guessed latest revision
+  scope: loaded.scope,
+  feedback: {
+    selections: { version: 1, workUnit: loaded.scope.workUnit, entries: [] },
+    comment: "None of these compositions works yet."
+  },
+  parentSubmission: null
+};
+// Save: input = review.
+// Submit: input = { review, actionKey: "review-action-" + crypto.randomUUID() }.
+// Retain the same complete input/actionKey until commit status is reconciled.
+```
+
+Selection entries reuse `exploration-contracts.ts`: stable ID, exact candidate/integrity/image descriptor, encoded-top-left orientation, normalized-original coordinates, whole/rectangle/ellipse/validated binary mask anchor, intent, existing preservation contract, and bounded notes. Kernel gates independently reconstruct the source/job/receipt closure and check freshness inside the transaction. Revision/scope/action-key conflicts return HTTP 409; syntax errors and missing tokens remain rejected. No browser-supplied author, timestamp or verification result is accepted.

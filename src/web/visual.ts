@@ -1,3 +1,4 @@
+import {ProductionReviewUI} from './production-review.ts';
 import type {ProductionProjection} from '../modules/website/production-contracts.ts';
 import {nativeView,bindNative,type NativeViewState} from './native-exchange.ts';
 import { bindAuxiliary, auxiliaryDraftChanged } from "./auxiliary.ts";
@@ -30,6 +31,7 @@ import { normalizedPoint, regionBetween } from "./visual-geometry.ts";
 import { VisualDrafts, type PageDraft } from "./visual-drafts.ts";
 type Work<T> = NodePacket<DesignArtifact<T>>;
 type State = {
+  reviewAvailable:boolean;
   nativeExchange: NativeViewState;
   productionIterations: ProductionProjection[];
   project: VersionRef;
@@ -61,6 +63,7 @@ const ref = (p: { id: string; version: number }): VersionRef => ({
 const key = (p: { id: string; version: number }) => p.id + ":" + p.version;
 let token = "",
   catalog: {
+    reviewAvailable?:boolean;
     projects: { ref: VersionRef; title: string }[];
     brands: { ref: VersionRef; label: string }[];
   } = { projects: [], brands: [] };
@@ -78,6 +81,7 @@ let layout = "sheet",
   epoch = 0;
 let observers: ResizeObserver[] = [];
 const drafts = new VisualDrafts();
+const review = new ProductionReviewUI(()=>render(),(action,input,pid)=>post(action,input,pid));
 let workspaceError = "", errorUnit = "", pendingRemoval: string[] = [];
 const draft = (): PageDraft => drafts.page(pid, state ? key(state.unit) : errorUnit);
 const allCandidates = () => [...new Map([...(state?.candidates ?? []), ...(state?.selectedSources ?? [])].map(c => [key(c), c])).values()];
@@ -103,6 +107,7 @@ function dirtyNote(e: SelectionEntry) {
   return !!n && (n.note !== (e.notes[0]?.text ?? "") || n.intent !== e.intent);
 }
 function requestRemoval(ids: string[]) {
+  if(review.active){review.remove(ids);return;}
   if (entries().some(e => ids.includes(e.id) && (dirtyNote(e) || Object.keys(draft().requests[noteKey(e)]?.values ?? {}).length))) {
     pendingRemoval = ids;
     render();
@@ -148,7 +153,7 @@ async function post(action: string, input: unknown, projectId = pid) {
     ),
   });
   const v = await r.json();
-  if (!r.ok) throw Error(v.error);
+  if (!r.ok) throw Object.assign(Error(v.error),{status:r.status});
   return v;
 }
 let selectionId = "";
@@ -157,7 +162,7 @@ const selectionSets = () =>
     | Work<Selections>[]
     | undefined;
 const selection = () => selectionSets()?.find((p) => p.id === selectionId);
-const entries = () => selection()?.payload.state.entries ?? [];
+const entries = () => review.active ? review.entries : selection()?.payload.state.entries ?? [];
 const active = () => allCandidates().find((c) => key(c) === focused);
 function focusSource(k: string) {
   focused = k;
@@ -299,6 +304,7 @@ async function saveEntries(next: SelectionEntry[]) {
   await reload();
 }
 async function add(c: Work<RasterConcept>, anchor: Anchor) {
+  if(review.active){review.add(c,anchor);return;}
   const nextEntry = "selection-" + crypto.randomUUID();
   const e: SelectionEntry = {
     id: nextEntry,
@@ -356,6 +362,7 @@ function focusView() {
   return `<section class="focus-view"><div class="focus-toolbar"><span>${esc(sourceLabel(c))}</span><label>Region <select id="region-tool"><option value="rectangle" ${tool === "rectangle" ? "selected" : ""}>Rectangle</option><option value="ellipse" ${tool === "ellipse" ? "selected" : ""}>Ellipse</option></select></label><label>Zoom <select id="zoom">${[1, 1.5, 2].map((z) => `<option value="${z}" ${zoom === z ? "selected" : ""}>${z * 100}%</option>`).join("")}</select></label><button id="clear-compare">Single focus</button></div><div class="comparison ${comparisons.length > 1 ? "multiple" : ""}">${comparisons.map(canvas).join("")}</div>${contextControls()}<p class="hint">Drag on an image to select a region, or enter a region below. Requests do not change these pixels.</p><details class="region-access"><summary>Add region without dragging</summary><form id="region-form"><label>Shape <select name="shape"><option value="rectangle">Rectangle</option><option value="ellipse">Ellipse</option></select></label>${["x", "y", "width", "height"].map((n) => `<label>${n} (%)<input name="${n}" type="number" min="0" max="100" step="0.1" required></label>`).join("")}<button>Add region to focused concept</button></form></details></section>`;
 }
 function selectionView() {
+  if(review.active)return review.selections();
   return `<aside class="selections"><div class="section-head"><h2>Selected sources <span>${entries().length}</span></h2></div>${
     entries().length
       ? entries()
@@ -397,9 +404,11 @@ function scopeView() {
   return `<label>Request scope<select id="request-scope"><option value="" ${draft().scope === "" ? "selected" : ""}>This page</option>${draft().scope !== "" && !entries().some(e => e.id === draft().scope) ? `<option value="${esc(draft().scope)}" selected disabled>Unavailable source scope</option>` : ""}${entries().map((e,i) => `<option value="${esc(e.id)}" ${draft().scope === e.id ? "selected" : ""}>Source ${i+1} · ${esc(sourceLabel(allCandidates().find(c => key(c) === key(e.candidate))!))}</option>`).join("")}</select></label>`;
 }
 function contextControls() {
+  if(review.active)return "";
   return `<details id="level1-panel" class="context-controls" ${draft().open["level1-panel"] ? "open" : ""}><summary>Direct requests · Level 1 · ${draft().scope === "" ? "This page" : "Selected source"}</summary>${scopeView()}<p class="hint">Six optional requests for the visible scope. Current properties are unmeasured; requests change the next input, not these pixels.</p><div class="controls">${controls(1)}</div></details>`;
 }
 function prepareView() {
+  if(review.active)return `<p class="hint">Review feedback is separate from next-variation input. Choose the blank review iteration option to return to your retained variation draft.</p>`;
   const d = draft();
   const option = (value: string, label: string, current: string) => `<option value="${value}" ${value === current ? "selected" : ""}>${label}</option>`;
   return `<section class="prepare"><div class="section-head"><h2>Next variation</h2><span>Preparation only</span></div><form id="prepare"><label class="intent">Intent<textarea name="intent" rows="2" required placeholder="Describe the next visual direction…">${esc(d.intent)}</textarea></label><div class="prepare-core"><label>Operation<select name="operation">${[["refine","Refine selected sources"],["refresh","Refresh alternatives"],["create","Create direction"],["branch","Branch"]].map(([v,l])=>option(v!,l!,d.operation)).join("")}</select></label><label>Attempts<select name="count" required>${option("","Choose 1–6",d.count)}${[1,2,3,4,5,6].map(n=>option(String(n),String(n),d.count)).join("")}</select></label><label>Direction<select name="direction" required>${option("","Choose Direction",d.direction)}${option("fresh","Fresh",d.direction)}${option("follow","Follow selected direction",d.direction)}</select></label></div><div class="optional"><details id="tune-panel" ${d.open["tune-panel"] ? "open" : ""}><summary>Tune · Level 2 · ${d.scope === "" ? "This page" : "Selected source"}</summary><p class="hint">Requested characteristics only, not measurements. Scales 1.0–10.0. No request until changed; Clear restores unset. Current effect category/strength are unknown.</p><div class="controls">${controls(2)}</div></details><details id="brand-panel" ${d.open["brand-panel"] ? "open" : ""}><summary>Brand · ${d.brand === "" ? "off" : "on"}</summary><label>Optional approved Brand<select name="brand"><option value="">Off · unbranded</option>${catalog.brands.map((b,i) => `<option value="${i}" ${d.brand === String(i) ? "selected" : ""}>${esc(b.label)}</option>`).join("")}</select></label><p class="hint">Brand and Direction are independent.</p></details></div><p class="execution-note">${state!.executionAvailability.connected ? "Offline fixture executor only." : "Image execution is unavailable."} Preparation saves canonical sources and pending slots only; save source notes explicitly before freezing.</p><p class="hint">Session drafts survive view and page/project switches. Reload closes this draft session. Successful preparation retains this editable draft for another explicit operation.</p><button class="primary">Prepare next attempt</button><button type="button" id="discard-draft">Discard this page's unsaved drafts</button></form>${prepared ? `<div class="prepared" role="status"><strong>${prepared.batch.payload.state.attempts.length} pending attempts prepared · draft retained</strong><p>${esc(prepared.specification.payload.state.rawIntent)} · ${prepared.specification.payload.state.direction} · Brand ${prepared.specification.payload.state.brand.enabled ? "on" : "off"}</p><details><summary>Inspect exact frozen input</summary><pre>${esc(JSON.stringify(prepared.specification.payload.state, null, 2))}</pre></details></div>` : ""}</section>`;
@@ -996,8 +1005,10 @@ function bindMemory() {
 }
 
 function render() {
+  const recoveryUnit=units.find(u=>key(u)===errorUnit);
+  review.setContext(state?.reviewAvailable?{pid,unit:ref(state.unit),iterations:state.productionIterations}:workspaceError&&catalog.reviewAvailable&&recoveryUnit?{pid,unit:ref(recoveryUnit),iterations:[],readOnly:true}:null);
   const focusId = (document.activeElement as HTMLElement)?.id;
-  root.innerHTML = `<header><a class="wordmark" href="/visual">BVE <span>VISUAL STUDIO</span></a><span class="review-tag">Interaction review · no image execution</span><a href="/legacy">Legacy semantic workspace</a></header><main id="workspace"><div class="workspace-title"><div><p class="eyebrow">WEBSITE EXPLORATION</p><h1>${esc(state?.title ?? (pid ? "Start a page" : "Start with a page."))}</h1></div><label>Review layout<select id="layout"><option value="sheet" ${layout === "sheet" ? "selected" : ""}>A · Contact sheet + Focus</option><option value="film" ${layout === "film" ? "selected" : ""}>B · Focus + Filmstrip</option></select></label></div><div class="entry-bar"><label>Project<select id="project"><option value="">Choose project</option>${catalog.projects.map((p) => `<option value="${p.ref.id}" ${pid === p.ref.id ? "selected" : ""}>${esc(p.title)}</option>`).join("")}</select></label><details class="entry-extra" ${pid ? "" : "open"}><summary>New project</summary><form id="new-project"><input name="title" required aria-label="New Website project name" placeholder="New Website project"><button>Create project</button></form></details>${pid ? `<label>Page<select id="page"><option value="">Choose page</option>${units.map((u) => `<option value="${key(u)}" ${state && key(state.unit) === key(u) ? "selected" : ""}>${esc(u.payload.state.label)}</option>`).join("")}</select></label><details class="entry-extra" id="page-tools" ${state ? "" : "open"}><summary>Add page</summary><form id="new-page"><select name="type" aria-label="Page type"><option value="homepage">Homepage</option><option value="about">About Us</option><option value="custom">Custom page</option></select><input name="label" aria-label="Page label" placeholder="Page label (optional)"><button>Add page</button></form></details>` : ""}</div>${
+  root.innerHTML = `<header><a class="wordmark" href="/visual">BVE <span>VISUAL STUDIO</span></a><span class="review-tag">Interaction review · no image execution</span><a href="/legacy">Legacy semantic workspace</a></header><main id="workspace"><div class="workspace-title"><div><p class="eyebrow">WEBSITE EXPLORATION</p><h1>${esc(state?.title ?? (workspaceError?catalog.projects.find(p=>p.ref.id===pid)?.title:undefined) ?? (pid ? "Start a page" : "Start with a page."))}</h1></div><label>Review layout<select id="layout"><option value="sheet" ${layout === "sheet" ? "selected" : ""}>A · Contact sheet + Focus</option><option value="film" ${layout === "film" ? "selected" : ""}>B · Focus + Filmstrip</option></select></label></div><div class="entry-bar"><label>Project<select id="project"><option value="">Choose project</option>${catalog.projects.map((p) => `<option value="${p.ref.id}" ${pid === p.ref.id ? "selected" : ""}>${esc(p.title)}</option>`).join("")}</select></label><details class="entry-extra" ${pid ? "" : "open"}><summary>New project</summary><form id="new-project"><input name="title" required aria-label="New Website project name" placeholder="New Website project"><button>Create project</button></form></details>${pid ? `<label>Page<select id="page"><option value="">Choose page</option>${units.map((u) => `<option value="${key(u)}" ${(state ? key(state.unit) === key(u) : workspaceError && errorUnit === key(u)) ? "selected" : ""}>${esc(u.payload.state.label)}</option>`).join("")}</select></label><details class="entry-extra" id="page-tools" ${state ? "" : "open"}><summary>Add page</summary><form id="new-page"><select name="type" aria-label="Page type"><option value="homepage">Homepage</option><option value="about">About Us</option><option value="custom">Custom page</option></select><input name="label" aria-label="Page label" placeholder="Page label (optional)"><button>Add page</button></form></details>` : ""}</div>${
     state
       ? `<div class="action-bar">${
           selectionSets()!.length > 1
@@ -1008,8 +1019,8 @@ function render() {
                 )
                 .join("")}</select></label>`
             : ""
-        }<details class="entry-extra" id="import-tools" ${state.candidates.length ? "" : "open"}><summary>Import raster</summary><form id="import"><label class="import-pick">Import PNG / JPEG / WebP<input name="file" type="file" accept="image/png,image/jpeg,image/webp" required></label><input name="permission" aria-label="Image use permission" placeholder="Permission / source" required><label>Import as<select name="previous"><option value="">New concept</option>${state.candidates.map((c, i) => `<option value="${key(c)}">Replace Concept ${i + 1} · v${c.version}</option>`).join("")}</select></label><button>Import raster</button></form></details><div class="deferred"><button id="library-save" ${active()&&!libraryView().pending?"":"disabled"}>Add whole raster to Library</button><button id="raster-export" ${active()&&!libraryView().pending?"":"disabled"}>Export whole raster</button><button id="build-html" ${active()?"":"disabled"}>Build as HTML</button></div></div><p class="hint">Library save, raster export and later HTML reconstruction are separate operations.</p><div class="studio ${layout}"><div class="visual-area">${(state.candidates.length || state.selectedSources.length) ? (layout === "sheet" ? `<section class="contact-sheet" aria-label="Candidate contact sheet">${groups()}</section>${focusView()}` : `${focusView()}<section class="filmstrip" aria-label="Candidate filmstrip">${state.candidates.map((c, i) => card(c, i, true)).join("")}</section>`) : `<div class="empty-canvas"><h2>Your next direction starts here.</h2><p>Import raster concepts to compare, select and annotate.</p><p>No image generator is connected in this review slice.</p>${contextControls()}</div>`}</div>${selectionView()}</div><div id="reconstruction-root"></div>${libraryPanel()}${memoryPanel()}${prepareView()}${nativeView(state.nativeExchange,esc,state.records.filter(p=>p.payload.kind==="raster-specification"),Boolean(draft().open["native-exchange-panel"]))}${executionView()}${historyView()}`
-      : workspaceError ? `<section class="workspace-error" role="alert"><h2>Workspace unavailable</h2><p>${esc(workspaceError)}</p><p>Stored sources could not be validated. No records or drafts were changed.</p><button id="retry-open">Retry reopen</button></section>` : '<section class="welcome"> <h2>A visual place to explore.</h2><p>Create a Website project and choose Homepage, About Us or a custom page. Brand setup and chat are optional.</p></section>'
+        }<details class="entry-extra" id="import-tools" ${state.candidates.length ? "" : "open"}><summary>Import raster</summary><form id="import"><label class="import-pick">Import PNG / JPEG / WebP<input name="file" type="file" accept="image/png,image/jpeg,image/webp" required></label><input name="permission" aria-label="Image use permission" placeholder="Permission / source" required><label>Import as<select name="previous"><option value="">New concept</option>${state.candidates.map((c, i) => `<option value="${key(c)}">Replace Concept ${i + 1} · v${c.version}</option>`).join("")}</select></label><button>Import raster</button></form></details><div class="deferred"><button id="library-save" ${active()&&!libraryView().pending?"":"disabled"}>Add whole raster to Library</button><button id="raster-export" ${active()&&!libraryView().pending?"":"disabled"}>Export whole raster</button><button id="build-html" ${active()?"":"disabled"}>Build as HTML</button></div></div><p class="hint">Library save, raster export and later HTML reconstruction are separate operations.</p>${review.panel()}<div class="studio ${layout}"><div class="visual-area">${(state.candidates.length || state.selectedSources.length) ? (layout === "sheet" ? `<section class="contact-sheet" aria-label="Candidate contact sheet">${groups()}</section>${focusView()}` : `${focusView()}<section class="filmstrip" aria-label="Candidate filmstrip">${state.candidates.map((c, i) => card(c, i, true)).join("")}</section>`) : `<div class="empty-canvas"><h2>Your next direction starts here.</h2><p>Import raster concepts to compare, select and annotate.</p><p>No image generator is connected in this review slice.</p>${contextControls()}</div>`}</div>${selectionView()}</div><div id="reconstruction-root"></div>${libraryPanel()}${memoryPanel()}${prepareView()}${nativeView(state.nativeExchange,esc,state.records.filter(p=>p.payload.kind==="raster-specification"),Boolean(draft().open["native-exchange-panel"]))}${executionView()}${historyView()}`
+      : workspaceError ? `<section class="workspace-error" role="alert"><h2>Workspace unavailable</h2><p>${esc(workspaceError)}</p><p>Stored sources could not be validated. No records or drafts were changed.</p><button id="retry-open">Retry reopen</button></section>${review.panel()}${review.selections()}` : '<section class="welcome"> <h2>A visual place to explore.</h2><p>Create a Website project and choose Homepage, About Us or a custom page. Brand setup and chat are optional.</p></section>'
   }</main>`;
   bind();
   if (focusId) document.getElementById(focusId)?.focus();
@@ -1048,6 +1059,7 @@ function groups() {
   );
 }
 function bind() {
+  review.bind(root);
   bindLibrary();
   bindMemory();
   bindReconstruction(state&&project?{pid,project,unit:ref(state.unit),focus:active()??null,brands:catalog.brands,post}:null);
@@ -1169,27 +1181,27 @@ function bind() {
   });
   on("project", "change", (e) => {
     const value = (e.target as HTMLSelectElement).value;
-    if (value) void run(() => openProject(value), "Project reopened", true);
-    else { pid = ""; state = null; project = null; units = []; workspaceError = ""; prepared = null; pendingRemoval = []; render(); notice.textContent = "Choose a project; session drafts retained"; }
+    if (value) review.navigate(()=>void run(() => openProject(value), "Project reopened", true));
+    else review.navigate(()=>{ pid = ""; state = null; project = null; units = []; workspaceError = ""; prepared = null; pendingRemoval = []; render(); notice.textContent = "Choose a project; session drafts retained"; });
   });
   on("page", "change", (e) => {
     const value = (e.target as HTMLSelectElement).value;
-    if (value) void run(() => openUnit(value), "Page reopened", true);
-    else { state = null; workspaceError = ""; prepared = null; pendingRemoval = []; render(); notice.textContent = "Choose a page; session drafts retained"; }
+    if (value) review.navigate(()=>void run(() => openUnit(value), "Page reopened", true));
+    else review.navigate(()=>{ state = null; workspaceError = ""; prepared = null; pendingRemoval = []; render(); notice.textContent = "Choose a page; session drafts retained"; });
   });
   on("new-project", "submit", (e) => {
     e.preventDefault();
     const f = new FormData(e.target as HTMLFormElement);
-    void run(async () => {
+    review.navigate(()=>void run(async () => {
       const p = await post("create", { title: f.get("title") });
       catalog = await get("session");
       await openProject(p.project.id);
-    }, "Website project created");
+    }, "Website project created"));
   });
   on("new-page", "submit", (e) => {
     e.preventDefault();
     const f = new FormData(e.target as HTMLFormElement);
-    void run(async () => {
+    review.navigate(()=>void run(async () => {
       const u = await post("page", {
         expectedProject: project,
         pageType: f.get("type"),
@@ -1203,7 +1215,7 @@ function bind() {
       const p = await get("project?project=" + pid);
       units = p.units;
       await openUnit(key(u));
-    }, "Page created");
+    }, "Page created"));
   });
   on("import", "submit", (e) => {
     e.preventDefault();
@@ -1243,7 +1255,7 @@ function bind() {
   root.querySelectorAll<HTMLButtonElement>("[data-whole]").forEach(b => b.onclick = () => {
     const c = allCandidates().find(c => key(c) === b.dataset["whole"])!;
     const ids = selected(c).filter(e => e.anchor.kind === "whole").map(e => e.id);
-    if (ids.length) requestRemoval(ids); else void run(() => add(c, { kind: "whole" }), "Whole source saved");
+    if (ids.length) requestRemoval(ids); else void run(() => add(c, { kind: "whole" }), review.active?"Review source added · unsaved":"Whole source saved");
   });
   root.querySelectorAll<HTMLButtonElement>("[data-compare]").forEach(
     (b) =>
@@ -1285,7 +1297,7 @@ function bind() {
         ["x", "y", "width", "height"].map((n) => [n, Number(f.get(n)) / 100]),
       ),
     } as Anchor;
-    void run(() => add(active()!, anchor), "Region source saved");
+    void run(() => add(active()!, anchor), review.active?"Review region added · unsaved":"Region source saved");
   });
   on("annotation", "submit", (e) => {
     e.preventDefault();
@@ -1488,7 +1500,7 @@ function bind() {
             kind: tool,
             ...box,
           }),
-        "Region source saved",
+        review.active?"Review region added · unsaved":"Region source saved",
       );
     };
   });
@@ -1498,4 +1510,6 @@ void run(async () => {
   token = s.token;
   catalog = s;
   render();
+  const requested=new URL(location.href).searchParams,projectId=requested.get("project"),page=requested.get("page");
+  if(projectId&&catalog.projects.some(p=>p.ref.id===projectId)){await openProject(projectId);if(page&&units.some(u=>key(u)===page)&&(!state||key(state.unit)!==page))await openUnit(page);}
 }, "Choose a project or create a Website project");

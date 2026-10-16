@@ -1,3 +1,4 @@
+import {Reviews} from './reviews.ts';
 import {ProductionIntake} from './production-intake.ts';
 import {projectConfig,runningInstallation} from './project-bootstrap.ts';
 import {Auxiliary,type OfflineAuxiliaryInjection} from './auxiliary.ts';
@@ -40,6 +41,7 @@ export interface RunningApp {
   library: RasterLibrary;
   chat: Chat;
   production: ProductionIntake | null;
+  reviews: Reviews | null;
   installation: ReturnType<typeof runningInstallation> | null;
   origin: string;
   close: () => Promise<void>;
@@ -65,12 +67,14 @@ export async function startApp(
     token = randomBytes(32).toString('hex');
   try {
   const production=workspaceOptions?.projectRoot ? new ProductionIntake(workspace,workspaceOptions.projectRoot):null;
+  const reviews=workspaceOptions?.projectRoot?new Reviews(workspace,workspaceOptions.projectRoot):null;
   const providers = new Providers(workspace, providerConfig);
   const regions = new Regions(workspace, providers);
   const compositions = new Compositions(workspace);
   const pages = new Pages(workspace);
   const directions = new AIDirections(workspace);
   const visual = new VisualWorkspace(workspace,workspaceOptions?.executionFixture);
+  visual.reviewAvailable=!!reviews;
   const reconstruction=new Reconstruction(workspace,pages,visual,workspaceOptions?.reconstructionFixture,workspaceOptions?.auxiliaryFixture);
   const auxiliary=new Auxiliary(workspace,pages,reconstruction,workspaceOptions?.auxiliaryFixture);
   const memory = new ProjectMemory(workspace);
@@ -131,6 +135,14 @@ export async function startApp(
       )
         throw new InputError('Local host/origin required', 403);
       if (req.method === 'GET') {
+        if(path.startsWith('/api/v1/visual/review/')){
+          if(!reviews)throw new InputError('No project-bound review service',404);
+          const pid=id(url.searchParams.get('project')),action=path.slice('/api/v1/visual/review/'.length);
+          if(action==='catalog'){json(200,reviews.catalog(pid,exactRef(JSON.parse(url.searchParams.get('unit')??'null'))),false);return;}
+          if(action==='state'){json(200,reviews.state(pid,exactRef(JSON.parse(url.searchParams.get('unit')??'null')),id(url.searchParams.get('iteration'))),false);return;}
+          if(action==='original'){const out=reviews.original(pid,exactRef(JSON.parse(url.searchParams.get('record')??'null')),Number(url.searchParams.get('index')));res.writeHead(200,{'Content-Type':'image/'+out.image.format,'Content-Length':out.bytes.length});res.end(out.bytes);return;}
+          throw new InputError('Unknown review read',404);
+        }
         if(path==='/api/v1/production/state'){if(!production)throw new InputError('No project-bound production service',404);json(200,{projectId:production.config.projectId,runtimeId:production.config.runtimeId,installation,featureContract:production.config.featureContract,initialWorkUnit:production.config.initialWorkUnit,jobs:production.jobs(),iterations:production.iterations(),receipts:production.receipts()},false);return;}
 
         if(path==='/api/v1/visual/auxiliary/state'){json(200,auxiliary.state(id(url.searchParams.get('project')),exactRef(JSON.parse(url.searchParams.get('unit')??'null'))),false);return;}
@@ -359,6 +371,14 @@ export async function startApp(
         throw new InputError('Invalid JSON');
       }
       let result: unknown;
+      if(path.startsWith('/api/v1/visual/review/')){
+        if(!reviews)throw new InputError('No project-bound review service',404);
+        const r=record(input,['projectId','input']),pid=id(r['projectId']),action=path.slice('/api/v1/visual/review/'.length);
+        if(action==='save')result=reviews.save(pid,r['input']);
+        else if(action==='submit')result=reviews.submit(pid,r['input']);
+        else if(action==='copy')result=reviews.copy(pid,r['input']);
+        else throw new InputError('Unknown review action',404);json(200,result,false);return;
+      }
       if(path.startsWith('/api/v1/production/')){
         if(!production)throw new InputError('No project-bound production service',404);
         const action=path.slice('/api/v1/production/'.length);
@@ -661,6 +681,7 @@ export async function startApp(
     chat,
     origin,
     production,
+    reviews,
     installation,
     close: () => {
       if (closePromise) return closePromise;
