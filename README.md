@@ -1,5 +1,7 @@
 # Brand Visual Engine
 
+> **Legacy/reference implementation.** New development continues in [BVE V2](https://github.com/adun-denton/bve-v2), an independent architectural reset. This repository and its Git history remain preserved as reference evidence. The V2 development candidate uses a new private runtime root and does not migrate or modify an existing BVE pilot. See the successor repository for its designated candidate and installation handoff.
+
 Website is the first implemented module of an experimental shared AI Design OS foundation. Its
 contracts connect brand intent, visual references, Website design exploration, image iteration and
 local design decisions.
